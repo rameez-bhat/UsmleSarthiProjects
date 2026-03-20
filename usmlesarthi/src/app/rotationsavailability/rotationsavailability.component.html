@@ -1,0 +1,585 @@
+<!-- rotation-details.component.html -->
+<div class="rotation-wrapper" [class.loading]="loading">
+
+  <!-- MAIN VIEW (Details) -->
+  <ng-container *ngIf="Viewtype !== 'testimonal'">
+    <div class="rotation-availability" *ngIf="selectedHospital">
+      <mat-card class="rotation-card mat-elevation-z4">
+
+        <!-- Header -->
+        <mat-card-header class="card-header">
+          <div class="header-left">
+            <h2 class="hospital-title">{{ selectedHospital?.title }}</h2>
+            <h4 class="rotation-code">
+              Rotation Code: <strong>{{ selectedHospital?.location_code }}</strong>
+            </h4>
+          </div>
+        </mat-card-header>
+
+        <mat-divider></mat-divider>
+
+        <mat-card-content class="card-content">
+          <!-- Hospital Info -->
+          <section class="section">
+            <h3 class="section-title">Rotation Information</h3>
+            <div class="info-grid info-grid-2">
+              <div class="info-item"><strong>City:</strong> {{ selectedHospital.city }}</div>
+              <div class="info-item"><strong>State:</strong> {{ selectedHospital.state }}</div>
+              <div class="info-item"><strong>ZIP Code:</strong> {{ selectedHospital.zipCode }}</div>
+              <div class="info-item"><strong>Rotation Type:</strong> {{ selectedHospital.type }}</div>
+              <div class="info-item"><strong>Specialty:</strong> {{ selectedHospital.specialty }}</div>
+              <div class="info-item"><strong>Duration:</strong> {{ selectedHospital.duration }}</div>
+              <div class="info-item"><strong>Rotation Setting:</strong> {{ selectedHospital.rotation_setting }}</div>
+              <div class="info-item"><strong>Affiliations:</strong> {{ selectedHospital.affiliations }}</div>
+              <div class="info-item"><strong>Rotation Fee:</strong> {{ selectedHospital.fee }} 
+                <div *ngIf="hasDiscount=='yes' && discountValue && isDiscountActive(discountTo)" class="info-item" style="color: blue;font-weight: 400;"><strong>Current Discounts/Offers:</strong> <span *ngIf="discountType!='percentage'">$</span>{{ discountValue }}<span *ngIf="discountType=='percentage'">%</span> off for {{discountFrom}} To {{discountTo}}</div> 
+                <div *ngIf="selectedHospital.offers && hasDiscount!='yes' && !discountValue" class="info-item" style="color: blue;font-weight: 400;"><strong>Current Discounts/Offers:</strong> {{ selectedHospital.offers }}</div>
+              </div>
+              <div class="info-item"><strong>Application Fee:</strong> {{ selectedHospital.registration_fee }}</div>
+              <div class="info-item"><strong>Do Hospitals have Residency?</strong> {{ selectedHospital.residency }}</div>
+              <div class="info-item"><strong>Hospital Rounds:</strong> {{ selectedHospital.rounds }}</div>
+              <div class="info-item"><strong>LOR Type:</strong> {{ selectedHospital.lor_type }}</div>
+              <div class="info-item"><strong>Number of LORs:</strong> {{ selectedHospital.lor_number }}</div>
+            </div>
+          </section>
+
+          <mat-divider></mat-divider>
+          <mat-divider></mat-divider>
+
+          <!-- Additional Details -->
+          <section class="section pt-2">
+            <h3 class="section-title">Additional Details</h3>
+            <div class="info-grid info-grid-2">
+              
+              <div class="info-item"><strong>Description:</strong> {{ selectedHospital.description }}</div>
+              <div class="info-item"><strong>Hours:</strong> {{ selectedHospital.hours }}</div>
+              <div class="info-item"><strong>Documentation Required:</strong> {{ selectedHospital.documentation }}</div>
+              <div class="info-item">
+                <strong>Payment Policy:</strong>
+                {{ selectedHospital.payment_policy?.replace('30 days', '45 days') }}
+              </div>
+              <div class="info-item">
+                <strong>Refund Policy:</strong>
+                <a [href]="selectedHospital.refund_policy_link" target="_blank" rel="noopener">View Policy</a>
+              </div>
+              <div
+              class="info-item"
+              *ngIf="selectedHospital.type.toLowerCase().indexOf('tele') === -1 || selectedHospital?.type?.toLowerCase()?.includes('hybrid')"
+            >
+            <strong>Invitation Letter for Visa Support</strong>
+
+               <label *ngIf="
+    !selectedHospital?.visaLetterBy &&
+    !(selectedHospital.visaLetterBy?.physician ||
+     selectedHospital.visaLetterBy?.lawyer ||
+     selectedHospital.visaLetterBy?.sarthi)
+  "> For more information on Visa click <a href="https://www.usmlesarthi.com/visa-support-for-imgs.html" target="_blank">here</a> </label>
+                <!-- ================= VISA LETTER DETAILS ================= -->
+
+<section
+  class="section pt-2"
+  *ngIf="
+    selectedHospital?.visaLetterBy &&
+    (selectedHospital.visaLetterBy?.physician ||
+     selectedHospital.visaLetterBy?.lawyer ||
+     selectedHospital.visaLetterBy?.sarthi)
+  "
+>
+  <h3 class="section-title">Visa Invitation Letter Details</h3>
+
+  <div class="info-grid info-grid-1">
+
+    <!-- ================= PHYSICIAN LETTER ================= -->
+    <div
+  class="info-item"
+  *ngIf="selectedHospital?.visaLetterBy?.physician"
+>
+  <strong class="greenColor">Physician Visa Letter</strong>
+
+  <div
+    class="nested-box"
+    *ngFor="let head of selectedHospital?.visaLetterBy?.physicianDetails?.letterHeads"
+  >
+    <div>• <strong class="blueColor">{{ head | titlecase }} Letterhead</strong></div>
+
+    <!-- Extract fee object safely -->
+    <ng-container
+      *ngIf="selectedHospital.visaLetterBy.physicianDetails.fees as fees"
+    >
+      <ng-container *ngIf="fees[head] as feeObj">
+        
+        <!-- Fee -->
+        <div>
+          <strong>Fee:</strong>
+          <span *ngIf="feeObj.fee; else noPhysicianFee">
+            ${{ feeObj.fee }}
+          </span>
+        </div>
+
+        <!-- Security Deposit -->
+        <div>
+          <strong>Advance Deposit:</strong>
+          <span *ngIf="feeObj.securityDeposit; else noPhysicianDeposit">
+            ${{ feeObj.securityDeposit }}
+          </span>
+        </div>
+        <!-- Security Deposit -->
+        <div *ngIf="feeObj.notes" style="color:red">
+          <strong>Note:</strong>
+          <span >
+            {{ feeObj.notes }}
+          </span>
+        </div>
+
+        <!-- Total -->
+        <div *ngIf="feeObj.fee || feeObj.securityDeposit">
+          <b>
+            Total:
+            ${{ (feeObj.fee || 0) + (feeObj.securityDeposit || 0) }}
+          </b>
+        </div>
+
+        <div *ngIf="!feeObj.fee && !feeObj.securityDeposit">
+          <b>Total: No fee</b>
+        </div>
+
+      </ng-container>
+    </ng-container>
+
+    <!-- Fallback -->
+    <ng-template #noPhysicianFee>No fee</ng-template>
+    <ng-template #noPhysicianDeposit>No fee</ng-template>
+
+    <hr />
+  </div>
+</div>
+
+
+
+    <!-- ================= LAWYER LETTER ================= -->
+    <div
+  class="info-item"
+  *ngIf="selectedHospital?.visaLetterBy?.lawyer"
+>
+  <strong class="greenColor">Lawyer Visa Letter</strong>
+
+  <div class="nested-box">
+    <div>
+      <strong>Fee:</strong>
+      <span *ngIf="selectedHospital.visaLetterBy.lawyerF.fee; else noFee">
+        ${{ selectedHospital.visaLetterBy.lawyerF.fee }}
+      </span>
+      <ng-template #noFee>No fee</ng-template>
+    </div>
+
+    <div>
+      <strong>Security Deposit:</strong>
+      <span *ngIf="selectedHospital.visaLetterBy.lawyerF.securityDeposit; else noDeposit">
+        ${{ selectedHospital.visaLetterBy.lawyerF.securityDeposit }}
+      </span>
+      <ng-template #noDeposit>No fee</ng-template>
+    </div>
+
+    <div *ngIf="
+      selectedHospital.visaLetterBy.lawyerF.fee ||
+      selectedHospital.visaLetterBy.lawyerF.securityDeposit
+    ">
+      <b>
+        Total:
+        ${{
+          (selectedHospital.visaLetterBy.lawyerF.fee || 0) +
+          (selectedHospital.visaLetterBy.lawyerF.securityDeposit || 0)
+        }}
+      </b>
+    </div>
+
+    <div *ngIf="
+      !selectedHospital.visaLetterBy.lawyerF.fee &&
+      !selectedHospital.visaLetterBy.lawyerF.securityDeposit
+    ">
+      <b>Total: No fee</b>
+    </div>
+  </div>
+</div>
+
+    <!-- ================= SARTHI LETTER ================= -->
+    <div
+  class="info-item"
+  *ngIf="selectedHospital?.visaLetterBy?.sarthi"
+>
+  <strong class="greenColor">Sarthi Visa Letter</strong>
+
+  <div class="nested-box">
+    <div>
+      <strong>Fee:</strong>
+      <span *ngIf="selectedHospital.visaLetterBy.sarthiF.fee; else noFee">
+        ${{ selectedHospital.visaLetterBy.sarthiF.fee }}
+      </span>
+      <ng-template #noFee>No fee</ng-template>
+    </div>
+
+    <div>
+      <strong>Security Deposit:</strong>
+      <span *ngIf="selectedHospital.visaLetterBy.sarthiF.securityDeposit; else noDeposit">
+        ${{ selectedHospital.visaLetterBy.sarthiF.securityDeposit }}
+      </span>
+      <ng-template #noDeposit>No fee</ng-template>
+    </div>
+
+    <div *ngIf="
+      selectedHospital.visaLetterBy.sarthiF.fee ||
+      selectedHospital.visaLetterBy.sarthiF.securityDeposit
+    ">
+      <b>
+        Total:
+        ${{
+          (selectedHospital.visaLetterBy.sarthiF.fee || 0) +
+          (selectedHospital.visaLetterBy.sarthiF.securityDeposit || 0)
+        }}
+      </b>
+    </div>
+
+    <div *ngIf="
+      !selectedHospital.visaLetterBy.sarthiF.fee &&
+      !selectedHospital.visaLetterBy.sarthiF.securityDeposit
+    ">
+      <b>Total: No fee</b>
+    </div>
+  </div>
+</div>
+
+  </div>
+</section>
+
+
+            </div>
+  "       <div *ngIf="
+    !selectedHospital?.visaLetterBy &&
+    !(selectedHospital.visaLetterBy?.physician ||
+     selectedHospital.visaLetterBy?.lawyer ||
+     selectedHospital.visaLetterBy?.sarthi)">
+            <div
+              *ngIf="selectedHospital.type.toLowerCase().indexOf('tele') === -1  || selectedHospital?.type?.toLowerCase()?.includes('hybrid')"
+              class="info-item"
+            >
+            <strong>Who provides the Visa Letter</strong>
+
+                  To see  who provides the visa letter click <a href="https://docs.google.com/spreadsheets/d/1Evf-C_hXyaz66Vmgt05bL9RyFT0xyw3jgn79-Xl0NHM/edit?gid=0#gid=0" target="_blank">Here</a>
+            </div>
+            </div>
+              <div *ngIf="selectedHospital.program_director" class="info-item"><strong>Program Director:</strong> {{ selectedHospital.program_director }}</div>
+            </div>
+          </section>
+
+          <mat-divider></mat-divider>
+
+          <!-- Calendar + Booking -->
+          <section class="section calendar-booking">
+            <div class="calendar-box">
+              <h3 class="section-title">Rotation Calendar</h3>
+              <div class="calendar-wrapper">
+                <full-calendar
+                  #calendar
+                  [plugins]="calendarPlugins"
+                  [defaultView]="defaultView"
+                  [editable]="editable"
+                  [selectable]="selectable"
+                  [events]="calendarEvents"
+                  [validRange]="validRange"
+                  (dateClick)="handleDateClick($event)"
+                  (eventClick)="handleDateClick($event,'event')" 
+                  (datesRender)="handleMonthClick($event)"
+                  style="min-height: 300px; display: block;"
+                  >
+                </full-calendar>
+
+                <!-- Tooltip -->
+                <div
+                  *ngIf="tooltipVisible"
+                  class="custom-tooltip"
+                  [style.left.px]="tooltipX"
+                  [style.top.px]="tooltipY"
+                  [innerHTML]="tooltipContent">
+                </div>
+              </div>
+            </div>
+
+            <div class="booking-box" *ngIf="!paymentscreen">
+              <h3 class="section-title" >Booking Details</h3>
+              <div class="booking-body">
+                <div class="row" *ngIf="BookingSelectedDate">
+                  <div class="label">Your Selected Date:</div>
+                  <div class="value">{{ BookingSelectedDate }}</div>
+                </div>
+
+                <div class="row" *ngIf="getNearestDates?.exactmatch === 'no' && !getNearestDates?.nearestdates?.length">
+                  <div class="label">But Is Not Available For The Month:</div>
+                  <div class="value">{{ BookingSelectedDate | date:'MMMM yyyy' }}</div>
+                </div>
+
+                <div class="row" *ngIf="getNearestDates?.exactmatch === 'no' && getNearestDates?.nearestdates?.length">
+                  <div class="label">Congratulations! You Can Start</div>
+                  <div class="value" *ngIf="getNearestDates.nearestdates.length === 2">
+                    Either On {{ getNearestDates.nearestdates[0] }} OR {{ getNearestDates.nearestdates[1] }}
+                  </div>
+                  <div class="value" *ngIf="getNearestDates.nearestdates.length === 1">
+                    On {{ getNearestDates.nearestdates[0] }}
+                  </div>
+                </div>
+
+                <div class="row" *ngIf="seatsAvailableNow !== undefined && BookingSelectedDate">
+                  <div class="label">Availability Status:</div>
+                  <div class="value">{{ ((seatsAvailableNow && getNearestDates?.nearestdates?.length) || (seatsAvailableNow && getNearestDates?.exactmatch === 'yes') ) ? 'Available' : 'Not Available' }}</div>
+                </div>
+                <div class="row" *ngIf="!BookingSelectedDate">
+                  <div class="label">Please Pick Date From Calender To Check Availability.</div>
+                </div>
+                <div *ngIf="seatsAvailableNow ">
+                <div class="info-row highlightdis" *ngIf="discountAmount"><span>Congratulations! You are eligible for a discount on rotation fee 👇</span></div>
+              <div class="info-row highlightdis" *ngIf="discountAmount"><span>Discount:</span><span>${{ discountAmount }}</span></div>
+                  </div>
+                <div id="bookingdetails" class="custom-message" [innerHTML]="CustomeMessage"></div>
+
+                <!-- Terms + Actions -->
+                <div *ngIf="seatsAvailableNow " class="terms-actions">
+                  <label class="terms">
+                    <input type="checkbox" [(ngModel)]="termsAccepted" />
+                    I agree.
+                  </label>
+
+                  <div class="action-buttons">
+                    <button class="btn primary" [disabled]="!termsAccepted" (click)="choosePaymentType()">Pay Application Fee</button>
+                    <!--<button class="btn outline-success ml-2" (click)="openWhatsApp()">Write Query to Support</button>
+                    <button class="btn outline-danger ml-2" (click)="openGmail()">Email Support</button>-->
+                    <button class="btn outline-danger m-2" (click)="openGmail()"><img src="https://www.svgrepo.com/show/223047/gmail.svg" alt="Gmail" width="18" class="gmailicon"></button>
+                    <button class="btn outline-success m-2" (click)="openWhatsApp()"> <i class="fa fa-whatsapp"></i></button>
+                  </div>
+                </div>
+                <div *ngIf="!seatsAvailableNow" class="terms-actions">
+                 
+
+                  <div class="action-buttons">
+                   
+                    <button class="btn outline-danger m-2" (click)="openGmail()"><img src="https://www.svgrepo.com/show/223047/gmail.svg" alt="Gmail" width="18" class="gmailicon"></button>
+                    <button class="btn outline-success m-2" (click)="openWhatsApp()"> <i class="fa fa-whatsapp"></i></button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Payment screen (when paymentscreen === true) -->
+            <div class="booking-box payment-screen" *ngIf="paymentscreen">
+              <h3 class="section-title">Payments Selection</h3>
+
+              <label class="terms-inline">
+                <input type="checkbox" [(ngModel)]="termsAccepted" />
+                I agree with the above terms
+              </label>
+
+              <div class="payment-buttons">
+                <button class="btn primary " [disabled]="!termsAccepted" (click)="pay('stripe')">💳 Credit/Debit Card</button>
+                <button class="btn warning ml-2" [disabled]="!termsAccepted" (click)="pay('zelle')">🟣 Pay via Zelle</button>
+                <button class="btn secondary ml-2 mt-2" [disabled]="!termsAccepted" (click)="pay('wire')">🏦 Pay via Wire Transfer</button>
+              </div>
+
+              <!-- Zelle block -->
+              <div class="payment-info" *ngIf="seatsAvailableNow && paymentSelectionType === 'zelle'">
+                <h4>💜 Zelle Payment Details</h4>
+                <div class="info-row"><span>Name:</span><span>MedSarthi LLC</span></div>
+                <div class="info-row"><span>Email for Zelle:</span><span>pawankhera@usmlesarthi.com</span></div>
+                <div class="info-row"><span>Instructions:</span><span>Include the student's name in notes and send a screenshot to <b>enroll@usmlesarthi.com</b></span></div>
+                <!--<div class="info-row"><span>Rotation Fee:</span><span>${{ RotationFee }}</span></div>-->
+                <div class="info-row"><span>Application Fee:</span><span>${{ ApplicationFee }}</span></div>
+
+                <div class="action-row">
+                  <!--<button class="btn outline-success" (click)="openWhatsApp()">Write Query to Support</button>
+                  <button class="btn outline-danger" (click)="openGmail()">Email Support</button>-->
+                  <button class="btn outline-danger m-2" (click)="openGmail()"><img src="https://www.svgrepo.com/show/223047/gmail.svg" alt="Gmail" width="18" class="gmailicon"></button>
+                    <button class="btn outline-success m-2" (click)="openWhatsApp()"> <i class="fa fa-whatsapp"></i></button>
+
+                </div>
+              </div>
+
+              <!-- Stripe block -->
+              <div class="payment-info" *ngIf="seatsAvailableNow && paymentSelectionType === 'stripe'">
+                <h4>💳 Stripe Payment Details</h4>
+                <div class="info-row"><span>Name:</span><span>MedSarthi LLC</span></div>
+                <!--<div class="info-row"><span>Note:</span><span><b>You Will Be Charged Application Fee + 4% Processing + $0.30</b></span></div>-->
+                <div class="info-row"><span>Application Fee:</span><span>${{ ApplicationFee }}</span></div>
+                <div class="info-row"><span>Processing Fee(4%+$0.30):</span><span>${{ ((ApplicationFee*4/100)+0.30) | number:'1.2-2' }}</span></div>
+                <div class="info-row" *ngIf="PromotorDiscountsAmount"><span>Referral Discount:</span><span>${{PromotorDiscountsAmount}}</span></div>
+                <div class="info-row"><span>Total Payment:</span><span><b>${{ (0.30 + ApplicationFee + (ApplicationFee*4/100)-PromotorDiscountsAmount) | number:'1.2-2' }}</b></span></div>
+                <label class="terms-inline" style="display:table">
+          <input type="checkbox" [(ngModel)]="payOtherAmount" />
+          Pay Other Amount
+        </label>
+         <div class="info-row" *ngIf="payOtherAmount">Enter Amount You Want To Pay<input type="text" [(ngModel)]="enterOtherAmount" style="width:100%" /></div>
+                <div class="action-row">
+                  <button *ngIf="UserLoggedIn" class="btn primary" (click)="proceedToPayStripe()">💼 Proceed To Pay</button>
+
+                  <div *ngIf="!UserLoggedIn" class="guest-pay">
+                    <label>Enter Your Email If You Want To Pay As Guest</label>
+                    <input type="email" [(ngModel)]="enteredEmail" class="guest-email" />
+                    <div class="guest-actions">
+                      <button class="btn warning" (click)="redirectToLogin()">Login / Register</button>
+                      <button class="btn primary" (click)="proceedToPayStripe()">Pay As Guest</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="action-row">
+                  <!--<button class="btn outline-success" (click)="openWhatsApp()">Write Query to Support</button>
+                  <button class="btn outline-danger" (click)="openGmail()">Email Support</button>-->
+                  <button class="btn outline-danger m-2" (click)="openGmail()"><img src="https://www.svgrepo.com/show/223047/gmail.svg" alt="Gmail" width="18" class="gmailicon"></button>
+    <button class="btn outline-success m-2" (click)="openWhatsApp()"> <i class="fa fa-whatsapp"></i></button>
+                </div>
+              </div>
+
+              <!-- Wire block -->
+              <div class="payment-info" *ngIf="seatsAvailableNow && paymentSelectionType === 'wire'">
+                <h4>🏦 Wire Transfer Details</h4>
+                <div class="info-row"><span>Wire To</span><span>Medsarthi LLC</span></div>
+                <div class="info-row"><span>Bank Name</span><span>Bank of America</span></div>
+                <div class="info-row"><span>Account Number</span><span>4570-4639-8400</span></div>
+                <div class="info-row"><span>SWIFT Code</span><span>BOFAUS3N</span></div>
+                <!--<div class="info-row"><span>Rotation Fee:</span><span>${{ RotationFee }}</span></div>-->
+                <div class="info-row"><span>Application Fee:</span><span>${{ ApplicationFee }}</span></div>
+                <div class="info-row"><span>Processing Fee(On Each Transaction):</span><span>$35</span></div>
+
+                <div class="action-row">
+                  <!--<button class="btn outline-success" (click)="openWhatsApp()">Write Query to Support</button>
+                  <button class="btn outline-danger" (click)="openGmail()">Email Support</button>-->
+                  <button class="btn outline-danger m-2" (click)="openGmail()"><img src="https://www.svgrepo.com/show/223047/gmail.svg" alt="Gmail" width="18" class="gmailicon"></button>
+                    <button class="btn outline-success m-2" (click)="openWhatsApp()"> <i class="fa fa-whatsapp"></i></button>
+
+                </div>
+              </div>
+            </div>
+
+          </section>
+
+          <mat-divider></mat-divider>
+
+          <!-- (optional) Request form commented out — keep available for future -->
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </ng-container>
+
+  <!-- TESTIMONIAL VIEW -->
+  <ng-container *ngIf="Viewtype === 'testimonal'">
+    <div class="testimonial-section">
+      <mat-card class="testimonial-card mat-elevation-z4">
+        <mat-card-header class="card-header">
+          <div>
+            <h2 class="hospital-title">{{ selectedHospital?.title }}</h2>
+            <h4 class="rotation-code">Rotation Code: <strong>{{ selectedHospital?.location_code }}</strong></h4>
+          </div>
+        </mat-card-header>
+
+        <mat-card-content>
+          <h3 class="section-title">Student Testimonials</h3>
+
+          <div *ngIf="selectedHospital?.reviews?.length; else noTestimonials" class="testimonials-grid">
+            <mat-card class="single-testimonial" *ngFor="let review of selectedHospital.reviews; index as i">
+              <mat-card-header>
+                <div mat-card-avatar class="avatar">{{ i + 1 }}</div>
+                <div class="reviewer-info">
+                  <div class="reviewer-name">{{ review?.student_name }}</div>
+                  <mat-card-subtitle>
+                    <ng-container *ngIf="review?.ratings as ratingStr">
+                      <ng-container *ngIf="getStars(ratingStr) as stars">
+                        <span class="star filled" *ngFor="let s of stars.filled">★</span>
+                        <span class="star empty" *ngFor="let s of stars.empty">☆</span>
+                      </ng-container>
+                    </ng-container>
+                  </mat-card-subtitle>
+                </div>
+              </mat-card-header>
+
+              <mat-card-content>
+                <p class="review-title" *ngIf="review?.title && review.title !== 'nan'"><strong>{{ review.title }}</strong></p>
+                <p class="review-feedback">{{ review.feedback }}</p>
+              </mat-card-content>
+            </mat-card>
+          </div>
+
+          <ng-template #noTestimonials>
+            <mat-card class="no-testimonial-card mat-elevation-z2">
+              <mat-card-content class="no-testimonial-content">
+                <mat-icon color="warn" class="info-icon">info</mat-icon>
+                <div>No testimonials yet for this rotation.</div>
+              </mat-card-content>
+            </mat-card>
+          </ng-template>
+
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </ng-container>
+  <div class="popup-overlay" *ngIf="!UserLoggedIn   && BookingSelectedDate && ShowModelPopup && !submitEmailPopup"  >
+  <div class="popup-box">
+    <h2>Enter Your Email</h2>
+    <p>You are not logged in. Please enter your email to continue.</p>
+
+    <input
+      type="email"
+      [(ngModel)]="enteredEmail"
+      placeholder="Enter email"
+      class="popup-input"
+    />
+    <div class="form-group">
+              <label for="country">Select Country:</label>
+              <ng-select
+                [items]="countryPhoneOptions"
+                bindLabel="label"
+                name="phonecountry"
+                [(ngModel)]="selectedPhoneCountry"
+                (change)="onPhoneCountryChange($event)"
+                [searchable]="true"
+                placeholder="Choose a country"
+              >
+              <ng-template ng-label-tmp let-item="item">
+                <div style="display: flex; align-items: center;">
+                  <img
+                    [src]="item.flag"
+                    alt="{{ item.label }}"
+                    style="width: 20px; height: 20px; margin-right: 5px"
+                  />
+                  {{ item.label }}
+                </div>
+              </ng-template>
+                <ng-template ng-option-tmp let-item="item">
+                  <img [src]="item.flag" width="20" style="margin-right: 5px" />
+                  {{ item.label }}
+                </ng-template>
+              </ng-select>
+            </div>
+            
+            <div class="form-group" style="margin-top: 15px">
+              <label for="phone">Phone Number:</label>
+              <input
+                type="text"
+                class="form-control"
+                name="phonenumber"
+                [(ngModel)]="phoneNumber"
+                (ngModelChange)="updateFullPhoneNumber()"
+                placeholder="Enter phone number"
+  
+              />
+            </div>
+
+    <div class="popup-buttons">
+      <button class="btn cancel-btn" (click)="closeEmailPopup()">Cancel</button>
+      <button class="btn submit-btn" (click)="submitEmailPopupF()">Continue</button>
+    </div>
+  </div>
+</div>
+
+  <!-- LOADING OVERLAY -->
+  <div *ngIf="loading" class="overlay">
+    <div class="spinner"></div>
+    <p class="loading-text">Please Wait...</p>
+  </div>
+
+</div>

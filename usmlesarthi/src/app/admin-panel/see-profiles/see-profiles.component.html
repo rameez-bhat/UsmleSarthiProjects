@@ -1,0 +1,1046 @@
+<div class="card-body" [ngSwitch]="landing">
+  <div *ngSwitchCase="'list'">
+    <div *ngIf="loading; else loaded" class="text-center">
+      Fetching the users list...
+    </div>
+    <ng-template #loaded>
+      <div>
+        <label> Write the user's name or email you are looking for..</label>
+        <input type="text" class="form-control" #userPrefix />
+        <br />
+        <button
+          style="margin-right: 10px"
+          class="btn btn-primary btn-outline-primary btn-md text-center float-left"
+          (click)="fetchSome(userPrefix.value)"
+        >
+          Search
+        </button>
+        <!--<button class="btn btn-primary btn-outline-primary btn-md text-center float-right" (click)="fetchAll()">
+    Show all users
+  </button>-->
+      </div>
+      <div *ngIf="usersList.length">
+        <div class="table-responsive">
+          <table class="table table-striped table-hover">
+            <thead>
+              <tr>
+                <th scope="col">S.No</th>
+                <th scope="col">User Email</th>
+                <th scope="col">Name</th>
+                <th scope="col">Current Role</th>
+                <th scope="col">See Profile</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let user of usersList; index as i">
+                <td>{{ i + 1 }}</td>
+                <td>{{ user.email }}</td>
+                <td>{{ user.displayName }}</td>
+                <td>{{ user.Role }}</td>
+                <td>
+                  <button
+                    class="btn btn-primary btn-outline-primary"
+                    (click)="takeMeToUserProfile(user)"
+                  >
+                    See
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </ng-template>
+  </div>
+  <div *ngSwitchCase="'profile'">
+    <div *ngIf="loading; else loaded" class="text-center">
+      Fetching the user's profile...
+    </div>
+    <ng-template #loaded>
+      <div class="row">
+        <div class="col">
+          <button
+            class="btn btn-primary btn-outline-primary float-left"
+            (click)="landing = 'list'"
+          >
+            <i class="ft-arrow-left"></i> Back
+          </button>
+        </div>
+      </div>
+      <div class="row mb-2">
+        <span class="col-6"><label for="mentor">Mentor</label></span>
+        <span class="col-6"
+          ><input
+            type="text"
+            disabled
+            class="form-control"
+            [(ngModel)]="selectedUser.mentor"
+            name="mentor"
+            aria-describedby="clinicalExperienceError"
+            placeholder="Enter the name of assigned mentor"
+            onfocus="this.placeholder = ''"
+        /></span>
+      </div>
+      <div id="contentToConvert">
+        <div class="row">
+          <div class="col text-center">
+            <h4 class="font-weight-bolder">
+              {{ selectedUser.displayName }}'s Profile
+            </h4>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-sm-6 col-md-3 mr-auto">
+            <button
+              class="btn btn-success btn-outline-success mt-3"
+              (click)="showMatch = !showMatch"
+            >
+              Show User's Match
+            </button>
+          </div>
+          <div class="col-sm-6 col-md-3 ml-auto">
+            <button
+              type="submit"
+              class="btn btn-block btn-primary btn-outline-primary mt-3"
+              name="submit"
+              (click)="captureScreen()"
+            >
+              Download as PDF
+            </button>
+          </div>
+        </div>
+        <div class="card row" *ngIf="showMatch">
+          <div class="card-body">
+            <div *ngIf="!selectedUserMatch.PId; else match">
+              <span class="text-primary text-center font-weight-bolder">
+                This user has not been matched yet
+              </span>
+            </div>
+            <ng-template #match>
+              <div class="text-primary text-center font-weight-bolder">
+                The user's matching details are:
+                <div class="col-12 text-left">
+                  Specialty : {{ programObject[selectedUserMatch.PId].PName }}
+                </div>
+                <div class="col-12 text-left">
+                  Hospital : {{ selectedUserMatch.hospital.HName }} (
+                  {{ selectedUserMatch.hospital.City }},
+                  {{ selectedUserMatch.hospital.State }})
+                </div>
+                <div class="col-12 text-left">
+                  Match Year :
+                  {{
+                    selectedUserMatch.yearMatch
+                      ? selectedUserMatch.yearMatch
+                      : ""
+                  }}
+                </div>
+              </div>
+            </ng-template>
+          </div>
+        </div>
+        <form ngNativeValidate #form>
+          <div class="font-weight-bold h4 text-primary m-2 p-2">Education</div>
+          <div class="row mt-2">
+            <span class="col-6"
+              ><label for="yog"
+                >Year of graduation<span style="color: red">*</span></label
+              ></span
+            >
+            <span class="col-6">
+              <label>
+                If you extended graduation by more than 6 months, let us know
+              </label>
+            </span>
+            <span class="col-6"
+              ><input
+                type="number"
+                min="1980"
+                class="form-control"
+                [(ngModel)]="selectedUser.YOG"
+                name="yog"
+                aria-describedby="yogError"
+                placeholder="Enter your year of graduation"
+                onfocus="this.placeholder = ''"
+                required
+            /></span>
+            <span class="col-6">
+              <input
+                type="text"
+                name="extendedGrad"
+                placeholder="Please explain here.."
+                [(ngModel)]="selectedUser.extendedGrad"
+                class="form-control"
+                id="extendedGrad"
+              />
+            </span>
+          </div>
+          <div class="row mt-2">
+            <span class="col-6"
+              ><label for="primarySpeciality"
+                >Name of your Medical School<span style="color: red"
+                  >*</span
+                ></label
+              ></span
+            >
+            <span class="col-6"
+              ><label
+                >Country of your Medical School<span style="color: red"
+                  >*</span
+                ></label
+              ></span
+            >
+            <span class="col-6"
+              ><input
+                type="text"
+                class="form-control"
+                [(ngModel)]="selectedUser.School"
+                name="school"
+                aria-describedby="yogError"
+                placeholder="Enter the name of your medical school"
+                onfocus="this.placeholder = ''"
+                required
+            /></span>
+            <span class="col-6"
+              ><input
+                type="text"
+                class="form-control"
+                name="country"
+                [(ngModel)]="selectedUser.schoolCountry"
+                aria-describedby="step1ScoreError"
+                placeholder="Enter the country of your medical school"
+                onfocus="this.placeholder = ''"
+                required
+            /></span>
+          </div>
+          <div class="row mt-2">
+            <span class="col-6"
+              ><label>
+                Are you a repeat applicant for residency?<span
+                  style="color: red"
+                  >*</span
+                ></label
+              ></span
+            >
+            <span class="col-3"
+              ><label
+                ><input
+                  type="radio"
+                  name="repeatApplicant"
+                  [(ngModel)]="selectedUser.repeatApplicant"
+                  value="Yes"
+                  required
+                />
+                Yes</label
+              ></span
+            >
+            <span class="col-3"
+              ><label
+                ><input
+                  type="radio"
+                  name="repeatApplicant"
+                  [(ngModel)]="selectedUser.repeatApplicant"
+                  value="No"
+                />
+                No</label
+              ></span
+            >
+          </div>
+          <div
+            class="row mt-2"
+            *ngIf="
+              selectedUser.repeatApplicant &&
+              selectedUser.repeatApplicant == 'Yes'
+            "
+          >
+            <span class="col-12">
+              <label>
+                If you are a repeat applicant, mention year(s) in which you have
+                applied, speciality and any interviews</label
+              >
+            </span>
+            <span class="col-12">
+              <textarea
+                autosize
+                type="text"
+                placeholder="Please explain here.."
+                [(ngModel)]="selectedUser.repeatApplicantComments"
+                name="repeatComments"
+                class="form-control"
+                [required]="
+                  selectedUser.repeatApplicant &&
+                  selectedUser.repeatApplicant == 'Yes'
+                "
+              >
+              </textarea>
+            </span>
+          </div>
+          <div class="row mt-2">
+            <span class="col-12"
+              ><label for="visareq"
+                >VISA Requirement<span style="color: red">
+                  (Hold down the Ctrl (windows) / Command (Mac) button to select
+                  multiple options)</span
+                ></label
+              >
+              <select
+                class="form-control"
+                id="userVisa[]"
+                name="userVisa[]"
+                size="4"
+                multiple="multiple"
+                [(ngModel)]="selectedUser.newVisas"
+                required
+              >
+                <option [value]="visa.VId" *ngFor="let visa of customVisa">
+                  {{ visa.Type === "Data not available" ? "Other" : visa.Type }}
+                </option>
+              </select>
+            </span>
+            <span
+              class="col-12 mt-2"
+              *ngIf="
+                selectedUser.newVisas && selectedUser.newVisas.includes('4')
+              "
+              ><input
+                type="text"
+                name="visaOther"
+                [(ngModel)]="selectedUser.visaOther"
+                class="form-control"
+                placeholder="Please explain here about other.."
+            /></span>
+          </div>
+          <div class="font-weight-bold h4 text-primary m-2 p-2">
+            USMLE Scores
+          </div>
+          <div class="row mt-2">
+            <span class="col-6"
+              ><label
+                >Step 1 Pass/Fail?<span style="color: red">*</span></label
+              ></span
+            >
+            <span class="col-6"
+              ><label
+                >Any Step 1 Failure?<span style="color: red">*</span></label
+              ></span
+            >
+            <span class="col-6"
+              ><select
+                class="form-control"
+                name="Step1Result"
+                [(ngModel)]="selectedUser.Step1Result"
+                required
+              >
+                <option value="Pass">Pass</option>
+                <option value="Fail">Fail</option>
+                <option value="Score">Score</option>
+              </select></span
+            >
+            <span class="col-6"
+              ><select
+                class="form-control"
+                name="Step1Failure"
+                [(ngModel)]="selectedUser.Step1Failure"
+                required
+              >
+                <option value="0">0</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="More than 2">More than 2</option>
+              </select></span
+            >
+            <span
+              class="col-6 mt-2"
+              *ngIf="
+                (selectedUser.Step1Result &&
+                  selectedUser.Step1Result == 'Score') ||
+                selectedUser.Step1Score
+              "
+              ><input
+                type="number"
+                class="form-control"
+                name="step1Score"
+                [(ngModel)]="selectedUser.Step1Score"
+                aria-describedby="step1ScoreError"
+                placeholder="Enter your step 1 score"
+                onfocus="this.placeholder = ''"
+                required
+            /></span>
+          </div>
+          <div class="row mt-2">
+            <span class="col-6"
+              ><label
+                >Step 2 CK Score/ Not Taken?<span style="color: red"
+                  >*</span
+                ></label
+              ></span
+            >
+            <span class="col-6"
+              ><label
+                >Any Step 2 CK Failure?<span style="color: red">*</span></label
+              ></span
+            >
+            <span class="col-6"
+              ><select
+                class="form-control"
+                name="Step2Result"
+                [(ngModel)]="selectedUser.Step2Result"
+                required
+              >
+                <option value="Score">Score</option>
+                <option value="Not Taken">Not Taken</option>
+              </select></span
+            >
+            <span class="col-6"
+              ><select
+                class="form-control"
+                name="Step2Failure"
+                [(ngModel)]="selectedUser.Step2Failure"
+                required
+              >
+                <option value="0">0</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="More than 2">More than 2</option>
+              </select></span
+            >
+            <span
+              class="col-6 mt-2"
+              *ngIf="
+                (selectedUser.Step2Result &&
+                  selectedUser.Step2Result == 'Score') ||
+                selectedUser.Step2Score
+              "
+              ><input
+                type="number"
+                class="form-control"
+                [(ngModel)]="selectedUser.Step2Score"
+                name="step2Score"
+                aria-describedby="step2ScoreError"
+                placeholder="Enter your step 2 score"
+                onfocus="this.placeholder = ''"
+                required
+            /></span>
+          </div>
+          <div class="row mt-2">
+            <span class="col-6"><label>Step 3 Score/ Not Taken?</label></span>
+            <span class="col-6"
+              ><label
+                >Any Step 3 Failure?<span style="color: red">*</span></label
+              ></span
+            >
+            <span class="col-6"
+              ><select
+                class="form-control"
+                name="Step3Result"
+                [(ngModel)]="selectedUser.Step3Result"
+                required
+              >
+                <option value="Score">Score</option>
+                <option value="Not Taken">Not Taken</option>
+              </select></span
+            >
+            <span class="col-6"
+              ><select
+                class="form-control"
+                name="Step3Failure"
+                [(ngModel)]="selectedUser.Step3Failure"
+                required
+              >
+                <option value="0">0</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="More than 2">More than 2</option>
+              </select></span
+            >
+            <span
+              class="col-6 mt-2"
+              *ngIf="
+                selectedUser.Step3Result && selectedUser.Step3Result == 'Score'
+              "
+              ><input
+                type="number"
+                class="form-control"
+                name="Step3Score"
+                [(ngModel)]="selectedUser.Step3Score"
+                aria-describedby="step1ScoreError"
+                placeholder="Enter your step 3 score"
+                onfocus="this.placeholder = ''"
+            /></span>
+          </div>
+          <div class="row mt-2">
+            <span class="col-6"
+              ><label for="step2Score"
+                >Step 2 CS/OET ? <span style="color: red">*</span></label
+              ></span
+            >
+            <span class="col-6"
+              ><label
+                >Any Step 2 CS/OET Failure?<span style="color: red"
+                  >*</span
+                ></label
+              ></span
+            >
+            <span class="col-2"
+              ><label
+                ><input
+                  type="radio"
+                  name="step2CsScore"
+                  [(ngModel)]="selectedUser.Step2CSScore"
+                  value="Pass"
+                  required
+                />
+                Pass
+              </label></span
+            >
+            <span class="col-2"
+              ><label
+                ><input
+                  type="radio"
+                  name="step2CsScore"
+                  [(ngModel)]="selectedUser.Step2CSScore"
+                  value="Fail"
+                />
+                Fail
+              </label></span
+            >
+            <span class="col-2"
+              ><label
+                ><input
+                  type="radio"
+                  name="step2CsScore"
+                  [(ngModel)]="selectedUser.Step2CSScore"
+                  value="Not Taken"
+                />
+                Not Taken
+              </label></span
+            >
+            <span class="col-6"
+              ><select
+                class="form-control"
+                name="Step2CSFailure"
+                [(ngModel)]="selectedUser.Step2CSFailure"
+                required
+              >
+                <option value="0">0</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="More than 2">More than 2</option>
+              </select></span
+            >
+          </div>
+          <div class="font-weight-bold h4 text-primary m-2 p-2">
+            Additional information
+          </div>
+          <!-- <div class="row mt-2">
+            <span class="col-6"
+              ><label for="primarySpeciality"
+                >Focus Speciality for Residency<span style="color: red"
+                  >*</span
+                ></label
+              ></span
+            >
+            <span class="col-6"
+              ><label
+                >Do you have home country residency?<span style="color: red"
+                  >*</span
+                ></label
+              ></span
+            >
+            <span class="col-6"
+              ><input
+                type="text"
+                class="form-control"
+                [(ngModel)]="selectedUser.focusSpeciality"
+                name="focusSpeciality"
+                aria-describedby="yogError"
+                placeholder="Enter your focus speciality for residency"
+                required
+            /></span>
+            <span class="col-3"
+              ><label
+                ><input
+                  type="radio"
+                  name="homeResidency"
+                  [(ngModel)]="selectedUser.homeResidency"
+                  value="Yes"
+                  required
+                />
+                Yes</label
+              ></span
+            >
+            <span class="col-3"
+              ><label
+                ><input
+                  type="radio"
+                  name="homeResidency"
+                  [(ngModel)]="selectedUser.homeResidency"
+                  value="No"
+                />
+                No</label
+              ></span
+            >
+          </div>
+          <div
+            class="row mt-2"
+            *ngIf="
+              selectedUser.homeResidency && selectedUser.homeResidency == 'Yes'
+            "
+          >
+            <span class="col-6"
+              ><label
+                >Completion Year<span style="color: red">*</span></label
+              ></span
+            >
+            <span class="col-6"
+              ><label for="step2Score"
+                >Home Country Residency Speciality
+                <span style="color: red">*</span></label
+              ></span
+            >
+            <span class="col-6"
+              ><input
+                type="number"
+                class="form-control"
+                name="homeCompletionYear"
+                [(ngModel)]="selectedUser.homeCompletionYear"
+                aria-describedby="step1ScoreError"
+                placeholder="Enter your completion year"
+                onfocus="this.placeholder = ''"
+                [required]="
+                  selectedUser.homeResidency && selectedUser.homeResidency == 'Yes'
+                "
+            /></span>
+            <span class="col-6"
+              ><input
+                type="text"
+                class="form-control"
+                [(ngModel)]="selectedUser.homeSpeciality"
+                name="homeSpeciality"
+                aria-describedby="step2ScoreError"
+                placeholder="Enter the home country speciality"
+                [required]="
+                  selectedUser.homeResidency && selectedUser.homeResidency == 'Yes'
+                "
+            /></span>
+            <span class="col-12 mt-2">
+              <label> Other comments </label>
+            </span>
+            <span class="col-12">
+              <textarea
+                autosize
+                type="text"
+                name="homeComments"
+                class="form-control"
+                [(ngModel)]="selectedUser.homeComments"
+                placeholder="Please explain here.."
+              >
+              </textarea>
+            </span>
+          </div>
+          <div class="row mt-2">
+            <span class="col-12">
+              <label>
+                If you are applying to more than one speciality or
+                undecided, please explain
+              </label>
+            </span>
+            <span class="col-12"
+              ><input
+                type="text"
+                name="undecidedSpecialities"
+                class="form-control"
+                [(ngModel)]="selectedUser.undecidedSpecialities"
+                placeholder="Please explain here.."
+            /></span>
+          </div> -->
+
+          <div class="row mt-2">
+            <span class="col-6"
+              ><label
+                >Do you have a US Masters (MS) Degree?<span style="color: red"
+                  >*</span
+                ></label
+              ></span
+            >
+            <span class="col-3"
+              ><label
+                ><input
+                  type="radio"
+                  name="masters"
+                  [(ngModel)]="selectedUser.MastersDegree"
+                  value="Yes"
+                  required
+                />
+                Yes</label
+              ></span
+            >
+            <span class="col-3"
+              ><label
+                ><input
+                  type="radio"
+                  name="masters"
+                  [(ngModel)]="selectedUser.MastersDegree"
+                  value="No"
+                />
+                No</label
+              ></span
+            >
+          </div>
+          <div
+            class="row mt-2"
+            *ngIf="
+              selectedUser.MastersDegree && selectedUser.MastersDegree == 'Yes'
+            "
+          >
+            <!-- <span class="col-6"
+              ><input
+                type="number"
+                class="form-control"
+                name="mastersCompletionYear"
+                [(ngModel)]="selectedUser.mastersCompletionYear"
+                aria-describedby="step1ScoreError"
+                placeholder="Enter your completion year"
+                onfocus="this.placeholder = ''"
+                [required]="
+                  selectedUser.MastersDegree && selectedUser.MastersDegree == 'Yes'
+                "
+            /></span> -->
+            <span class="col-12"
+              ><input
+                type="text"
+                class="form-control"
+                [(ngModel)]="selectedUser.mastersDegreeName"
+                name="mastersDegreeName"
+                aria-describedby="step2ScoreError"
+                placeholder="Name of the degree"
+                [required]="
+                  selectedUser.MastersDegree &&
+                  selectedUser.MastersDegree == 'Yes'
+                "
+            /></span>
+          </div>
+          <div class="font-weight-bold h4 text-primary m-2 p-2">Experience</div>
+          <div class="font-weight-bold h5 m-2 p-2">Total</div>
+          <div class="row mt-2">
+            <span class="col-6"
+              ><label for="clinicalExperienceMonths">
+                All work experience US and non-US<span style="color: red"
+                  >* (in months) </span
+                ><span style="color: blue"
+                  >Enter 0 if you don't have any experience</span
+                ></label
+              ></span
+            >
+            <span class="col-6"
+              ><input
+                type="text"
+                class="form-control"
+                [(ngModel)]="selectedUser.USCE"
+                name="clinicalExperienceMonths"
+                aria-describedby="clinicalExperienceError"
+                placeholder="Enter clinical experience in months"
+                onfocus="this.placeholder = ''"
+                required
+            /></span>
+          </div>
+          <div class="font-weight-bold h5 m-2 p-2">USCE</div>
+          <div class="row mt-2">
+            <span class="col-6"
+              ><label for="primarySpeciality"
+                >How many of total months of US rotations will you have at the
+                time of application (Including all Tele, Observerships, and
+                hands-on)? <span style="color: red">*</span></label
+              ></span
+            >
+            <span class="col-6"
+              ><input
+                type="number"
+                class="form-control"
+                [(ngModel)]="selectedUser.totalRotations"
+                name="totalRotations"
+                aria-describedby="yogError"
+                placeholder="Enter your months"
+                onfocus="this.placeholder = ''"
+                required
+            /></span>
+          </div>
+          <div class="row mt-2">
+            <span class="col-6"
+              ><label
+                >How many months of US hands-on USCE will you have at the time
+                of application?
+              </label></span
+            >
+            <span class="col-6"
+              ><input
+                type="number"
+                class="form-control"
+                [(ngModel)]="selectedUser.handsOn"
+                name="handsOn"
+                aria-describedby="yogError"
+                placeholder="Enter your months"
+                onfocus="this.placeholder = ''"
+                required
+            /></span>
+            <span class="col-6"
+              ><label
+                >How many months of US observership will you have at the time of
+                application?</label
+              ></span
+            >
+            <span class="col-6"
+              ><input
+                type="number"
+                class="form-control"
+                [(ngModel)]="selectedUser.observership"
+                name="observership"
+                aria-describedby="yogError"
+                placeholder="Enter your months"
+                onfocus="this.placeholder = ''"
+                required
+            /></span>
+            <span class="col-6"
+              ><label
+                >How many months of US telerotations will you have at the time
+                of application?</label
+              ></span
+            >
+            <span class="col-6"
+              ><input
+                type="number"
+                class="form-control"
+                [(ngModel)]="selectedUser.teleRotations"
+                name="teleRotations"
+                aria-describedby="yogError"
+                placeholder="Enter your months of tele rotations only"
+                onfocus="this.placeholder = ''"
+                required
+            /></span>
+          </div>
+          <!-- <div class="row mt-2">
+            <span class="col-12">
+              <label>
+                Of all of your rotations, mention how many months are in a
+                private clinic and months in hospital?
+                <span style="color: red">*</span>
+              </label>
+            </span>
+            <span class="col-12">
+              <textarea
+                autosize
+                type="text"
+                name="privateRotations"
+                [(ngModel)]="selectedUser.privateRotations"
+                class="form-control"
+                placeholder="Please explain here.."
+                required
+              >
+              </textarea>
+            </span>
+          </div>
+          <div class="row mt-2">
+            <span class="col-12">
+              <label> Comments on your rotations if any </label>
+            </span>
+            <span class="col-12">
+              <textarea
+                autosize
+                type="text"
+                name="commmentsRotations"
+                [(ngModel)]="selectedUser.commentsRotations"
+                class="form-control"
+                placeholder="Please explain here.."
+              >
+              </textarea>
+            </span>
+          </div> -->
+          <div class="font-weight-bold h5 m-2 p-2">Research</div>
+          <div class="row mt-2">
+            <!-- <span class="col-6"
+              ><label
+                >How many months of US Research experience will you have at
+                the time of application?
+                <span style="color: red">*</span></label
+              ></span
+            > -->
+            <span class="col-6"
+              ><label for="step2Score"
+                >What is the total number of research publications you will have
+                by application submission (Sept 15)?
+              </label></span
+            >
+            <span class="col-6"
+              ><label for="step2Score"
+                >What is the total number of different research experiences you
+                will have by application submission (Sept 15)? - Each project
+                can count as a separate experience, each job can count as a
+                separate experience
+              </label></span
+            >
+            <!-- <span class="col-6"
+              ><input
+                type="number"
+                class="form-control"
+                name="USResearch"
+                [(ngModel)]="selectedUser.USResearch"
+                aria-describedby="step1ScoreError"
+                placeholder="Enter the research experience in US (months)"
+                onfocus="this.placeholder = ''"
+                required
+            /></span> -->
+            <span class="col-6"
+              ><input
+                type="number"
+                class="form-control"
+                [(ngModel)]="selectedUser.publications"
+                name="publications"
+                aria-describedby="step2ScoreError"
+                placeholder="Enter the number of publications"
+                onfocus="this.placeholder = ''"
+                required
+            /></span>
+            <span class="col-6"
+              ><input
+                type="number"
+                class="form-control"
+                [(ngModel)]="selectedUser.noResearch"
+                name="publications"
+                aria-describedby="step2ScoreError"
+                placeholder="Enter the number of experiences"
+                onfocus="this.placeholder = ''"
+                required
+            /></span>
+          </div>
+          <!-- <div class="row mt-2">
+            <span class="col-12">
+              <label> Comments on your research experience if any </label>
+            </span>
+            <span class="col-12">
+              <textarea
+                autosize
+                type="text"
+                name="commentsResearch"
+                [(ngModel)]="selectedUser.commentsResearch"
+                class="form-control"
+                placeholder="Please explain here.."
+              >
+              </textarea>
+            </span>
+          </div> -->
+          <div class="font-weight-bold h5 m-2 p-2">Volunteering</div>
+          <div class="row mt-2">
+            <span class="col-6"
+              ><label for="step2Score"
+                >How many different volunteering experiences will you have by
+                application submission? Examples of volunteering include
+                activities like health camp, working for Red Cross and others
+                where you give back to the community (for example if you
+                volunteer for 3 different organizations, then the answer is 3
+                and NOT the total months/years/duration of the experiences)
+              </label></span
+            >
+            <span class="col-6"
+              ><input
+                type="number"
+                class="form-control"
+                [(ngModel)]="selectedUser.noVolunteering"
+                name="publications"
+                aria-describedby="step2ScoreError"
+                placeholder="Enter the number of volunteering experiences"
+                onfocus="this.placeholder = ''"
+                required
+            /></span>
+          </div>
+          <div class="font-weight-bold h4 text-primary m-2 p-2">Other</div>
+          <div class="row mt-2">
+            <span class="col-12">
+              <label>
+                If you have a unique hobby, about which you can talk like an
+                expert for 15 min, mention it below (examples: photography,
+                mountaineering etc.)
+              </label>
+            </span>
+            <span class="col-12">
+              <textarea
+                autosize
+                type="text"
+                name="hobbies"
+                class="form-control"
+                [(ngModel)]="selectedUser.hobbies"
+                placeholder="Enter your hobbies here"
+              >
+              </textarea>
+            </span>
+          </div>
+          <div class="row mt-2">
+            <span class="col-12">
+              <label>
+                Any other information/red flag you want us to be aware of
+              </label>
+            </span>
+            <span class="col-12">
+              <textarea
+                autosize
+                type="text"
+                name="redFlags"
+                class="form-control"
+                [(ngModel)]="selectedUser.redFlags"
+                placeholder="Please explain here.."
+              >
+              </textarea>
+            </span>
+          </div>
+          <div class="row mt-2">
+            <span class="col-6"
+              ><label
+                >How did you hear about USMLESarthi?<span style="color: red"
+                  >*</span
+                ></label
+              ></span
+            >
+            <span class="col-6"
+              ><select
+                class="form-control"
+                name="hearAbout"
+                [(ngModel)]="selectedUser.hearAbout"
+                required
+              >
+                <option value="Facebook">Facebook</option>
+                <option value="YouTube">Youtube</option>
+                <option value="Google">Google</option>
+                <option value="Reviewed Website">Reviewed Website</option>
+                <option value="Reddit">Reddit</option>
+                <option value="Twitter">Twitter</option>
+                <option value="LinkedIn">LinkedIn</option>
+                <option value="Telegram">Telegram</option>
+                <option value="Profile Review/Discussion with Sarthi team">
+                  Profile Review/Discussion with Sarthi team
+                </option>
+                <option value="Reffered by Friend/Senior">
+                  Referred by Friend/Senior
+                </option>
+                <option value="Others">Others</option>
+              </select></span
+            >
+            <span
+              class="col-12 mt-2"
+              *ngIf="
+                selectedUser.hearAbout && selectedUser.hearAbout == 'Others'
+              "
+              ><input
+                type="text"
+                name="hearAboutOthers"
+                [(ngModel)]="selectedUser.hearAboutOthers"
+                class="form-control"
+                placeholder="Please explain here about others.."
+                [required]="
+                  selectedUser.hearAbout && selectedUser.hearAbout == 'Others'
+                "
+            /></span>
+          </div>
+        </form>
+      </div>
+    </ng-template>
+  </div>
+</div>

@@ -1,0 +1,130 @@
+<div class="card-body">
+  <div *ngIf="loading; else loaded" class="text-center">
+    Fetching the interviews list...
+  </div>
+  <ng-template #loaded>
+    <div class="table-responsive text-center">
+      <button
+        class="btn btn-primary btn-outline-primary btn-md text-center float-left"
+        (click)="fetchInterviews()"
+      >
+        Generate Data
+      </button>
+      <div class="w-100 font-weight-bolder text-align-right">
+        <div class="col">
+          <button
+            class="btn btn-block btn-warning btn-outline-warning mt-2 float-left card-footer"
+            (click)="exportInterviewsToExcel()"
+          >
+            <i class="ft-upload"></i> Export To Excel
+          </button>
+        </div>
+      </div>
+      <h5 class="font-weight-bold text-uppercase text-center text-primary">
+        This Season's Interviews
+      </h5>
+      <br />
+      <table
+        class="table table-striped table-hover text-left"
+        id="Interviews-List"
+      >
+        <thead>
+          <tr>
+            <th scope="col">S.No.</th>
+            <th scope="col">Hospital Name</th>
+            <th scope="col">Program Type</th>
+            <th scope="col">Interview Date</th>
+            <th scope="col">City</th>
+            <th scope="col">State</th>
+            <th scope="col">Name</th>
+            <th scope="col">Email</th>
+            <th scope="col">Provided Info</th>
+            <th scope="col">Step 1 Score</th>
+            <th scope="col">Step 2 Score</th>
+            <th scope="col">Step 3 Score</th>
+            <th scope="col">YOG</th>
+            <th scope="col">USCE</th>
+            <th scope="col">VISA</th>
+            <th scope="col">Was Signaled</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let interview of interviewsList; index as i">
+            <th scope="row">{{ i + 1 }}</th>
+            <td>{{ interview.hospital.HName }}</td>
+            <td>{{ programObject[interview.PId].PName }}</td>
+            <td>{{ interview.Date }}</td>
+            <td>{{ interview.hospital.City }}</td>
+            <td>
+              {{
+                (interview.hospital.states &&
+                  interview.hospital.states.postalCode) ||
+                  interview.hospital.State
+              }}
+            </td>
+            <td>{{ interview.user.displayName }}</td>
+            <td>{{ interview.user.email }}</td>
+            <td>{{ interview.ProvidedInfo }}</td>
+            <td>
+              
+              {{ 
+                interview.user?.ScoreData?.Step1Score?.Selected?.Name === 'Score'
+                  ? interview.user?.ScoreData?.Step1Score?.Selected?.Value
+                  : (
+                      interview.user?.ScoreData?.Step1Score?.Selected?.Name === 'Pass'|| interview.user?.ScoreData?.Step1Score?.Selected?.Name == 'Not taken'
+                        ? interview.user?.ScoreData?.Step1Score?.Selected?.Name
+                        : (
+                            interview.user?.Step1Result === 'Score' || interview.user?.Step1Score
+                              ? interview.user?.Step1Score
+                              :  interview.user.Step1Result || 'N/A'
+                          )
+                    )
+              }}
+            </td>
+            <td>
+              {{ 
+                interview.user?.ScoreData?.Step2Score?.Selected?.Name === 'Score'
+                  ? interview.user?.ScoreData?.Step2Score?.Selected?.Value
+                  : (
+                      interview.user?.ScoreData?.Step2Score?.Selected?.Name === 'Pass' || interview.user?.ScoreData?.Step2Score?.Selected?.Name == 'Not taken'
+                        ? interview.user?.ScoreData?.Step2Score?.Selected?.Name
+                        : (
+                            interview.user?.Step2Result === 'Score' || interview.user?.Step2Score
+                              ? interview.user?.Step2Score?.Selected?.Name || interview.user?.Step2Score
+                              :  interview.user.Step2Result || 'N/A'
+                          )
+                    )
+              }}
+            </td>
+            <td>
+              <!--{{ interview.extraUser.Step3Score }}-->
+              {{ 
+                interview.user?.ScoreData?.Step3Score?.Selected?.Name === 'Score'
+                  ? interview.user?.ScoreData?.Step3Score?.Selected?.Value
+                  : (
+                       interview.user?.ScoreData?.Step3Score?.Selected?.Name == 'Pass' || interview.user?.ScoreData?.Step3Score?.Selected?.Name == 'Not taken'
+                        ? interview.user?.ScoreData?.Step3Score?.Selected?.Name
+                        : (
+                            interview.user?.Step3Result === 'Score' || interview.user?.Step3Score
+                              ? interview.user?.Step3Score?.Selected?.Name ? interview.user?.Step3Score?.Selected?.Name : interview.user?.Step3Score?.Selected?.Name
+                              : interview.user.Step3Result || 'N/A'
+                          )
+                    )
+              }}
+
+            </td>
+            <td>{{ interview.user.YOG }}</td>
+            <td>{{ interview.user.USCE }}</td>
+            <td>
+              <ng-template ngFor let-visa [ngForOf]="interview.user.Visas">
+                {{ customVisa[visa].Type }}
+                <br />
+              </ng-template>
+            </td>
+            <td style="text-transform: uppercase">{{ interview.signal }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </ng-template>
+</div>

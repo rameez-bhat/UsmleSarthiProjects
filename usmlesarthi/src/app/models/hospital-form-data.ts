@@ -1,0 +1,93 @@
+//Model giving reference and validations to HospitalFormData in CrowdSourcing Tool
+export class HospitalFormData {
+    public  HPInfoId: any;
+    public AppDeadline: any;
+        public CorEmail: any;
+        public CorName: any;
+        public CorPhone: any;
+        public DirEmail: any;
+        public DirName: any;
+        public ECFMGReq: any;
+        public Eras: any;
+        public FirstYearSpots: any;
+        public FirstYearSpotsComments: any;
+        public FirstYearSpotsPrelim: any;
+        public Frieda: any;
+        public HPId: any;
+        public yearlyData: any;
+        public InhouseFellow: any;
+        public LORNum: any;
+        public LORReq: any;
+        public Nrmp: any;
+        public NrmpAdvance: any;
+        public NrmpCategorical: any;
+        public NrmpPrelim: any;
+        public NrmpPriCase: any;
+        public NumInterviews: any;
+        public PTALReq: any;
+        public ProgramType: any;
+        public ResearchOpp: any;
+        public SpanishReq: any;
+        public Status: any;
+        public Step1Accept: any;
+        public Step1Req: any;
+        public Step1ScoreLastYearMax: number;
+        public Step1ScoreLastYearMin: number;
+        public Step2Req: any;
+        public Step2Min: number;
+        public Step2Max: number;
+        public Step2Accept: any;
+        public Step2CSAccept: any;
+        public Step2CSReq: any;
+        public Step3Accept: any;
+        public TimeStamp: any;
+        public Date: any;
+        public TimeStampD: any;
+        public DataOfYear: any;
+        public UId: any;
+        public USCEComments: any;
+        public USCENotCon: any;
+        public USCEReq: any;
+        public USMLEExamComments: any;
+        public Verified: any;
+        public VerifiedAdmin: any;
+        public YOG: any;
+        public address: any;
+        public deadline: Date;
+        public imgpercentage: any;
+        public usImgPercentage: any;
+        public nonUsImgPercentage: any;
+        public imgpercentageCarribean: any;
+        public imgpercentageComments: any;
+        public notes: any;
+        public website: any;
+        public websummary: any;
+        public AssignedOn:any;
+        public AssignedYear:any;
+        public HId: any;
+        public PId: any;
+        public Visas: any[];
+        public hospital: any;
+        public VisaNames: any[];
+        public myNotes: any;
+        public USCEReqOrPref : any;
+        public ProgramPref : any;
+        public reLink : any;
+        public friedaLink : any;
+        public usmdPercentageNew : any;
+        public doPercentageNew : any;
+        public j1VisaNew : any;
+        public h1VisaNew : any;
+        public id : any;
+        public f1VisaNew : any;
+        public h4VisaNew : any;
+        public noVisaNew : any;
+        public programDirectorNew : any;
+        public personToContactNew : any;
+        public teachingSiteNew : any;
+    public constructor (
+         )
+    { 
+    }
+     
+}

@@ -1,0 +1,55 @@
+<div class="card-body">
+  <div *ngIf="loading else loaded" class="text-center">
+    Loading....
+  </div>
+  <ng-template #loaded>
+    <div class="h5 font-weight-bold text-center text-warning">
+      Fill the additional hospital data
+    </div>
+      <form ngNativeValidate (ngSubmit)="fillData()" >
+        <div class="row mt-2">
+          <label for="speciality">Choose a speciality</label>
+          <select class="form-control" id="speciality" name="speciality" 
+            [(ngModel)]="dataObject.PId" (change)="loadHospitals($event)" required>
+            <option [value]="speciality.PId" *ngFor="let speciality of specialities">{{speciality.PName}} </option>
+          </select>
+        </div>
+        <div class="row mt-2">
+          <label for="hospital">Choose a hospital</label>
+          <select class="form-control" id="hospital" name="hospital" 
+            [(ngModel)]="dataObject.HId" required>
+            <option [value]="hospital.HId" *ngFor="let hospital of hospitals">{{hospital.HName}}({{hospital.State}}) </option>
+          </select>
+        </div>
+        <div class="row mt-2">
+          <label for="size">Size of Hospital <span class="text-primary">(Number of Beds)</span> </label>
+          <input class="form-control" type="text" required name="size" id="size" [(ngModel)]="dataObject.size">
+        </div>
+        <div class="row mt-2">
+          <label for="fellowships">Available in house fellowships</label>
+          <input class="form-control"  type="text" required name="fellowships" id="fellowships" [(ngModel)]="dataObject.fellowships">
+        </div>
+        <div class="row mt-2">
+          <label for="electives">Away Electives</label>
+          <input class="form-control"  type="text" required name="electives" id="electives" [(ngModel)]="dataObject.electives">
+        </div>
+        <div class="row mt-2">
+          <label for="affiliation">University Affiliation</label>
+          <input class="form-control"  type="text" required name="affiliation" id="affiliation" [(ngModel)]="dataObject.affiliation">
+        </div>
+        <div class="row mt-2">
+          <label for="matchRate">Fellowship Match Rate</label>
+          <input class="form-control"  type="text" required  name="matchRate" id="matchRate" [(ngModel)]="dataObject.matchRate">
+        </div>
+        <div class="row mt-2">
+          <label for="comments">Additional Comments</label>
+          <input class="form-control"  type="text" required name="comments" id="comments" [(ngModel)]="dataObject.additionalComments">
+        </div>
+        <div class="row mt-2">
+          <button type="submit" class="btn btn-block btn-primary btn-outline-primary card-footer" name="submit">
+            Save Data
+          </button>
+        </div>
+      </form>
+  </ng-template>
+</div>

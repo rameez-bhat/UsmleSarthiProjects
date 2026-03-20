@@ -1,0 +1,1596 @@
+<div class="row text-left">
+  <div class="display-4 m-2 p-2 row">Contribute to the Sarthi List</div>
+</div>
+<div class="card m-2" [ngSwitch]="landing">
+  <div class="card-body" *ngSwitchCase="'list'">
+    <div *ngIf="loading; else loaded" class="text-center">
+      Fetching your hospitals list...
+    </div>
+    <ng-template #loaded>
+      <div class="table-responsive text-center">
+        <h5 class="font-weight-bold text-uppercase">Allocated Hospitals</h5>
+        <h6 class="text-left">
+          Your task is to enter detailed information about the following
+          hospitals that have been allocated to you. Click on the link
+          corresponding to a hospital name.
+        </h6>
+        <table
+          class="table table-striped table-hover text-left"
+          *ngIf="hospitalsDataByUser.length; else noHospital"
+        >
+          <thead>
+            <tr>
+              <th scope="col">S.No.</th>
+              <th scope="col">Hospital</th>
+              <th scope="col">City</th>
+              <th scope="col">State</th>
+              <th scope="col">Specialty</th>
+              <th scope="col">Last Updated</th>
+              <th scope="col">Insert/Update Info</th>
+              <th scope="col">Assigned On</th>
+              <th scope="col">Admin Comments</th>
+              <th scope="col">Status</th>
+              
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let hospital of hospitalsDataByUser; index as i">
+              <th scope="row">{{ i + 1 }}</th>
+              <td>{{ hospital.hospital.HName }}</td>
+              <td>{{ hospital.hospital.City }}</td>
+              <td>{{ hospital.hospital.State }}</td>
+              <td>{{ programObject[hospital.PId].PName }}</td>
+              <td>{{ hospital.Date }}</td>
+              <td>
+                <button
+                  [value]="hospital.HPInfoId"
+                  class="btn-flat btn-sm btn-outline-primary"
+                  (click)="takeMeToForm(hospital)"
+                >
+                  Link to form
+                </button>
+              </td>
+              <td> {{ hospital?.AssignedOn | date: 'dd/MM/yyyy' }}</td>
+              <td >{{hospital.VerifyComment || '' }}</td>
+              <td>
+                {{
+                  hospital.Verified === "Yes"
+                    ? "Accepted"
+                    : hospital.Verified === "Rejected"
+                    ? "Re Assigned"
+                    : hospital.Status
+                }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <ng-template #noHospital>
+          <h6 class="text-center text-primary font-weight-bolder">
+            No hospitals are assigned to you, please contact the admin.
+          </h6>
+        </ng-template>
+      </div>
+    </ng-template>
+  </div>
+  <div class="card-body" *ngSwitchCase="'submitData'">
+    <div *ngIf="loading; else loaded" class="text-center">
+      Loading the form...
+    </div>
+    <ng-template #loaded>
+      <div class="row m-auto">
+        <button
+          class="btn btn-primary btn-md btn-outline-primary float-left"
+          (click)="takeMeToList()"
+        >
+          <i class="fa fa-arrow-left"></i> Back to Hospitals List
+        </button>
+      </div>
+      <div class="card card-body bg-light card-outline-primary">
+        <div class="row h4 font-weight-bold m-auto">
+          {{ hospitalFormData.hospital.HName }}
+        </div>
+        <div class="row h5 p-2 font-weight-bold m-auto text-primary">
+          {{ hospitalFormData.hospital.City }},
+          {{ hospitalFormData.hospital.State }}
+        </div>
+        <div class="row h6 p-2 font-weight-bolder m-auto">
+          {{ programObject[hospitalFormData.PId].PName }}
+        </div>
+      </div>
+      <form ngNativeValidate (ngSubmit)="onSubmitForm()">
+        <div class="form-group">
+          <label for="Frieda">ACGME FREIDA ID Number</label>
+          <label *ngIf="this.user.Role === 'Admin'">
+            {{ " " }}(Enter -149 to hide program)</label
+          >
+          <input
+            type="number"
+            class="form-control"
+            name="Frieda"
+            id="Frieda"
+            disabled
+            aria-describedby="Frieda"
+            placeholder="Enter ACGME FREIDA ID Number"
+            [disabled]="this.user.Role !== 'Admin'"
+            [(ngModel)]="this.hospitalFormData.Frieda"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label for="reLink">Residency Explorer Link <a target="_blank" [href]="this.hospitalFormData.reLink">Click</a></label>
+          <input
+            type="text"
+            class="form-control"
+            name="reLink"
+            id="reLink"
+            aria-describedby="reLink"
+            placeholder="Enter here"
+            [(ngModel)]="this.hospitalFormData.reLink"
+            [required]="this.user.Role !== 'Admin'"
+          />
+        </div>
+        <div class="form-group ">
+          <label for="friedaLink">Frieda Link <a target="_blank" [href]="this.hospitalFormData.friedaLink">Click</a></label>
+          <input
+            type="text"
+            class="form-control"
+            name="friedaLink"
+            id="friedaLink"
+            [disabled]="this.user.Role !== 'Admin'"
+            aria-describedby="friedaLink"
+            placeholder="Enter here"
+            [(ngModel)]="this.hospitalFormData.friedaLink"
+            [required]="this.user.Role !== 'Admin'"
+          />
+        </div>
+        <div class="form-group col-12">
+          <label for="website"
+            >Enter Website Address of the hospital (preferably the URL to page
+            with information about the given speciality) (Enter NA if data is
+            not available) <a *ngIf="this.hospitalFormData.website" target="_blank" [href]="this.hospitalFormData.website">Click</a></label
+          >
+          <input
+            type="text"
+            class="form-control"
+            name="website"
+            id="website"
+            aria-describedby="website"
+            placeholder="Enter here"
+            [(ngModel)]="this.hospitalFormData.website"
+            [required]="this.user.Role !== 'Admin'"
+          />
+        </div>
+        <div class="form-group">
+          <label for="ProgramType">Type of Program</label>
+          <select
+            class="form-control"
+            id="ProgramType"
+            name="ProgramType"
+            [(ngModel)]="this.hospitalFormData.ProgramType"
+            [required]="this.user.Role !== 'Admin'"
+          >
+            <option class="dropdown-item" value="">Choose an option</option>
+            <option class="dropdown-item" value="Community">Community</option>
+            <option class="dropdown-item" value="University Hospital">
+              University Hospital
+            </option>
+            <option class="dropdown-item" value="Comm. affiliated with Univ.">
+              Comm. affiliated with University
+            </option>
+            <option class="dropdown-item" value="Data Not Available">
+              Data Not Available
+            </option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="imgpercentage">
+            Total IMG % (Enter -99 if data is not available)<font color="red">(Please obtain from Frieda)</font></label
+          >
+          <input
+            type="number"
+            class="form-control"
+            name="imgpercentage"
+            id="imgpercentage"
+            aria-describedby="imgpercentage"
+            placeholder="Enter IMG Percentage"
+            [(ngModel)]="this.hospitalFormData.imgpercentage"
+            [required]="this.user.Role !== 'Admin'"
+            step="any"
+          />
+        </div>
+        <div class="form-group">
+          <label for="imgpercentage">
+            USMD % (Enter -99 if data is not available)<font color="blue">(please obtain from Residency explorer or frieda)</font></label
+          >
+          <input
+            type="number"
+            class="form-control"
+            name="usmdPercentageNew"
+            id="usmdPercentageNew"
+            aria-describedby="usmdPercentageNew"
+            placeholder="Enter USMD Percentage"
+            [(ngModel)]="this.hospitalFormData.usmdPercentageNew"
+            [required]="this.user.Role !== 'Admin'"
+            step="any"
+          />
+        </div>
+        <div class="form-group">
+          <label for="imgpercentage">
+            DO % (Enter -99 if data is not available)</label
+          >
+          <input
+            type="number"
+            class="form-control"
+            name="doPercentageNew"
+            id="doPercentageNew"
+            aria-describedby="doPercentageNew"
+            placeholder="Enter USMD Percentage"
+            [(ngModel)]="this.hospitalFormData.doPercentageNew"
+            [required]="this.user.Role !== 'Admin'"
+            step="any"
+          />
+        </div>
+        <div class="form-group row">
+          <div class="col-md-6 col-sm-12">
+            <label for="imgpercentage"
+              >US IMG % (Enter -99 if data is not available)<font color="blue">(please obtain from Residency explorer)</font></label
+            >
+            <input
+              type="number"
+              class="form-control"
+              name="usImgPercentage"
+              id="usImgPercentage"
+              aria-describedby="imgpercentage"
+              placeholder="Enter US IMG Percentage"
+              [(ngModel)]="this.hospitalFormData.usImgPercentage"
+              [required]="this.user.Role !== 'Admin'"
+              step="any"
+            />
+          </div>
+          <div class="col-md-6 col-sm-12">
+            <label for="imgpercentage"
+              >Non US IMG % (Enter -99 if data is not available)<font color="blue">(please obtain from Residency explorer)</font></label
+            >
+            <input
+              type="number"
+              class="form-control"
+              name="nonUsImgPercentage"
+              id="nonUsImgPercentage"
+              aria-describedby="imgpercentage"
+              placeholder="Enter Non US IMG Percentage"
+              [(ngModel)]="this.hospitalFormData.nonUsImgPercentage"
+              [required]="this.user.Role !== 'Admin'"
+              step="any"
+            />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="imgpercentageCarribean"
+            >Caribbean IMG Percentage (Enter whole numbers only without % sign.
+            Enter -99 if data is not available)</label
+          >
+          <input
+            type="number"
+            class="form-control"
+            name="imgpercentageCarribean"
+            id="imgpercentageCarribean"
+            aria-describedby="imgpercentageCarribean"
+            placeholder="Enter Caribbean IMG Percentage"
+            [(ngModel)]="this.hospitalFormData.imgpercentageCarribean"
+            [required]="this.user.Role !== 'Admin'"
+          />
+        </div>
+        <div class="form-group">
+          <label for="imgpercentageComments"
+            >Comments about IMG percentage and friendliness (Enter NA if data is
+            not available)</label
+          >
+          <input
+            type="text"
+            class="form-control"
+            name="imgpercentageComments"
+            id="imgpercentageComments"
+            aria-describedby="imgpercentageComments"
+            placeholder="Enter Comments Here"
+            [(ngModel)]="this.hospitalFormData.imgpercentageComments"
+          />
+        </div>
+        <div class="row">
+          <div class="form-group col-md-6 col-sm-12">
+            <label for="Eras">Participating in ERAS</label>
+            <label class="form-check form-check-label">
+              <input
+                type="radio"
+                class="form-check-input"
+                name="Eras"
+                id="Eras"
+                value="Yes"
+                [(ngModel)]="this.hospitalFormData.Eras"
+                [required]="this.user.Role !== 'Admin'"
+              />
+              Yes
+            </label>
+            <label class="form-check form-check-label">
+              <input
+                type="radio"
+                class="form-check-input"
+                name="Eras"
+                id="Eras"
+                value="No"
+                [(ngModel)]="this.hospitalFormData.Eras"
+              />
+              No
+            </label>
+            <label class="form-check form-check-label">
+              <input
+                type="radio"
+                class="form-check-input"
+                name="Eras"
+                id="Eras"
+                value="NA"
+                [(ngModel)]="this.hospitalFormData.Eras"
+              />
+              Data Not Available
+            </label>
+          </div>
+          <div class="form-group col-md-6 col-sm-12">
+            <label for="Nrmp">Participating in NRMP</label>
+            <label class="form-check form-check-label">
+              <input
+                type="radio"
+                class="form-check-input"
+                name="Nrmp"
+                id="Nrmp"
+                value="Yes"
+                [(ngModel)]="this.hospitalFormData.Nrmp"
+                [required]="this.user.Role !== 'Admin'"
+              />
+              Yes
+            </label>
+            <label class="form-check form-check-label">
+              <input
+                type="radio"
+                class="form-check-input"
+                name="Nrmp"
+                id="Nrmp"
+                value="No"
+                [(ngModel)]="this.hospitalFormData.Nrmp"
+              />
+              No
+            </label>
+            <label class="form-check form-check-label">
+              <input
+                type="radio"
+                class="form-check-input"
+                name="Nrmp"
+                id="Nrmp"
+                value="NA"
+                [(ngModel)]="this.hospitalFormData.Nrmp"
+              />
+              Data Not Available
+            </label>
+          </div>
+        </div>
+        <!----SETT NGGG MODELLLSSS FOORR THEMM-->
+        <div class="row">
+          <div class="form-group col-md-6 col-sm-12">
+            <label for="NrmpPrelim">NRMP Number (Preliminary)</label>
+            <input
+              type="text"
+              class="form-control"
+              name="NrmpPrelim"
+              id="NrmpPrelim"
+              aria-describedby="NrmpPrelim"
+              placeholder="Enter the number here"
+              [(ngModel)]="this.hospitalFormData.NrmpPrelim"
+            />
+          </div>
+          <div class="form-group col-md-6 col-sm-12">
+            <label for="NrmpCategorical">NRMP Number (Categorial)</label>
+            <input
+              type="text"
+              class="form-control"
+              name="NrmpCategorical"
+              id="NrmpCategorical"
+              aria-describedby="NrmpCategorical"
+              placeholder="Enter the number here"
+              [(ngModel)]="this.hospitalFormData.NrmpCategorical"
+            />
+          </div>
+          <div class="form-group col-md-6 col-sm-12">
+            <label for="NrmpPriCase"
+              >NRMP Number (Primary Care Categorial)</label
+            >
+            <input
+              type="text"
+              class="form-control"
+              name="NrmpPriCase"
+              id="NrmpPriCase"
+              aria-describedby="NrmpPriCase"
+              placeholder="Enter the number here"
+              [(ngModel)]="this.hospitalFormData.NrmpPriCase"
+            />
+          </div>
+          <div class="form-group col-md-6 col-sm-12">
+            <label for="NrmpAdvance">NRMP Number (Advance)</label>
+            <input
+              type="text"
+              class="form-control"
+              name="NrmpAdvance"
+              id="NrmpAdvance"
+              aria-describedby="NrmpAdvance"
+              placeholder="Enter the number here"
+              [(ngModel)]="this.hospitalFormData.NrmpAdvance"
+            />
+          </div>
+        </div>
+        <div class="row">
+          <div class="form-group col-md-6 col-sm-12">
+            <label for="FirstYearSpots"
+              >Number of First Year Spots available - Categorical</label
+            >
+            <select
+              class="form-control"
+              id="FirstYearSpots"
+              name="FirstYearSpots"
+              [(ngModel)]="this.hospitalFormData.FirstYearSpots"
+              [required]="this.user.Role !== 'Admin'"
+            >
+              <option disabled selected>Select your option</option>
+              <option value="0">0</option>
+              <option value="1-9">1-9</option>
+              <option value="10-20">10-20</option>
+              <option value="20-30">20-30</option>
+              <option value="30-40">30-40</option>
+              <option value=">40">&gt; 40</option>
+            </select>
+          </div>
+          <div class="form-group col-md-6 col-sm-12">
+            <label for="FirstYearSpotsPrelim"
+              >Number of First Year Spots available - Preliminary</label
+            >
+            <select
+              class="form-control"
+              id="FirstYearSpotsPrelim"
+              name="FirstYearSpotsPrelim"
+              [(ngModel)]="this.hospitalFormData.FirstYearSpotsPrelim"
+              [required]="this.user.Role !== 'Admin'"
+            >
+              <option disabled selected>Select your option</option>
+              <option value="0">0</option>
+              <option value="1-9">1-9</option>
+              <option value="10-20">10-20</option>
+              <option value="20-30">20-30</option>
+              <option value="30-40">30-40</option>
+              <option value=">40">&gt; 40</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="FirstYearSpotsComments"
+            >Comments about Number of First Year Spots available</label
+          >
+          <input
+            type="text"
+            class="form-control"
+            name="FirstYearSpotsComments"
+            id="FirstYearSpotsComments "
+            aria-describedby="FirstYearSpotsComments"
+            placeholder="Enter the comments here"
+            [(ngModel)]="this.hospitalFormData.FirstYearSpotsComments"
+          />
+        </div>
+        <div *ngFor="let entry of this.yearDataArrayKeys">
+          <ng-container *ngIf="entry">
+        <div class="form-group">
+          <label for="TotalApplicantsForTheYear"
+            >{{ entry }} Applicant Count:</label
+          >
+          <input
+            type="number"
+            class="form-control"
+            name="TotalApplicantsForTheYear"
+            id="TotalApplicantsForTheYear "
+            aria-describedby="TotalApplicantsForTheYear"
+            placeholder="Enter Total Applicants"
+            [(ngModel)]="this.hospitalFormData.yearlyData[entry].TotalApplicantsForTheYear"
+          />
+        </div>
+        <div class="form-group">
+          <label for="TotalAplicantsInvitedForTheYear"
+            >{{ entry }} Applicants Invited to Interview Count:</label
+          >
+          <input
+            type="number"
+            class="form-control"
+            name="TotalAplicantsInvitedForTheYear"
+            id="TotalAplicantsInvitedForTheYear "
+            aria-describedby="TotalAplicantsInvitedForTheYear"
+            placeholder="Enter total applicants invited"
+            [(ngModel)]="this.hospitalFormData.yearlyData[entry].TotalAplicantsInvitedForTheYear"
+          />
+        </div>
+        <div class="form-group">
+        <div >
+          <h3>{{ entry }} Interview Rates by Applicant Characteristic</h3>
+          <table border="1" cellpadding="8" style="width:100%">
+            <tr>
+              <th colspan="3">Signal — Interview Rates <b style="margin-left:20px">(<font color="blue">Note:</font> For specialties that do not have separate gold or silver signals, put all signals under <font color="red">GOLD.</font>)</b></th>
+              <th colspan="3">Geographic Preference — Interview Rates</th>
+            </tr>
+            <tr>
+              <th>Category</th>
+              <td>% Interview Invited</td>
+              <th>Category</th>
+              <td>% Interview Invited</td>
+            </tr>
+            <tr>
+              <th>Gold Sent</th>
+              
+              <td><input
+                type="number"
+                class="form-control"
+                name="GoldSentInterviewed"
+                id="GoldSentInterviewed "
+                aria-describedby="GoldSentInterviewed"
+                placeholder="Applicants Interview"
+                [(ngModel)]="this.hospitalFormData.yearlyData[entry].GoldSentInterviewed"
+              /></td>
+              <th>Aligned</th>
+              
+              <td><input
+                type="number"
+                class="form-control"
+                name="AlignedInterviewed"
+                id="AlignedInterviewed "
+                aria-describedby="AlignedInterviewed"
+                placeholder="Applicants Interview"
+                [(ngModel)]="this.hospitalFormData.yearlyData[entry].AlignedInterviewed"
+              /></td>
+            </tr>
+            <tr>
+              <th>Silver Sent</th>
+              
+              <td><input
+                type="number"
+                class="form-control"
+                name="SilverInterviewed"
+                id="SilverInterviewed "
+                aria-describedby="SilverInterviewed"
+                placeholder="Applicants Interview"
+                [(ngModel)]="this.hospitalFormData.yearlyData[entry].SilverInterviewed"
+              /></td>
+              <th>Not Aligned</th>
+              
+              <td><input
+                type="number"
+                class="form-control"
+                name="NotalignedInterviewed"
+                id="NotalignedInterviewed "
+                aria-describedby="NotalignedInterviewed"
+                placeholder="Applicants Interview"
+                [(ngModel)]="this.hospitalFormData.yearlyData[entry].NotalignedInterviewed"
+              /></td>
+            </tr>
+            <tr>
+              <th>Did not sent</th>
+              
+              <td><input
+                type="number"
+                class="form-control"
+                name="DidnotInterviewed"
+                id="DidnotInterviewed "
+                aria-describedby="DidnotInterviewed"
+                placeholder="Not Interviewed"
+                [(ngModel)]="this.hospitalFormData.yearlyData[entry].DidnotInterviewed"
+              /></td>
+              <th>No Preference</th>
+              
+              <td><input
+                type="number"
+                class="form-control"
+                name="NopreferenceInterviewed"
+                id="NopreferenceInterviewed "
+                aria-describedby="NopreferenceInterviewed"
+                placeholder="No Preference Interviewed"
+                [(ngModel)]="this.hospitalFormData.yearlyData[entry].NopreferenceInterviewed"
+              /></td>
+            </tr>
+          </table>
+        </div>
+      </div>
+      </ng-container>
+      </div>
+        <!--------------STEP 1 INFORMATION-------------->
+        <label class="font-weight-bold h6 text-primary"
+          >STEP 1 INFORMATION</label
+        >
+        <div class="row">
+          <div class="form-group col-md-6 col-sm-12">
+            <label for="Step1Req"
+              >Preferred STEP 1 score (Enter -99 if data is not
+              available)</label
+            >
+            <input
+              type="number"
+              class="form-control"
+              name="Step1Req"
+              id="Step1Req"
+              aria-describedby="Step1Req"
+              placeholder="Enter the score here"
+              [(ngModel)]="this.hospitalFormData.Step1Req"
+              [required]="this.user.Role !== 'Admin'"
+            />
+          </div>
+          <div class="form-group col-md-6 col-sm-12">
+            <label for="Step1ScoreLastYearMin"
+              >Minimum STEP 1 score (Enter -99 if data is not available)</label
+            >
+            <input
+              type="number"
+              class="form-control"
+              name="Step1ScoreLastYearMin"
+              id="Step1ScoreLastYearMin"
+              aria-describedby="Step1ScoreLastYearMin"
+              placeholder="Enter the score here"
+              [(ngModel)]="this.hospitalFormData.Step1ScoreLastYearMin"
+              [required]="this.user.Role !== 'Admin'"
+            />
+          </div>
+          <!-- <div class="form-group col-md-6 col-sm-12">
+            <label for="Step1ScoreLastYearMax"
+              >Maximum STEP 1 score (Enter -99 if data is not available)</label
+            >
+            <input
+              type="number"
+              class="form-control"
+              name="Step1ScoreLastYearMax"
+              id="Step1ScoreLastYearMax"
+              aria-describedby="Step1ScoreLastYearMax"
+              placeholder="Enter the score here"
+              [(ngModel)]="this.hospitalFormData.Step1ScoreLastYearMax"
+              [required]="this.user.Role !== 'Admin'"
+            />
+          </div> -->
+          <div class="form-group col-md-6 col-sm-12">
+            <label for="Step1Accept"
+              >Condition about number of Step 1 attempts ?</label
+            >
+            <select
+              class="form-control"
+              id="Step1Accept"
+              name="Step1Accept"
+              [(ngModel)]="this.hospitalFormData.Step1Accept"
+              [required]="this.user.Role !== 'Admin'"
+            >
+              <option class="dropdown-item" value="">Choose an option</option>
+              <option class="dropdown-item" value="Multiple Attempts Accepted">
+                Multiple Attempts Accepted
+              </option>
+              <option
+                class="dropdown-item"
+                value="Multiple Attempts Accepted but First Attempt Preferred"
+              >
+                Multiple Attempts Accepted but First Attempt Preferred
+              </option>
+              <option
+                class="dropdown-item"
+                value="Multiple Attempts Not Accepted"
+              >
+                Multiple Attempts Not Accepted; Only First attempt accepted
+              </option>
+              <option class="dropdown-item" value="NA">
+                Data Not Available
+              </option>
+            </select>
+          </div>
+        </div>
+        <!------------STEP 1 ENDS---------->
+        <!--------------STEP 2 CK INFORMATION-------------->
+        <label class="font-weight-bold h6 text-primary"
+          >STEP 2 CK INFORMATION</label
+        >
+        <div class="row">
+          <div class="form-group col-md-6 col-sm-12">
+            <label for="Step2Req"
+              >Preferred STEP 2 score (Enter -99 if data is not
+              available)</label
+            >
+            <input
+              type="number"
+              class="form-control"
+              name="Step2Req"
+              id="Step2Req"
+              aria-describedby="Step2Req"
+              placeholder="Enter the score here"
+              [(ngModel)]="this.hospitalFormData.Step2Req"
+              [required]="this.user.Role !== 'Admin'"
+            />
+          </div>
+          <div class="form-group col-md-6 col-sm-12">
+            <label for="Step2Min"
+              >Minimum STEP 2 score (Enter -99 if data is not available)</label
+            >
+            <input
+              type="number"
+              class="form-control"
+              name="Step2Min"
+              id="Step2Min"
+              aria-describedby="Step2Min"
+              placeholder="Enter the score here"
+              [(ngModel)]="this.hospitalFormData.Step2Min"
+              [required]="this.user.Role !== 'Admin'"
+            />
+          </div>
+          <!-- <div class="form-group col-md-6 col-sm-12">
+            <label for="Step2Max"
+              >Maximum STEP 2 score (Enter -99 if data is not available)</label
+            >
+            <input
+              type="number"
+              class="form-control"
+              name="Step2Max"
+              id="Step2Max"
+              aria-describedby="Step2Max"
+              placeholder="Enter the score here"
+              [(ngModel)]="this.hospitalFormData.Step2Max"
+              [required]="this.user.Role !== 'Admin'"
+            />
+          </div> -->
+          <div class="form-group col-md-6 col-sm-12">
+            <label for="Step2Accept"
+              >Condition about number of Step 2 attempts ?</label
+            >
+            <select
+              class="form-control"
+              id="Step2Accept"
+              name="Step2Accept"
+              [(ngModel)]="this.hospitalFormData.Step2Accept"
+              [required]="this.user.Role !== 'Admin'"
+            >
+              <option class="dropdown-item" value="">Choose an option</option>
+              <option class="dropdown-item" value="Multiple Attempts Accepted">
+                Multiple Attempts Accepted
+              </option>
+              <option
+                class="dropdown-item"
+                value="Multiple Attempts Accepted but First Attempt Preferred"
+              >
+                Multiple Attempts Accepted but First Attempt Preferred
+              </option>
+              <option
+                class="dropdown-item"
+                value="Multiple Attempts Not Accepted"
+              >
+                Multiple Attempts Not Accepted; Only First attempt accepted
+              </option>
+              <option class="dropdown-item" value="NA">
+                Data Not Available
+              </option>
+            </select>
+          </div>
+        </div>
+        <!------------STEP 2 CK ENDS---------->
+        <!--------------STEP 2 CS INFORMATION-------------->
+        <!--<label class="font-weight-bold h6 text-primary">OET INFORMATION</label>
+        <div class="form-group">
+          <label for="Step2CSReq">OET Requirement </label>
+          <select
+            class="form-control"
+            id="Step2CSReq"
+            name="Step2CSReq"
+            [(ngModel)]="this.hospitalFormData.Step2CSReq"
+            [required]="this.user.Role !== 'Admin'"
+          >
+            <option class="dropdown-item" value="">Choose an option</option>
+            <option class="dropdown-item" value="Passed">
+              Must have passed the OET Exam
+            </option>
+            <option class="dropdown-item" value="Result Awaited">
+              Results awaited for OET Exam is also acceptable
+            </option>
+            <option class="dropdown-item" value="N/A">
+              Data Not Available
+            </option>
+          </select>
+        </div>-->
+        <!-- <div class="form-group">
+          <label for="Step2CSAccept"
+            >Condition about number of Step 2 attempts ?</label
+          >
+          <select
+            class="form-control"
+            id="Step2CSAccept"
+            name="Step2CSAccept"
+            [(ngModel)]="this.hospitalFormData.Step2CSAccept"
+            required
+          >
+            <option class="dropdown-item" value="">Choose an option</option>
+            <option class="dropdown-item" value="Multiple Attempts Accepted">
+              Multiple Attempts Accepted
+            </option>
+            <option
+              class="dropdown-item"
+              value="Multiple Attempts Accepted but First Attempt Preferred"
+            >
+              Multiple Attempts Accepted but First Attempt Preferred
+            </option>
+            <option
+              class="dropdown-item"
+              value="Multiple Attempts Not Accepted"
+            >
+              Multiple Attempts Not Accepted; Only First attempt accepted
+            </option>
+            <option class="dropdown-item" value="NA">Data Not Available</option>
+          </select>
+        </div> -->
+        <!------------STEP 2 CS ENDS---------->
+        <!--------------STEP 3 INFORMATION-------------->
+        <label class="font-weight-bold h6 text-primary"
+          >STEP 3 INFORMATION</label
+        >
+        <div class="form-group">
+          <label for="Step3Accept">Step 3 Requirement </label>
+          <select
+            class="form-control"
+            id="Step3Accept"
+            name="Step3Accept"
+            [(ngModel)]="this.hospitalFormData.Step3Accept"
+            [required]="this.user.Role !== 'Admin'"
+          >
+            <option class="dropdown-item" value="">Choose an option</option>
+            <option class="dropdown-item" value="Need Step 3 Score to Apply">
+              Need Step 3 Score to Apply
+            </option>
+            <option
+              class="dropdown-item"
+              value="Do NOT Need Step 3 Score to Apply"
+            >
+              Do Not Need Step 3 Score to Apply
+            </option>
+            <option
+              class="dropdown-item"
+              value="Step 3 Score Preferred when Applying"
+            >
+              Step 3 Score Preferred when Applying
+            </option>
+            <option class="dropdown-item" value="NA">Data Not Available</option>
+          </select>
+        </div>
+        <!------------STEP 3 ENDS---------->
+        <div class="form-group">
+          <label for="USMLEExamComments"
+            >General Comments about USMLE EXAMS (Step 1, Step 2 CK and CS, and
+            Step 3)</label
+          >
+          <input
+            type="text"
+            class="form-control"
+            name="USMLEExamComments"
+            id="USMLEExamComments"
+            aria-describedby="USMLEExamComments"
+            placeholder="Enter the comments here"
+            [(ngModel)]="this.hospitalFormData.USMLEExamComments"
+          />
+        </div>
+        <div class="form-group">
+          <label for="YOG">Requirement about year of graduation (YOG)</label>
+          <select
+            class="form-control"
+            id="YOG"
+            name="YOG"
+            [(ngModel)]="this.hospitalFormData.YOG"
+            [required]="this.user.Role !== 'Admin'"
+          >
+            <option disabled selected>Select your option</option>
+            <option value="Within 2 year">Within 2 year</option>
+            <option value="Within 3 year">Within 3 year</option>
+            <option value="Within 4 year">Within 4 year</option>
+            <option value="Within 5 year">Within 5 year</option>
+            <option value="Within 6 year">Within 6 year</option>
+            <option value="YOG not a constrain">YOG not a constraint</option>
+            <option value="Data not available">Data not available</option>
+          </select>
+        </div>
+
+        <!-- <div class="form-group">
+          <label for="visareq"
+            >Visa offered by program<span style="color: red">
+              (Hold down the Ctrl (windows) / Command (Mac) button to select
+              multiple options)</span
+            ></label
+          >
+          <select
+            class="form-control"
+            id="userVisa[]"
+            name="userVisa[]"
+            size="7"
+            multiple="multiple"
+            [(ngModel)]="hospitalFormData.Visas"
+            required
+          >
+            <option [value]="visa.VId" *ngFor="let visa of visaList">
+              {{ visa.Type }}
+            </option>
+          </select>
+        </div> -->
+        <div class="form-group col-md-6 col-sm-12">
+          <label for="LORReq"
+            >Do not sponsor H1, do not accept J1(i.e. only accept GC/ US
+            Citizen), do not accept H4 EAD</label
+          >
+          <label class="form-check form-check-label">
+            <input
+              type="radio"
+              class="form-check-input"
+              name="noVisaNew"
+              id="noVisaNew"
+              value="Yes"
+              [(ngModel)]="this.hospitalFormData.noVisaNew"
+              [required]="this.user.Role !== 'Admin'"
+            />
+            Yes
+          </label>
+          <label class="form-check form-check-label">
+            <input
+              type="radio"
+              class="form-check-input"
+              name="noVisaNew"
+              id="noVisaNew"
+              value="No"
+              [(ngModel)]="this.hospitalFormData.noVisaNew"
+            />
+            No
+          </label>
+          <label class="form-check form-check-label">
+            <input
+              type="radio"
+              class="form-check-input"
+              name="noVisaNew"
+              id="noVisaNew"
+              value="NA"
+              [(ngModel)]="this.hospitalFormData.noVisaNew"
+            />
+            Data Not Available
+          </label>
+        </div>
+        <div class="form-group col-md-6 col-sm-12">
+          <label for="LORReq">J-1 visa sponsorship through ECFMG</label>
+          <label class="form-check form-check-label">
+            <input
+              type="radio"
+              class="form-check-input"
+              name="j1VisaNew"
+              id="j1VisaNew"
+              value="Yes"
+              [(ngModel)]="this.hospitalFormData.j1VisaNew"
+              [required]="this.user.Role !== 'Admin'"
+            />
+            Yes
+          </label>
+          <label class="form-check form-check-label">
+            <input
+              type="radio"
+              class="form-check-input"
+              name="j1VisaNew"
+              id="j1VisaNew"
+              value="No"
+              [(ngModel)]="this.hospitalFormData.j1VisaNew"
+            />
+            No
+          </label>
+          <label class="form-check form-check-label">
+            <input
+              type="radio"
+              class="form-check-input"
+              name="j1VisaNew"
+              id="j1VisaNew"
+              value="NA"
+              [(ngModel)]="this.hospitalFormData.j1VisaNew"
+            />
+            Data Not Available
+          </label>
+        </div>
+        <div class="form-group col-md-6 col-sm-12">
+          <label for="LORReq">H-1B visa</label>
+          <label class="form-check form-check-label">
+            <input
+              type="radio"
+              class="form-check-input"
+              name="h1VisaNew"
+              id="h1VisaNew"
+              value="Yes"
+              [(ngModel)]="this.hospitalFormData.h1VisaNew"
+              [required]="this.user.Role !== 'Admin'"
+            />
+            Yes
+          </label>
+          <label class="form-check form-check-label">
+            <input
+              type="radio"
+              class="form-check-input"
+              name="h1VisaNew"
+              id="h1VisaNew"
+              value="No"
+              [(ngModel)]="this.hospitalFormData.h1VisaNew"
+            />
+            No
+          </label>
+          <label class="form-check form-check-label">
+            <input
+              type="radio"
+              class="form-check-input"
+              name="h1VisaNew"
+              id="h1VisaNew"
+              value="NA"
+              [(ngModel)]="this.hospitalFormData.h1VisaNew"
+            />
+            Data Not Available
+          </label>
+        </div>
+        <div class="form-group col-md-6 col-sm-12">
+          <label for="LORReq">F-1 visa (OPT 1st year)</label>
+          <label class="form-check form-check-label">
+            <input
+              type="radio"
+              class="form-check-input"
+              name="f1VisaNew"
+              id="f1VisaNew"
+              value="Yes"
+              [(ngModel)]="this.hospitalFormData.f1VisaNew"
+              [required]="this.user.Role !== 'Admin'"
+            />
+            Yes
+          </label>
+          <label class="form-check form-check-label">
+            <input
+              type="radio"
+              class="form-check-input"
+              name="f1VisaNew"
+              id="f1VisaNew"
+              value="No"
+              [(ngModel)]="this.hospitalFormData.f1VisaNew"
+            />
+            No
+          </label>
+          <label class="form-check form-check-label">
+            <input
+              type="radio"
+              class="form-check-input"
+              name="f1VisaNew"
+              id="f1VisaNew"
+              value="NA"
+              [(ngModel)]="this.hospitalFormData.f1VisaNew"
+            />
+            Data Not Available
+          </label>
+        </div>
+        <div class="form-group col-md-6 col-sm-12">
+          <label for="LORReq"
+            >Do not sponsor H1, do not accept J1(i.e. only accept GC/ US
+            Citizen), but accept H4 EAD</label
+          >
+          <label class="form-check form-check-label">
+            <input
+              type="radio"
+              class="form-check-input"
+              name="h4VisaNew"
+              id="h4VisaNew"
+              value="Yes"
+              [(ngModel)]="this.hospitalFormData.h4VisaNew"
+              [required]="this.user.Role !== 'Admin'"
+            />
+            Yes
+          </label>
+          <label class="form-check form-check-label">
+            <input
+              type="radio"
+              class="form-check-input"
+              name="h4VisaNew"
+              id="h4VisaNew"
+              value="No"
+              [(ngModel)]="this.hospitalFormData.h4VisaNew"
+            />
+            No
+          </label>
+          <label class="form-check form-check-label">
+            <input
+              type="radio"
+              class="form-check-input"
+              name="h4VisaNew"
+              id="h4VisaNew"
+              value="NA"
+              [(ngModel)]="this.hospitalFormData.h4VisaNew"
+            />
+            Data Not Available
+          </label>
+        </div>
+
+        <!---VISA REQUIREMENTS MULTI SELECT-->
+
+        <div class="row">
+         <!-- <div class="form-group col-md-6 col-sm-12">
+            <label for="AppDeadline">Application deadline for IMG</label>
+            <select
+              class="form-control"
+              id="AppDeadline"
+              name="AppDeadline"
+              [(ngModel)]="this.hospitalFormData.AppDeadline"
+              [required]="this.user.Role !== 'Admin'"
+            >
+              <option disabled selected>Select your option</option>
+              <option value="Specific date">Specific date</option>
+              <option value="Not specified">Not specified</option>
+              <option value="Data not available">Data not available</option>
+            </select>
+          </div>-->
+          <div class="form-group col-md-6 col-sm-12">
+            <label for="deadline"
+              >Application Deadline For IMG(Format: MM/DD/YYYY)
+            </label>
+            <!--<input
+              type="date"
+              class="form-control"
+              name="deadline"
+              id="deadline"
+              aria-describedby="deadline"
+              placeholder="Enter the date here"
+              [(ngModel)]="this.hospitalFormData.deadline"
+            />-->
+            <input
+              type="date"
+              class="form-control"
+              name="deadline"
+              id="deadline"
+              aria-describedby="deadline"
+              placeholder="Enter the date here"
+              [(ngModel)]="this.hospitalFormData.AppDeadline"
+            />
+          </div>
+          <!--<div class="form-group col-md-6 col-sm-12">
+            <label for="NumInterviews">Number of interview last year</label>
+            <input
+              type="number"
+              class="form-control"
+              name="NumInterviews"
+              id="NumInterviews"
+              aria-describedby="NumInterviews"
+              placeholder="Enter the number here"
+              [(ngModel)]="this.hospitalFormData.NumInterviews"
+              [required]="this.user.Role !== 'Admin'"
+            />
+          </div>-->
+          <div class="form-group col-md-6 col-sm-12">
+            <label for="LORNum">LOR Number Required</label>
+            <select
+              class="form-control"
+              id="LORNum"
+              name="LORNum"
+              [(ngModel)]="this.hospitalFormData.LORNum"
+              [required]="this.user.Role !== 'Admin'"
+            >
+              <option disabled selected>Select your option</option>
+              <option value="0">0</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="Data not available">Data not available</option>
+            </select>
+          </div>
+          <div class="form-group col-md-6 col-sm-12">
+            <label for="LORReq"
+              >Does Program require LOR from home country</label
+            >
+            <label class="form-check form-check-label">
+              <input
+                type="radio"
+                class="form-check-input"
+                name="LORReq"
+                id="LORReq"
+                value="Yes"
+                [(ngModel)]="this.hospitalFormData.LORReq"
+                [required]="this.user.Role !== 'Admin'"
+              />
+              Yes
+            </label>
+            <label class="form-check form-check-label">
+              <input
+                type="radio"
+                class="form-check-input"
+                name="LORReq"
+                id="LORReq"
+                value="No"
+                [(ngModel)]="this.hospitalFormData.LORReq"
+              />
+              No
+            </label>
+            <label class="form-check form-check-label">
+              <input
+                type="radio"
+                class="form-check-input"
+                name="LORReq"
+                id="LORReq"
+                value="NA"
+                [(ngModel)]="this.hospitalFormData.LORReq"
+              />
+              Data Not Available
+            </label>
+          </div>
+          <!---<div class="form-group">
+          <label for="PTALReq">Is PTAL required (california specific requirement) at time of application</label>
+          <label class="form-check form-check-label">
+            <input type="radio" class="form-check-input" name="PTALReq" id="PTALReq" value="Yes" [(ngModel)]="this.hospitalFormData.PTALReq" required>
+            Yes
+          </label>
+          <label class="form-check form-check-label">
+            <input type="radio" class="form-check-input" name="PTALReq" id="PTALReq" value="No" [(ngModel)]="this.hospitalFormData.PTALReq">
+            No
+          </label>
+          <label class="form-check form-check-label">
+            <input type="radio" class="form-check-input" name="PTALReq" id="PTALReq" value="NA" [(ngModel)]="this.hospitalFormData.PTALReq">
+            Data Not Available
+          </label>
+        </div>--->
+          <div class="form-group col-md-6 col-sm-12">
+            <label for="SpanishReq">Is Spanish proficiency required?</label>
+            <label class="form-check form-check-label">
+              <input
+                type="radio"
+                class="form-check-input"
+                name="SpanishReq"
+                id="SpanishReq"
+                value="Yes"
+                [(ngModel)]="this.hospitalFormData.SpanishReq"
+                [required]="this.user.Role !== 'Admin'"
+              />
+              Yes
+            </label>
+            <label class="form-check form-check-label">
+              <input
+                type="radio"
+                class="form-check-input"
+                name="SpanishReq"
+                id="SpanishReq"
+                value="No"
+                [(ngModel)]="this.hospitalFormData.SpanishReq"
+              />
+              No
+            </label>
+            <label class="form-check form-check-label">
+              <input
+                type="radio"
+                class="form-check-input"
+                name="SpanishReq"
+                id="SpanishReq"
+                value="NA"
+                [(ngModel)]="this.hospitalFormData.SpanishReq"
+              />
+              Data Not Available
+            </label>
+          </div>
+          <div class="form-group col-md-6 col-sm-12">
+            <label for="USCEReqOrPref">Is USCE Required? </label>
+            <select
+              class="form-control"
+              id="USCEReqOrPref"
+              name="USCEReqOrPref"
+              [(ngModel)]="this.hospitalFormData.USCEReqOrPref"
+              [required]="this.user.Role !== 'Admin'"
+            >
+              <option disabled selected>Select your option</option>
+              <option value="Required">Required</option>
+              <option value="Preferred">Preferred</option>
+              <option value="Not preferred">Not preferred</option>
+              <option value="Don't know">Don't know</option>
+            </select>
+          </div>
+          <div class="form-group col-md-6 col-sm-12">
+            <label for="USCENotCon"
+              >What type of USCE does it not consider?</label
+            >
+            <select
+              class="form-control"
+              id="USCENotCon"
+              name="USCENotCon"
+              [required]="this.user.Role !== 'Admin'"
+              [(ngModel)]="this.hospitalFormData.USCENotCon"
+            >
+              <option disabled selected>Select your option</option>
+              <option value="observership not considered">
+                Observership Not Considered
+              </option>
+              <option value="Research not considered">
+                Research Not Considered
+              </option>
+              <option value="Both observership and Research not considered">
+                Both Observership and Research Not Considered
+              </option>
+              <option value="Not specified">Not specified</option>
+              <option value="Data not available">Data not available</option>
+            </select>
+          </div>
+          <div class="form-group col-12">
+            <label for="USCEReq">How many months of USCE Required ?</label>
+            <input
+              type="number"
+              class="form-control"
+              name="USCEReq"
+              id="USCEReq"
+              aria-describedby="NumInterviews"
+              placeholder="Enter the number here"
+              [(ngModel)]="this.hospitalFormData.USCEReq"
+              [required]="this.user.Role !== 'Admin'"
+            />
+          </div>
+          <div class="form-group col-md-6 col-sm-12">
+            <label for="ECFMGReq"
+              >ECFMG certificate required at time of application?</label
+            >
+            <select
+              class="form-control"
+              id="ECFMGReq"
+              name="ECFMGReq"
+              [(ngModel)]="this.hospitalFormData.ECFMGReq"
+              [required]="this.user.Role !== 'Admin'"
+            >
+              <option disabled selected>Select your option</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+              <option value="Required for IMGs">Required IMGs</option>
+              <option value="Data not available">Data not available</option>
+            </select>
+          </div>
+          <div class="form-group col-md-6 col-sm-12">
+            <label for="ResearchOpp"
+              >Does program offer Research opportunities during
+              residency?</label
+            >
+            <label class="form-check form-check-label">
+              <input
+                type="radio"
+                class="form-check-input"
+                name="ResearchOpp"
+                id="ResearchOpp"
+                value="Yes"
+                [(ngModel)]="this.hospitalFormData.ResearchOpp"
+                [required]="this.user.Role !== 'Admin'"
+              />
+              Yes
+            </label>
+            <label class="form-check form-check-label">
+              <input
+                type="radio"
+                class="form-check-input"
+                name="ResearchOpp"
+                id="ResearchOpp"
+                value="No"
+                [(ngModel)]="this.hospitalFormData.ResearchOpp"
+              />
+              No
+            </label>
+            <label class="form-check form-check-label">
+              <input
+                type="radio"
+                class="form-check-input"
+                name="ResearchOpp"
+                id="ResearchOpp"
+                value="NA"
+                [(ngModel)]="this.hospitalFormData.ResearchOpp"
+              />
+              Data Not Available
+            </label>
+          </div>
+          <div class="form-group col-md-6 col-sm-12">
+            <label for="ProgramPref"
+              >Does program prefer any of the following?</label
+            >
+            <select
+              class="form-control"
+              id="ProgramPref"
+              name="ProgramPref"
+              [(ngModel)]="this.hospitalFormData.ProgramPref"
+            >
+              <option disabled selected>Select your option</option>
+              <option value=" USA fellowships">USA fellowships</option>
+              <option value="Home country residency">
+                Home country residency
+              </option>
+              <option value="PHD">PHD</option>
+              <option value="Masters">Masters</option>
+              <option value="MPH">MPH</option>
+            </select>
+          </div>
+          <!-- <div class="form-group col-md-6 col-sm-12">
+            <label for="InhouseFellow">Are there inhouse fellowships?</label>
+            <label class="form-check form-check-label">
+              <input
+                type="radio"
+                class="form-check-input"
+                name="InhouseFellow"
+                id="InhouseFellow"
+                value="Yes"
+                [(ngModel)]="this.hospitalFormData.InhouseFellow"
+                required
+              />
+              Yes
+            </label>
+            <label class="form-check form-check-label">
+              <input
+                type="radio"
+                class="form-check-input"
+                name="InhouseFellow"
+                id="InhouseFellow"
+                value="No"
+                [(ngModel)]="this.hospitalFormData.InhouseFellow"
+              />
+              No
+            </label>
+            <label class="form-check form-check-label">
+              <input
+                type="radio"
+                class="form-check-input"
+                name="InhouseFellow"
+                id="InhouseFellow"
+                value="NA"
+                [(ngModel)]="this.hospitalFormData.InhouseFellow"
+              />
+              Data Not Available
+            </label>
+          </div> -->
+          <div class="form-group col-md-12">
+            <label for="DirName">Program Director Details</label>
+            <textarea
+              autosize
+              type="text"
+              class="form-control"
+              name="programDirectorNew"
+              id="programDirectorNew"
+              aria-describedby="DirName"
+              placeholder="Enter the name here"
+              [(ngModel)]="this.hospitalFormData.programDirectorNew"
+              [required]="this.user.Role !== 'Admin'"
+            >
+            </textarea>
+          </div>
+          <!-- <div class="form-group col-md-12">
+            <label for="DirEmail"
+              >Program Director Email (Enter NA@NA.com if data is not available;
+              If there are multiple email addresses, then separate each by a
+              comma)</label
+            >
+            <input
+              type="text"
+              class="form-control"
+              name="DirEmail"
+              id="DirEmail"
+              aria-describedby="DirEmail"
+              placeholder="Enter the emails here"
+              [(ngModel)]="this.hospitalFormData.DirEmail"
+              required
+            />
+          </div> -->
+          <div class="form-group col-md-12">
+            <label for="CorName">Point of Contact Details</label>
+            <textarea
+              autosize
+              type="text"
+              class="form-control"
+              name="personToContactNew"
+              id="personToContactNew"
+              aria-describedby="personToContactNew"
+              placeholder="Enter the name here"
+              [(ngModel)]="this.hospitalFormData.personToContactNew"
+              [required]="this.user.Role !== 'Admin'"
+            >
+            </textarea>
+          </div>
+          <div class="form-group col-md-12">
+            <label for="teachingSiteNew">Primary Teaching Site</label>
+            <input
+              type="text"
+              class="form-control"
+              name="teachingSiteNew"
+              id="teachingSiteNew"
+              aria-describedby="DirName"
+              placeholder="Enter the teaching site here"
+              [(ngModel)]="this.hospitalFormData.teachingSiteNew"
+              [required]="this.user.Role !== 'Admin'"
+            />
+          </div>
+          <!-- <div class="form-group col-md-12">
+            <label for="CorEmail"
+              >Coordinator Email (Enter NA@NA.com if data is not available; If
+              there are multiple email addresses, then separate each by a
+              comma)</label
+            >
+            <input
+              type="text"
+              class="form-control"
+              name="CorEmail"
+              id="CorEmail"
+              aria-describedby="CorEmail"
+              placeholder="Enter the emails here"
+              [(ngModel)]="this.hospitalFormData.CorEmail"
+              required
+            />
+          </div>
+          <div class="form-group col-md-12">
+            <label for="CorPhone"
+              >Coordinator Phone (Enter NA if data is not available)</label
+            >
+            <input
+              type="tel"
+              class="form-control"
+              name="CorPhone"
+              id="CorPhone"
+              aria-describedby="CorPhone"
+              placeholder="Enter the phone number here"
+              [(ngModel)]="this.hospitalFormData.CorPhone"
+              required
+            />
+          </div> -->
+          <div class="form-group col-12">
+            <label for="address"
+              >Enter Full Correspondence Address (Enter NA if data is not
+              available)</label
+            >
+            <input
+              type="text"
+              class="form-control"
+              name="address"
+              id="address"
+              aria-describedby="address"
+              placeholder="Enter here"
+              [(ngModel)]="this.hospitalFormData.address"
+              [required]="this.user.Role !== 'Admin'"
+            />
+          </div>
+          
+          
+          <!-- <div class="form-group col-12">
+            <label for="websummary"
+              >Enter Summary of the relevant info from the Hospital Website
+              (Enter NA if data is not available)</label
+            >
+            <input
+              type="text"
+              class="form-control"
+              name="websummary"
+              id="websummary"
+              aria-describedby="websummary"
+              placeholder="Enter the websummary here"
+              [(ngModel)]="this.hospitalFormData.websummary"
+              required
+            />
+          </div> -->
+          <!-- <div class="form-group col-12">
+            <label for="notes"
+              >Enter your personal notes about the hospital
+            </label>
+            <input
+              type="text"
+              class="form-control"
+              name="notes"
+              id="notes"
+              aria-describedby="notes"
+              placeholder="Enter your notes here"
+              [(ngModel)]="this.hospitalFormData.notes"
+            />
+          </div> -->
+        </div>
+        <div class="form-group row col-12">
+        <div class="form-group col-6">
+          <button class="btn btn-block btn-primary btn-outline-primary card-footer" (click)="onManualSubmitForm()"  type="button">Save And Continue Later</button>
+        </div>
+        <div class="form-group col-6">
+          <button class="btn btn-block btn-primary btn-outline-primary card-footer" type="submit">Final Submit For Review</button>
+        </div>
+      </div>
+      </form>
+    </ng-template>
+  </div>
+  <div class="card-body text-center" *ngSwitchDefault>
+    <h6>No such case.</h6>
+  </div>
+</div>

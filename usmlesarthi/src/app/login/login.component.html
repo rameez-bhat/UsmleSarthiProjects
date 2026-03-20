@@ -1,0 +1,392 @@
+<div class="container">
+  <div class="card card-responsive m-auto" [ngSwitch]="landing">
+    <div class="card-body row">
+      <div class="col-md-6 m-auto d-none d-md-inline">
+        <img
+          src="./../../assets/Title.jpg"
+          class="img-fluid"
+          alt="USMLESarthi"
+        />
+      </div>
+      <div class="col-sm-12 col-md-6 m-auto" *ngSwitchCase="'Login'">
+        <div *ngIf="loading; else loaded" class="text-center">
+          Signing In...
+        </div>
+        <ng-template #loaded>
+          <h6 class="card-title text-center font-weight-bolder text-primary">
+            LOGIN
+          </h6>
+          <br />
+          <div class="card-text font-weight-bolder h4 text-center">
+            Welcome back
+          </div>
+          <br />
+          <form>
+            <div class="form-group row m-2">
+              <label for="email"> Email Address </label>
+              <input
+                type="text"
+                class="form-control"
+                placeholder="Username"
+                #userName
+                required
+              />
+            </div>
+            <div class="form-group row m-2">
+              <label for="password"> Password </label>
+              <input
+                type="password"
+                class="form-control"
+                placeholder="Password"
+                #userPassword
+                required
+              />
+            </div>
+            <div class="form-group row m-2 mr-auto">
+              <span class="text-primary" (click)="landing = 'Reset Password'">
+                <a>Forgot Password?</a></span
+              >
+            </div>
+            <!-- Calling SignIn Api from AuthService -->
+            <div class="form-group row m-2">
+              <input
+                type="button"
+                class="btn btn-block btn-primary btn-outline-primary card-footer"
+                value="Login"
+                (click)="signIn(userName.value, userPassword.value)"
+              />
+            </div>
+            <div class="form-group text-center">
+              <span
+                >Don't have an account?
+                <span class="text-primary" (click)="landing = 'Register'">
+                  <a>Register Here</a></span
+                ></span
+              >
+            </div>
+          </form>
+        </ng-template>
+      </div>
+      <div class="col-sm-12 col-md-6 m-auto" *ngSwitchCase="'Register'">
+        <div *ngIf="loading; else loaded" class="text-center">
+          Registering..
+        </div>
+        <ng-template #loaded>
+          <div
+            class="card-title text-center font-weight-bolder text-primary h5"
+          >
+            Welcome to USMLESarthi, please register here
+          </div>
+          <form ngNativeValidate #registerForm>
+            <div class="form-group">
+              <label for="name"> Full Name:</label>
+              <input
+                type="text"
+                class="form-control"
+                placeholder="Full Name"
+                #userName
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="email"> Email Address:</label>
+              <input
+                type="email"
+                class="form-control"
+                placeholder="Email Address"
+                #userEmail
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="email"> Password:</label>
+              <input
+                type="password"
+                class="form-control"
+                placeholder="Password"
+                #userPwd1
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="email"> Re-enter Password:</label>
+              <input
+                type="password"
+                class="form-control"
+                placeholder="Password"
+                #userPwd2
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label for="country">Select Country:</label>
+              <ng-select
+                [items]="countryPhoneOptions"
+                bindLabel="label"
+                name="phonecountry"
+                [(ngModel)]="selectedPhoneCountry"
+                (change)="onPhoneCountryChange($event)"
+                [searchable]="true"
+                placeholder="Choose a country"
+              >
+              <ng-template ng-label-tmp let-item="item">
+                <div style="display: flex; align-items: center;">
+                  <img
+                    [src]="item.flag"
+                    alt="{{ item.label }}"
+                    style="width: 20px; height: 20px; margin-right: 5px"
+                  />
+                  {{ item.label }}
+                </div>
+              </ng-template>
+                <ng-template ng-option-tmp let-item="item">
+                  <img [src]="item.flag" width="20" style="margin-right: 5px" />
+                  {{ item.label }}
+                </ng-template>
+              </ng-select>
+            </div>
+            
+            <div class="form-group" style="margin-top: 15px">
+              <label for="phone">Phone Number:</label>
+              <input
+                type="text"
+                class="form-control"
+                name="phonenumber"
+                [(ngModel)]="phoneNumber"
+                (ngModelChange)="updateFullPhoneNumber()"
+                placeholder="Enter phone number"
+  
+              />
+            </div>
+            
+            <div *ngIf="fullPhoneNumber" style="margin-top: 10px">
+              <strong>Full Number:</strong> {{ fullPhoneNumber }}
+            </div>
+            
+
+
+
+
+
+
+            
+            <div class="form-group">
+              <label for="countrySelect">Country Of Medical School:</label>
+              <ng-select
+                [items]="countryOptions"
+                bindLabel="label"
+                [(ngModel)]="selectedCountry"
+                (change)="onCountryChange(selectedCountry)"
+                placeholder="Select Country Of Medical School"
+                id="countrySelect"
+                name="selectedCountry"
+                required
+              >
+                <ng-template ng-label-tmp let-item="item">
+                  <div style="display: flex; align-items: center;">
+                    <img
+                      [src]="item.flag"
+                      alt="{{ item.label }}"
+                      style="width: 20px; height: 20px; margin-right: 5px"
+                    />
+                    {{ item.label }}
+                  </div>
+                </ng-template>
+            
+                <ng-template ng-option-tmp let-item="item">
+                  <div style="display: flex; align-items: center;">
+                    <img
+                      [src]="item.flag"
+                      alt="{{ item.label }}"
+                      style="width: 20px; height: 20px; margin-right: 5px"
+                    />
+                    {{ item.label }}
+                  </div>
+                </ng-template>
+              </ng-select>
+            </div>
+            
+            <div class="form-group">
+              <label for="medicalSchoolSelect">Your Medical School:</label>
+              <ng-select
+                placeholder="Your Medical School"
+                id="medicalSchoolSelect"
+                name="selectedMedicalSchool"
+                [(ngModel)]="selectedMedicalSchool"
+                [items]="medicalSchoolOptionsList"
+                bindLabel="label"
+                required
+              ></ng-select>
+              <input
+                *ngIf="selectedMedicalSchool?.label == 'Other'"
+                type="text"
+                name="otherMedicalSchool"
+                class="form-control"
+                placeholder="Medical School Name"
+                [(ngModel)]="otherMedicalSchool"
+                [required]="selectedMedicalSchool == 'Other'"
+              />
+            </div>
+
+            <div class="form-group">
+              <label> Year of applying for residency</label>
+              <select class="form-control" #selectedYearOfApplying required>
+                <option
+                value=""
+              >
+                =Select=
+              </option>
+                <option
+                  [value]="year"
+                  *ngFor="let year of yearOfApplytingOptions"
+                >
+                  Match Season {{ year }} (Sep {{ year-1 }})
+                </option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <button
+                type="submit"
+                class="btn btn-block btn-primary btn-outline-primary card-footer"
+                name="submit"
+                (click)="
+                  register(
+                    userEmail.value,
+                    userPwd1.value,
+                    userPwd2.value,
+                    userName.value,
+                    selectedYearOfApplying.value
+                  )
+                "
+              >
+                Register
+              </button>
+            </div>
+
+            <div class="redirectToLogin">
+              <span
+                >Already have an account?
+                <span class="text-primary" (click)="landing = 'Login'"
+                  ><a>Login Here</a></span
+                ></span
+              >
+            </div>
+          </form>
+        </ng-template>
+      </div>
+      <div class="col-sm-12 col-md-6 m-auto" *ngSwitchCase="'Reset Password'">
+        <div *ngIf="loading; else loaded" class="text-center">
+          Sending Mail..
+        </div>
+        <ng-template #loaded>
+          <form>
+            <div class="authBlock">
+              <label
+                >Please enter your email address to request a password
+                reset.</label
+              >
+
+              <div class="form-group">
+                <input
+                  type="email"
+                  class="form-control"
+                  placeholder="Email Address"
+                  #passwordResetEmail
+                  required
+                />
+              </div>
+
+              <!-- Calling ForgotPassword from AuthService Api -->
+              <div class="form-group">
+                <input
+                  type="submit"
+                  class="btn btn-block btn-primary btn-outline-primary card-footer"
+                  value="Reset Password"
+                  (click)="forgetPassword(passwordResetEmail.value)"
+                />
+              </div>
+            </div>
+
+            <div class="redirectToLogin">
+              <span
+                >Want to
+                <span class="text-primary" (click)="landing = 'Login'"
+                  ><a>Login?</a></span
+                ></span
+              >
+            </div>
+          </form>
+        </ng-template>
+      </div>
+      <div class="col-sm-12 col-md-6 m-auto" *ngSwitchCase="'Verify Email'">
+        <div *ngIf="loading; else loaded" class="text-center">
+          Sending mail..
+        </div>
+        <ng-template #loaded>
+          <form>
+            <div class="authBlock">
+              <h5 class="font-weight-bolder">Thank You for Registering</h5>
+              <br />
+              <div class="form-group" *ngIf="authService.userData as user">
+                <p class="text-center">
+                  We have sent a confirmation email to
+                  <strong>{{ user.email }}</strong
+                  >.
+                </p>
+                <p class="text-center">
+                  Please check your email and click on the link to verfiy your
+                  email address.
+                </p>
+              </div>
+
+              <!-- Calling SendVerificationMail() method using authService Api -->
+              <div class="form-group">
+                <button
+                  type="button"
+                  class="btn btn-block btn-primary btn-outline-primary card-footer"
+                  (click)="sendVerificationEmail()"
+                >
+                  <i class="fas fa-redo-alt"></i>
+                  Resend Verification Email
+                </button>
+              </div>
+            </div>
+
+            <div class="redirectToLogin">
+              <span
+                >Want to
+                <span class="text-primary" (click)="landing = 'Login'"
+                  ><a>Login?</a></span
+                ></span
+              >
+            </div>
+          </form>
+        </ng-template>
+      </div>
+      <div class="col-sm-12 col-md-6 m-auto" *ngSwitchCase="'Verify User'">
+        <div *ngIf="loading; else loaded" class="text-center">
+          Checking your authorization..
+        </div>
+        <ng-template #loaded>
+          <form>
+            <div class="authBlock">
+              <h5 class="font-weight-bolder">Thank You for Registering</h5>
+              <br />
+              <div class="form-group" *ngIf="authService.userData as user">
+                <p class="text-center">
+                  You are still not verified by us, please contact our support
+                  and re-<span class="text-primary" (click)="landing = 'Login'"
+                    ><a>login</a></span
+                  >.
+                </p>
+              </div>
+            </div>
+          </form>
+        </ng-template>
+      </div>
+    </div>
+  </div>
+</div>

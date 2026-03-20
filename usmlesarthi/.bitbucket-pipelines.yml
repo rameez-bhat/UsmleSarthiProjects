@@ -1,0 +1,30 @@
+image: docker:latest
+
+pipelines:
+  default:
+    - step:
+        name: Build and Push Docker Image
+        services:
+          - docker
+        caches:
+          - docker
+        script:
+          - docker build -t usmlesarthi .
+          - docker save usmlesarthi > usmlesarthi.tar
+          - pipe: atlassian/bitbucket-upload-file:0.3.2
+            variables:
+              BITBUCKET_USERNAME: $BITBUCKET_USERNAME
+              BITBUCKET_APP_PASSWORD: $BITBUCKET_APP_PASSWORD
+              FILENAME: "usmlesarthi.tar"
+              ACCOUNT: "usmleSarthi"
+              REPOSITORY: "usmlesarthi"
+
+    - step:
+        name: Deploy and Update Firestore
+        caches:
+          - node
+        script:
+          - apt-get update && apt-get install -y unzip
+          - npm install -g firebase-tools
+          - firebase login:ci --token=$FIREBASE_DEPLOY_TOKEN
+          - firebase deploy --only firestore

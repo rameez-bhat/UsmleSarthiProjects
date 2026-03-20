@@ -1,0 +1,30 @@
+<div class="row text-left" onselectstart="return false" onpaste="return false;" onCopy="return false" onCut="return false" onDrag="return false" onDrop="return false" autocomplete=off>
+  <div class="display-4 m-2 p-2 row">
+    FAQs
+  </div>
+</div>
+<div class="col-12 card card-body" onselectstart="return false" onpaste="return false;" onCopy="return false" onCut="return false" onDrag="return false" onDrop="return false" autocomplete=off>
+  <div class="row">
+    <div class="col-sm-12 col-md-6 mt-2">
+      Topics
+      <br/>
+        <ng-select class="mt-2" [items]="topics" [(ngModel)]="selectedTopic"></ng-select>
+    </div>
+    <div class='col-sm-12 col-md-12'>
+      <ngb-accordion [closeOthers]="true" #acc="ngbAccordion" activeIds="static-0">
+        <ngb-panel *ngFor="let question of questions[selectedTopic]; let index = index" id="static-{{index}}">
+          <ng-template ngbPanelTitle>
+            <div class="card bg-light text-left p-2 font-weight-bold card-outline-primary">
+              {{question.question}}
+            </div>
+          </ng-template>
+          <ng-template ngbPanelContent>
+            <div class="card bg-light text-left p-2 m-0 card-outline-secondary" onselectstart="return false" onpaste="return false;" onCopy="return false" onCut="return false" onDrag="return false" onDrop="return false" autocomplete=off>
+              {{question.answer}}
+            </div>
+          </ng-template>
+        </ngb-panel>
+      </ngb-accordion>
+    </div>
+  </div>
+</div>

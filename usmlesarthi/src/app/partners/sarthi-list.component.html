@@ -1,0 +1,20 @@
+<div class="row text-left">
+  <div class="display-4 m-2 p-2 row">We Partnered With</div>  
+</div>
+<div class="card m-2" [ngSwitch]="landing">
+  <div class="card-body">
+    <h2></h2>
+    <div style="margin: 20px 0;">
+      <a href="javascript:void(0)" >
+        <img src="https://www.residencyprogramslist.com/img/i7.png" alt="Residency Programs List" style="width: 200px; height: 200px; object-fit: contain; border: 1px solid #ccc; padding: 10px; background: white; border-radius: 8px;">
+      </a>
+    </div>
+    <p>To avail your exclusive discount on program list,</p>
+    <!--<a href="#!/programs" class="cta-link" style="color: white; background: #1976d2; padding: 10px 15px; border-radius: 4px; text-decoration: none;">Click Here</a>-->
+    <button class="btn btn-primary" style="color: white !important;" (click)="claimDiscount()" >Click Here</button>
+  </div>
+
+  <div class="card-body text-center" *ngSwitchDefault>
+    <h6>Complete your profile first.</h6>
+  </div>
+</div>

@@ -1,0 +1,855 @@
+<div class="card-body" [ngSwitch]="landing">
+  <div *ngSwitchCase="'list'">
+    <div *ngIf="loading; else loaded" class="text-center">
+      Fetching the rotations list...
+    </div>
+    <ng-template #loaded>
+      <div class="card row" *ngIf="addNew">
+        <div class="card-body">
+          <div class="text-primary">
+            Note: Please check the rotation before adding a new one, as this
+            will cause redundancy in our database.
+          </div>
+          <form class="m-2" ngNativeValidate>
+            <div class="row mt-2">
+              <label>Rotation Name</label>
+              <input
+                class="form-control"
+                type="text"
+                name="name"
+                id="name"
+                [(ngModel)]="newRotation.title"
+                required
+              />
+            </div>
+            <div class="row mt-2">
+              <label>City</label>
+              <input
+                class="form-control"
+                type="text"
+                name="city"
+                id="city"
+                [(ngModel)]="newRotation.city"
+                required
+              />
+            </div>
+            <div class="row mt-2">
+              <label>State</label>
+              <input
+                class="form-control"
+                type="text"
+                name="state"
+                id="state"
+                [(ngModel)]="newRotation.state"
+                required
+              />
+            </div>
+            <div class="row mt-2">
+              <label>ZIP Code</label>
+              <input
+                class="form-control"
+                type="text"
+                name="zipCode"
+                id="zipCode"
+                [(ngModel)]="newRotation.zipCode"
+                required
+              />
+            </div>
+            <div class="row mt-2">
+              <label>Duration (write x weeks)</label>
+              <input
+                class="form-control"
+                type="text"
+                name="duration"
+                id="duration"
+                [(ngModel)]="newRotation.duration"
+                required
+              />
+            </div>
+            <div class="row mt-2">
+              <label>Rotation Type </label>
+              <input
+                class="form-control"
+                type="text"
+                name="rotation"
+                id="rotation"
+                [(ngModel)]="newRotation.type"
+                required
+              />
+            </div>
+            <div class="row mt-2">
+              <label>Specialty</label>
+              <input
+                class="form-control"
+                type="text"
+                name="specialty"
+                id="specialty"
+                [(ngModel)]="newRotation.specialty"
+                required
+              />
+            </div>
+            <div class="row mt-2">
+              <label>Rotation Setting</label>
+              <input
+                class="form-control"
+                type="text"
+                name="rotation_setting"
+                id="rotation_setting"
+                [(ngModel)]="newRotation.rotation_setting"
+                required
+              />
+            </div>
+            <div class="row mt-2">
+              <label>Physician Affiliations</label>
+              <input
+                class="form-control"
+                type="text"
+                name="affiliations"
+                id="affiliations"
+                [(ngModel)]="newRotation.affiliations"
+                required
+              />
+            </div>
+            <div class="row mt-2">
+              <label> Rotation Fee</label>
+              <input
+                class="form-control"
+                type="number"
+                name="fee"
+                id="fee"
+                [(ngModel)]="newRotation.fee"
+                required
+              />
+            </div>
+            <div class="row mt-2">
+              <label> Registration Fee</label>
+              <input
+                class="form-control"
+                type="number"
+                name="registration_fee"
+                id="registration_fee"
+                [(ngModel)]="newRotation.registration_fee"
+                required
+              />
+            </div>
+            <div class="row mt-2">
+              <label> Visa Letter</label>
+              <input
+                class="form-control"
+                type="text"
+                name="visa_letter"
+                id="visa_letter"
+                [(ngModel)]="newRotation.visa_letter"
+                required
+              />
+            </div>
+            <div class="row mt-2">
+              <label> Visa Letter Cost</label>
+              <input
+                class="form-control"
+                type="number"
+                name="visa_letter_cost"
+                id="visa_letter_cost"
+                [(ngModel)]="newRotation.visa_letter_cost"
+              />
+            </div>
+            <div class="row mt-2">
+              <label> Do Hospitals have Residency?</label>
+              <input
+                class="form-control"
+                type="text"
+                name="residency"
+                id="residency"
+                [(ngModel)]="newRotation.residency"
+                required
+              />
+            </div>
+            <div class="row mt-2">
+              <label> Hospitals Rounds</label>
+              <input
+                class="form-control"
+                type="text"
+                name="rounds"
+                id="rounds"
+                [(ngModel)]="newRotation.rounds"
+                required
+              />
+            </div>
+            <div class="row mt-2">
+              <label> LOR Type</label>
+              <input
+                class="form-control"
+                type="text"
+                name="lor_type"
+                id="lor_type"
+                [(ngModel)]="newRotation.lor_type"
+                required
+              />
+            </div>
+            <div class="row mt-2">
+              <label> Number of LORs</label>
+              <input
+                class="form-control"
+                type="number"
+                name="lor_number"
+                id="lor_number"
+                [(ngModel)]="newRotation.lor_number"
+              />
+            </div>
+            <div class="row mt-2">
+              <label> Description</label>
+              <textarea
+                autosize
+                class="form-control"
+                type="text"
+                name="description"
+                id="description"
+                [(ngModel)]="newRotation.description"
+                required
+              >
+              </textarea>
+            </div>
+            <div class="row mt-2">
+              <label> Hours</label>
+              <textarea
+                class="form-control"
+                type="text"
+                name="hours"
+                id="hours"
+                [(ngModel)]="newRotation.hours"
+                required
+              >
+              </textarea>
+            </div>
+            <div class="row mt-2">
+              <label> Documentation Required</label>
+              <textarea
+                autosize
+                class="form-control"
+                type="text"
+                name="documentation"
+                id="documentation"
+                [(ngModel)]="newRotation.documentation"
+                required
+              >
+              </textarea>
+            </div>
+            <div class="row mt-2">
+              <label> Payment Policy</label>
+              <textarea
+                autosize
+                class="form-control"
+                type="text"
+                name="payment_policy"
+                id="payment_policy"
+                [(ngModel)]="newRotation.payment_policy"
+                required
+              >
+              </textarea>
+            </div>
+            <div class="row mt-2">
+              <label> Payment Policy</label>
+              <textarea
+                autosize
+                class="form-control"
+                type="text"
+                name="refund_policy_link"
+                id="refund_policy_link"
+                [(ngModel)]="newRotation.refund_policy_link"
+                required
+              >
+              </textarea>
+            </div>
+            <div class="row mt-2">
+              <label> Offers/Discounts (Keep it blank for no)</label>
+              <textarea
+                autosize
+                class="form-control"
+                type="text"
+                name="offers"
+                id="offers"
+                [(ngModel)]="newRotation.offers"
+              >
+              </textarea>
+            </div>
+            <div class="row mt-2">
+              <label>Discount Amount</label>
+              <input
+                type="number"
+                class="form-control"
+                name="discount_amount"
+                id="discount_amount"
+                [(ngModel)]="newRotation.discount_amount"
+                placeholder="Enter discount amount"
+              />
+            </div>
+            
+            <div class="row mt-2">
+              <div class="col-12">
+                <label>Discount Month (From - To)</label>
+              </div>
+              <div class="col-3">
+                <input
+                  type="month"
+                  class="form-control"
+                  name="discount_month_from"
+                  id="discount_month_from"
+                  [(ngModel)]="newRotation.discount_month_from"
+                  placeholder="From"
+                />
+              </div>
+              <div class="col-3">
+                <input
+                  type="month"
+                  class="form-control"
+                  name="discount_month_to"
+                  id="discount_month_to"
+                  [(ngModel)]="newRotation.discount_month_to"
+                  placeholder="To"
+                />
+              </div>
+            </div>
+            <div class="row mt-2">
+              <label>Program Director</label>
+              <textarea
+                autosize
+                class="form-control"
+                type="text"
+                name="program_director"
+                id="program_director"
+                [(ngModel)]="newRotation.program_director"
+              >
+              </textarea>
+            </div>
+            <div class="row mt-2">
+              <label> Doctor Of Rotation</label>
+              <ng-select
+                class="form-control"
+                name="doctorofrotation"
+                bindLabel="representingEmail"
+                bindValue="id"   
+                [items]="DoctorList"
+                [multiple]="true"
+                [(ngModel)]="newRotation.doctorofrotation"
+                style="padding:0px"
+              ></ng-select>
+            </div>
+            <div class="row mt-2">
+              <label>Payment to Physicians</label>
+              <input
+                type="number"
+                class="form-control"
+                name="payment_to_physicians"
+                id="payment_to_physicians"
+                [(ngModel)]="newRotation.payment_to_physicians"
+                placeholder="Enter payment amount"
+              />
+            </div>
+            
+            
+            
+            <div class="row mt-2">
+              <label> Combo Rotation? (Keep it blank for no)</label>
+              <input
+                class="form-control"
+                type="text"
+                name="combo_rotation"
+                id="combo_rotation"
+                [(ngModel)]="newRotation.combo_rotation"
+              />
+            </div>
+            <div class="row mt-2">
+              <label> Location Code</label>
+              <input
+                class="form-control"
+                type="text"
+                name="location_code"
+                id="location_code"
+                [(ngModel)]="newRotation.location_code"
+                required
+              />
+            </div>
+            <!--<div class="row mt-2">
+              <label> Admin Email</label>
+              <input
+                class="form-control"
+                type="email"
+                name="admin_email"
+                id="admin_email"
+                [(ngModel)]="newRotation.admin_email"
+                required
+              />
+            </div>-->
+            <div class="row mt-2">
+              <label> Order/ Rank</label>
+              <input
+                class="form-control"
+                type="number"
+                name="rank"
+                id="rank"
+                [(ngModel)]="newRotation.rank"
+                required
+              />
+            </div>
+            <div class="row mt-2">
+              <button
+                class="btn btn-success btn-block btn-outline-success"
+                type="submit"
+                (click)="addNewRotation()"
+              >
+                Add Rotation To the Database
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+      <div>
+        <label> Write the rotation's name/location code/City/State you are looking for..</label>
+        <input type="text" class="form-control" #rotationPrefix />
+        <br />
+        <div class="row">
+          <div class="col">
+            <button
+              style="margin-right: 10px"
+              class="btn btn-primary btn-outline-primary btn-md text-center float-left"
+              (click)="fetchSome(rotationPrefix.value)"
+            >
+              Search
+            </button>
+          </div>
+          <div class="col">
+            <button
+              class="btn btn-success btn-outline-success float-right"
+              (click)="addNew = !addNew"
+            >
+              Add New Rotation
+            </button>
+          </div>
+        </div>
+      </div>
+      <div *ngIf="rotationsList.length">
+        <label class="text-center"> See/Modify the existing rotations.</label>
+        <div class="table-responsive">
+          <table class="table table-striped table-hover">
+            <thead>
+              <tr>
+                <th scope="col">S.No</th>
+                <th scope="col">Rotation Name</th>
+                <th scope="col">Location Code</th>
+                <th scope="col">City</th>
+                <th scope="col">State</th>
+                <th scope="col">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let rotation of rotationsList; index as i">
+                <td>{{ i + 1 }}</td>
+                <td>{{ rotation.title }}</td>
+                <td>{{ rotation.location_code }}</td>
+                <td>{{ rotation.city }}</td>
+                <td>{{ rotation.state }}</td>
+                <td>
+                  <button
+                    class="btn btn-primary btn-outline-primary"
+                    (click)="takeMeToRotation(rotation)"
+                  >
+                    Update
+                  </button>
+                  <button
+                    class="btn btn-primary btn-outline-primary"
+                    (click)="deleteRotation(rotation)"
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </ng-template>
+  </div>
+  <div *ngSwitchCase="'rotation'">
+    <div *ngIf="loading; else loaded" class="text-center">
+      Fetching the rotation's data...
+    </div>
+    <ng-template #loaded>
+      <div class="row">
+        <div class="col">
+          <button
+            class="btn btn-primary btn-outline-primary float-left"
+            (click)="landing = 'list'"
+          >
+            <i class="ft-arrow-left"></i> Back
+          </button>
+        </div>
+      </div>
+      <form class="m-2" ngNativeValidate>
+        <div class="row mt-2">
+          <label>Rotation Name</label>
+          <input
+            class="form-control"
+            type="text"
+            name="name"
+            id="name"
+            [(ngModel)]="selectedRotation.title"
+            required
+          />
+        </div>
+        <div class="row mt-2">
+          <label>City</label>
+          <input
+            class="form-control"
+            type="text"
+            name="city"
+            id="city"
+            [(ngModel)]="selectedRotation.city"
+            required
+          />
+        </div>
+        <div class="row mt-2">
+          <label>State</label>
+          <input
+            class="form-control"
+            type="text"
+            name="state"
+            id="state"
+            [(ngModel)]="selectedRotation.state"
+            required
+          />
+        </div>
+        <div class="row mt-2">
+          <label>ZIP Code</label>
+          <input
+            class="form-control"
+            type="text"
+            name="zipCode"
+            id="zipCode"
+            [(ngModel)]="selectedRotation.zipCode"
+            required
+          />
+        </div>
+        <div class="row mt-2">
+          <label>Duration (write x weeks)</label>
+          <input
+            class="form-control"
+            type="text"
+            name="duration"
+            id="duration"
+            [(ngModel)]="selectedRotation.duration"
+            required
+          />
+        </div>
+        <div class="row mt-2">
+          <label>Rotation Type </label>
+          <input
+            class="form-control"
+            type="text"
+            name="rotation"
+            id="rotation"
+            [(ngModel)]="selectedRotation.type"
+            required
+          />
+        </div>
+        <div class="row mt-2">
+          <label>Specialty</label>
+          <input
+            class="form-control"
+            type="text"
+            name="specialty"
+            id="specialty"
+            [(ngModel)]="selectedRotation.specialty"
+            required
+          />
+        </div>
+        <div class="row mt-2">
+          <label>Rotation Setting</label>
+          <input
+            class="form-control"
+            type="text"
+            name="rotation_setting"
+            id="rotation_setting"
+            [(ngModel)]="selectedRotation.rotation_setting"
+            required
+          />
+        </div>
+        <div class="row mt-2">
+          <label>Physician Affiliations</label>
+          <input
+            class="form-control"
+            type="text"
+            name="affiliations"
+            id="affiliations"
+            [(ngModel)]="selectedRotation.affiliations"
+            required
+          />
+        </div>
+        <div class="row mt-2">
+          <label>Rotation Fee (in $)</label>
+          <input
+            class="form-control"
+            type="number"
+            name="fee"
+            id="fee"
+            [(ngModel)]="selectedRotation.fee"
+            required
+          />
+        </div>
+        <div class="row mt-2">
+          <label>Registration Fee (in $)</label>
+          <input
+            class="form-control"
+            type="number"
+            name="registration_fee"
+            id="registration_fee"
+            [(ngModel)]="selectedRotation.registration_fee"
+            required
+          />
+        </div>
+        <div class="row mt-2">
+          <label>Visa Letter</label>
+          <input
+            class="form-control"
+            type="text"
+            name="visa_letter"
+            id="visa_letter"
+            [(ngModel)]="selectedRotation.visa_letter"
+            required
+          />
+        </div>
+        
+        <!--<div class="row mt-2">
+          <label>  Who Provides Visa Letter</label>
+          <textarea
+            autosize
+            class="form-control"
+            type="text"
+            name="visa_letter_cost"
+            id="visa_letter_cost"
+            [(ngModel)]="selectedRotation.visa_letter_cost ?  selectedRotation.visa_letter_cost : defaultVisaLetterText"
+          >
+          </textarea>
+        </div>-->
+        <div class="row mt-2">
+              <label> Visa Letter Cost</label>
+              <input
+                class="form-control"
+                type="number"
+                name="visa_letter_cost"
+                id="visa_letter_cost"
+                [(ngModel)]="selectedRotation.visa_letter_cost"
+              />
+            </div>
+        <div class="row mt-2">
+          <label> Do Hospitals have Residency?</label>
+          <input
+            class="form-control"
+            type="text"
+            name="residency"
+            id="residency"
+            [(ngModel)]="selectedRotation.residency"
+            required
+          />
+        </div>
+        <div class="row mt-2">
+          <label> Hospitals Rounds</label>
+          <input
+            class="form-control"
+            type="text"
+            name="rounds"
+            id="rounds"
+            [(ngModel)]="selectedRotation.rounds"
+            required
+          />
+        </div>
+        <div class="row mt-2">
+          <label> LOR Type</label>
+          <input
+            class="form-control"
+            type="text"
+            name="lor_type"
+            id="lor_type"
+            [(ngModel)]="selectedRotation.lor_type"
+            required
+          />
+        </div>
+        <div class="row mt-2">
+          <label> Number of LORs</label>
+          <input
+            class="form-control"
+            type="number"
+            name="lor_number"
+            id="lor_number"
+            [(ngModel)]="selectedRotation.lor_number"
+          />
+        </div>
+        <div class="row mt-2">
+          <label> Description</label>
+          <textarea
+            autosize
+            class="form-control"
+            type="text"
+            name="description"
+            id="description"
+            [(ngModel)]="selectedRotation.description"
+            required
+          >
+          </textarea>
+        </div>
+        <div class="row mt-2">
+          <label> Hours</label>
+          <textarea
+            autosize
+            class="form-control"
+            type="text"
+            name="hours"
+            id="hours"
+            [(ngModel)]="selectedRotation.hours"
+            required
+          >
+          </textarea>
+        </div>
+        <div class="row mt-2">
+          <label> Documentation Required</label>
+          <textarea
+            autosize
+            class="form-control"
+            type="text"
+            name="documentation"
+            id="documentation"
+            [(ngModel)]="selectedRotation.documentation"
+            required
+          >
+          </textarea>
+        </div>
+        <div class="row mt-2">
+          <label> Payment Policy</label>
+          <textarea
+            autosize
+            class="form-control"
+            type="text"
+            name="payment_policy"
+            id="payment_policy"
+            [(ngModel)]="selectedRotation.payment_policy"
+            required
+          >
+          </textarea>
+        </div>
+        <div class="row mt-2">
+          <label> Refund Policy</label>
+          <textarea
+            autosize
+            class="form-control"
+            type="text"
+            name="refund_policy_link"
+            id="refund_policy_link"
+            [(ngModel)]="selectedRotation.refund_policy_link"
+          >
+          </textarea>
+        </div>
+        <div class="row mt-2">
+          <label> Offers/Discounts (Keep it blank for no)</label>
+          <textarea
+            autosize
+            class="form-control"
+            type="text"
+            name="offers"
+            id="offers"
+            [(ngModel)]="selectedRotation.offers"
+          >
+          </textarea>
+        </div>
+       <div class="row mt-2">
+              <label> Doctor Of Rotation</label>
+              <ng-select
+                class="form-control"
+                name="doctorofrotation"
+                bindLabel="representingEmail"
+                bindValue="id"   
+                id="doctorofrotation"
+                [items]="DoctorList"
+                [multiple]="true"
+                [(ngModel)]="selectedRotation.doctorofrotation"
+                style="padding:0px"
+              ></ng-select>
+            </div>
+            <div class="row mt-2">
+              <label>Payment to Physicians</label>
+              <input
+                type="number"
+                class="form-control"
+                required
+                name="payment_to_physicians"
+                id="payment_to_physicians"
+                [(ngModel)]="selectedRotation.payment_to_physicians"
+                placeholder="Enter payment amount"
+              />
+            </div>
+        <div class="row mt-2">
+          <label>Program Director</label>
+          <textarea
+            autosize
+            class="form-control"
+            type="text"
+            name="program_director"
+            id="program_director"
+            [(ngModel)]="selectedRotation.program_director"
+          >
+          </textarea>
+        </div>
+        <div class="row mt-2">
+          <label> Combo Rotation? (Keep it blank for no)</label>
+          <input
+            class="form-control"
+            type="text"
+            name="combo_rotation"
+            id="combo_rotation"
+            [(ngModel)]="selectedRotation.combo_rotation"
+          />
+        </div>
+        <div class="row mt-2">
+          <label> Location Code</label>
+          <input
+            class="form-control"
+            type="text"
+            name="location_code"
+            id="location_code"
+            [(ngModel)]="selectedRotation.location_code"
+            required
+          />
+        </div>
+        <div class="row mt-2">
+          <label> Admin Email</label>
+          <input
+            class="form-control"
+            type="email"
+            name="admin_email"
+            id="admin_email"
+            [(ngModel)]="selectedRotation.admin_email"
+            required
+          />
+        </div>
+        <div class="row mt-2">
+          <label> Order/ Rank</label>
+          <input
+            class="form-control"
+            type="number"
+            name="rank"
+            id="rank"
+            [(ngModel)]="selectedRotation.rank"
+            required
+          />
+        </div>
+        <div class="row mt-2">
+          <button
+            class="btn btn-success btn-block btn-outline-success"
+            type="submit"
+            (click)="updateRotation()"
+          >
+            Update Rotation
+          </button>
+        </div>
+      </form>
+    </ng-template>
+  </div>
+</div>

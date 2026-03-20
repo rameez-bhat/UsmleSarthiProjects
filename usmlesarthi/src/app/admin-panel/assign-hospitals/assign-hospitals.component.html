@@ -1,0 +1,243 @@
+<div class="card-body" [ngSwitch]="landing">
+  <div *ngSwitchCase="'users'">
+    <div *ngIf="loading; else loaded" class="text-center">Loading....</div>
+    <ng-template #loaded>
+      <div>
+        <label> Write the user's name you are looking for..</label>
+        <input type="text" class="form-control" #userPrefix />
+        <br />
+        <button
+          class="btn btn-primary btn-outline-primary btn-md text-center float-left"
+          (click)="fetchSome(userPrefix.value)"
+        >
+          Search
+        </button>
+        <!---<button class="btn btn-primary btn-outline-primary btn-md text-center float-right" (click)="fetchAll()">
+          Show all users
+        </button>-->
+      </div>
+      <div *ngIf="usersList.length">
+        <div class="table-responsive">
+          <table class="table table-striped table-hover">
+            <thead>
+              <tr>
+                <th scope="col">S.No</th>
+                <th scope="col">User Email</th>
+                <th scope="col">Name</th>
+                <th scope="col">Select this user</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let user of usersList; index as i">
+                <td>{{ i + 1 }}</td>
+                <td>{{ user.email }}</td>
+                <td>{{ user.displayName }}</td>
+                <td>
+                  <button
+                    class="btn btn-primary btn-outline-primary"
+                    (click)="selectUser(user)"
+                  >
+                    Select
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </ng-template>
+  </div>
+  <div *ngSwitchCase="'basic'">
+    <div *ngIf="loading; else loaded" class="text-center">Loading....</div>
+    <ng-template #loaded>
+      <div class="form-group">
+        <div>
+          <h6 class="font-weight-bold text-uppercase">
+            {{ users[selectedUid] && users[selectedUid].displayName }}
+          </h6>
+        </div>
+        <div>
+          <button
+            class="btn btn-primary btn-sm btn-outline-primary float-left"
+            (click)="landing = 'users'"
+          >
+            Assign to other users
+          </button>
+          <button
+            class="btn btn-primary btn-sm btn-outline-primary float-right"
+            (click)="takeMeToList()"
+          >
+            View user's hospitals
+          </button>
+        </div>
+        <label for="Number of hospitals"
+          >Please specify the number of hospitals for which you would like to
+          enter detailed information:</label
+        >
+        <input
+          type="number"
+          class="form-control"
+          name="numHos"
+          id="numHos"
+          aria-describedby="Number of hospitals"
+          placeholder="Number of hospitals"
+          [(ngModel)]="numHos"
+          required
+        />
+      </div>
+      <div class="form-group">
+        <label for="Speciality"
+          >Please select the specialty that you are interested in or have been allocated:
+        </label>
+        <select
+          class="form-control"
+          data-toggle="dropdown"
+          id="Speciality"
+          name="Speciality"
+          [(ngModel)]="speciality"
+          required
+        >
+          <option class="dropdown-item" value="" disabled selected>
+            Choose one option
+          </option>
+          <option
+            class="dropdown-item"
+            [value]="program.PId"
+            *ngFor="let program of programList"
+          >
+            {{ program.PName }}
+          </option>
+        </select>
+      </div>
+      <button
+        class="btn btn-block btn-primary btn-outline-primary card-footer"
+        (click)="getSelects()"
+      >
+        Continue
+      </button>
+    </ng-template>
+  </div>
+  <div *ngSwitchCase="'preferences'"></div>
+  <div *ngSwitchCase="'list'">
+    <div>
+      <h6 class="font-weight-bold text-uppercase">
+        {{ users[selectedUid] && users[selectedUid].displayName }}
+      </h6>
+    </div>
+    <div *ngIf="selectValues.length">
+      <div class="form-group" *ngFor="let select of selectValues; index as i">
+        <label for="Preferences"
+          >Choose your preference for Hospital {{ i + 1 }}:
+        </label>
+        <select
+          class="form-control"
+          [id]="i"
+          [name]="i"
+          [(ngModel)]="select.value"
+        >
+          <option value="No Preference">No Preference</option>
+          <option
+            [value]="hospital.HId"
+            *ngFor="let hospital of hospitalsByProgramDropDown"
+            [disabled]="AlreadyAssignedHospital[hospital.HId + '_' + CurrentSelectPID]"
+          >
+            {{ hospital.HName }} ({{ hospital.City }})
+          </option>
+        </select>
+      </div>
+      <button
+        class="btn btn-block btn-primary btn-outline-primary card-footer"
+        (click)="postPreferences()"
+      >
+        Continue
+      </button>
+    </div>
+    <div *ngIf="loading; else loaded" class="text-center">
+      Fetching your hospitals list...
+    </div>
+    <ng-template #loaded>
+      <div class="table-responsive text-center">
+        <button
+          class="btn btn-primary btn-sm btn-outline-primary float-left"
+          (click)="landing = 'users'"
+        >
+          Assign to other users
+        </button>
+        <button
+          class="btn btn-primary btn-sm btn-outline-primary float-right"
+          (click)="takeMeToBasic()"
+        >
+          Add more hospitals
+        </button>
+        <button
+          class="btn btn-danger btn-sm btn-outline-danger mr-1 float-right"
+          (click)="removeHospital()"
+        >
+          Remove not completed hospitals
+        </button>
+        <button
+        class="btn btn-danger btn-sm btn-outline-danger mr-1 float-right"
+        (click)="removeInCompleteHospital()"
+      >
+        Remove In Complete hospitals
+      </button>
+        <h6 class="font-weight-bold text-uppercase">Allocated Hospitals</h6>
+        <h6 class="text-left">
+          Your task is to enter detailed information about the following
+          hospitals that have been allocated to you. Click on the link
+          corresponding to a hospital name.
+        </h6>
+        <table class="table table-striped table-hover">
+          <thead>
+            <tr>
+              <th scope="col">S.No.</th>
+              <th scope="col">Hospital Name</th>
+              <th scope="col">City</th>
+              <th scope="col">State</th>
+              <th scope="col">Program</th>
+              <th scope="col">Frieda ID</th>
+              <th scope="col">Last Updated At</th>
+              <th scope="col">Comments</th>
+              <th scope="col">Assigned On</th>
+              <th scope="col">Status</th>
+              
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let hospital of hospitalsDataByUser; index as i">
+              <th scope="row">{{ i + 1 }}</th>
+              <td>{{ hospital.hospital.HName }}</td>
+              <td>{{ hospital.hospital.City }}</td>
+              <td>{{ hospital.hospital.State }}</td>
+              <td>{{ programObject[hospital.PId].PName }}</td>
+              <td>{{ hospital.Frieda }}</td>
+              <td>{{ hospital.Date }}</td>
+              <!--<td>
+                <button
+                  [value]="hospital.HPInfoId"
+                  class="btn-flat btn-sm btn-outline-primary"
+                >
+                  Link to form
+                </button>
+              </td>-->
+              <td>{{hospital.VerifyComment || '' }}</td>
+              <td>
+                {{ hospital?.AssignedOn | date: 'dd/MM/yyyy' }}
+              </td>
+              <td>
+                {{
+                  hospital.Verified === "Yes"
+                    ? "Accepted"
+                    : hospital.Verified === "Rejected"
+                    ? "Rejected"
+                    : hospital.Status
+                }}
+              </td>
+             
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </ng-template>
+  </div>
+</div>

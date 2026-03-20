@@ -1,0 +1,211 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "Enquiries",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "timestamp",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "feedbackElements",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "resourceTypeID",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "sequence",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "Hospital",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "PIds",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "HName",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "HospitalProgram",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "PId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "AssignedNum",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "HospitalProgramInfo",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "HId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "PId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "Verified",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "TimeStamp",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "HospitalProgramInfo",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "HPId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "UId",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "HospitalProgramInfo",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "HPId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "Verified",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "TimeStamp",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "HospitalProgramInfo",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "PId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "Verified",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "TimeStamp",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "HospitalProgramInfo",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "UId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "Status",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "HousingEnquiries",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "timestamp",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "Interviews",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "ProvidedInfo",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "Date",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "OtherHospitalProgramInfo",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "HId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "PId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "Verified",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "TimeStamp",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "topics",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "subjectID",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "orderNumber",
+          "order": "ASCENDING"
+        }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

@@ -1,0 +1,13 @@
+# Firebase secrets
+#*.json
+*service-account.json.json
+*serviceAccount*.json
+
+# Node
+node_modules/
+*/.env.production
+*/.env.development
+**/environment.prod.ts
+**/environment.ts
+# env
+.env

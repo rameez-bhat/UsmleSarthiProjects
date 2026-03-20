@@ -1,0 +1,96 @@
+<!-- MATCH PLANS SECTION -->
+<div class="max-w-7xl mx-auto bg-gray-50 mt-5 p-4 rounded-lg shadow-sm">
+  <h4 class="text-right font-weight-bolder mb-4">
+    Match Plans
+  </h4>
+
+  <div class="grid grid-cols-1 smgrid-cols-2 lggrid-cols-3 gap-8">
+    
+    <div class="relative card-rotation" *ngFor="let plan of matchPlans">
+      <div >
+      <!-- Badge -->
+      <div class="badge-featured">{{ plan.Name || plan.Pid }}</div>
+
+      <!-- Image -->
+      <img
+        [src]="plan.display_image || 'https://via.placeholder.com/600x300?text=Match+Plan'"
+        class="w-full h-48 object-contain bg-gray-100"
+      />
+
+      <div class="p-6">
+
+        <!-- Title -->
+        <h3 class="text-xl font-semibold text-gray-800 mb-2">
+          Match Plan: {{ plan.Name || plan.Pid }}
+        </h3>
+
+        <!-- Fee -->
+        <p class="text-gray-700 text-lg font-bold mb-4">
+          Fee: ${{ plan.fee }}
+        </p>
+
+        <!-- Feature Pills -->
+        <div class="flex flex-wrap gap-2 mb-4">
+  <span
+    class="pill pill-primary"
+    (click)="openAvailabilityModal('description',plan)"
+    *ngFor="let f of plan.Features | slice:0:3"
+  >
+    {{ f.title.length > 30 ? (f.title | slice:0:30) + '...' : f.title }}
+  </span>
+</div>
+
+        <!-- Buttons -->
+        <div class="flex items-center justify-between mt-4" style="text-align: center;" *ngIf="!plan?.Pid?.toLowerCase().includes('combo')">
+          
+
+          <button
+            class="px-3 py-1 bg-blue border border-gray-300 rounded-lg text-sm text-white hover:bg-gray-100 mr-2"
+            (click)="openAvailabilityModal('description',plan)"
+          >
+            More Details →
+          </button>
+        </div>
+        <div class="flex items-center justify-between mt-4" style="text-align: center;" *ngIf="plan?.Pid?.toLowerCase().includes('combo')">
+           <button class="btn outline-danger m-2" (click)="openGmail(plan)"><img src="https://www.svgrepo.com/show/223047/gmail.svg" alt="Gmail" width="18" class="gmailicon"></button>
+                    <button class="btn outline-success m-2" (click)="openWhatsApp(plan)"> <i class="fa fa-whatsapp"></i></button>
+        </div>
+</div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+<ng-template #matchPlanModal let-modal>
+  <div class="modal-content">
+    <div class="modal-header">
+      <h4 class="modal-title">
+        {{ selectedMatchPlan.PlanName || selectedMatchPlan.Pid }}
+      </h4>
+      <button class="close" (click)="modal.dismiss()">&times;</button>
+    </div>
+
+    <div class="modal-body" style="max-height:70vh; overflow:auto;">
+      <p class="text-lg font-bold mb-3">
+        Fee: ${{ selectedMatchPlan.fee }}
+      </p>
+
+      <h4 class="font-semibold mt-3">Features</h4>
+
+      <div *ngFor="let f of selectedMatchPlan.Features; let i = index" class="mb-3">
+        <h5>{{ i + 1 }}. {{ f.title }}</h5>
+
+       <div class="p-2 border rounded"
+     [innerHTML]="f.contentHtml | safeHtml">
+</div>
+        <hr />
+      </div>
+
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-danger" (click)="modal.close()">Close</button>
+    </div>
+  </div>
+</ng-template>

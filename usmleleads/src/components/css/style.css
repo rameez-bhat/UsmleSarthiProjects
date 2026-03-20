@@ -1,0 +1,401 @@
+.validationerror {
+  color: red;
+  font-size: 14px;
+    margin-left: 4px;
+    margin-top: 9px;
+  /* Add more styles as needed */
+}
+.submitbutton
+{
+margin-top:20px;
+
+}
+.margin0auto
+{
+	margin: 0 auto;
+    width: 100%;
+    left: 46%;
+    position: relative;
+    font-size: 20px;
+    font-weight: 900;
+}
+.margin0autoonly
+{
+	margin: 0 auto;
+	    display: ruby-text;
+
+}
+.calendar-input {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.calendar-label {
+  margin-right: 10px;
+}
+
+.calendar-icon {
+  margin-right: 10px;
+}
+
+.calendar-icon i {
+  color: #555;
+  cursor: pointer;
+  font-size: 1.2em;
+}
+.css-13cymwt-control
+{
+	height:56px;
+}
+.marginleft
+{
+	    padding-top: 16px;
+    padding-left: 16px;
+}
+.MainBody
+{
+position:relative;
+}
+.loader-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.8); /* Optional: semi-transparent background */
+  z-index: 9999; /* Ensure it's on top of other elements */
+}
+.hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+.loader-container .Loader {
+  border: 16px solid #f3f3f3; /* Light grey */
+  border-top: 16px solid #3498db; /* Blue */
+  border-radius: 50%;
+  width: 120px;
+  height: 120px;
+  top: 50%;
+    left: 50%;
+    position: fixed;
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+.RotationAdded
+{
+	border: 1px solid;
+    border-radius: 11px;
+    margin-bottom: 11px;
+}
+.css-kk1bwy-MuiButtonBase-root-MuiMenuItem-root.Mui-selected {
+    background-color: rgba(25, 118, 210, 0.8) !important;
+}
+.RightSide
+{
+	float:right;
+}
+.css-1nmdiq5-menu
+{
+	    z-index: 9 !important;
+}
+.css-okr87t
+{
+height:100% !important;
+}
+.RotationAddedPayment
+{
+	border: 1px solid;
+    border-radius: 11px;
+    clear: both;
+    width: 99%;
+    margin: 0 auto;
+    margin-bottom: 10px;
+}
+.TitleDiv
+{
+	text-align: center;
+}
+.css-19kzrtu,.css-1r4ai6y
+{
+	padding: 0px !important;
+}
+.RotationInner
+{
+	border: 1px solid #1976d2;
+    border-radius: 6px;
+    margin-top: 4px;
+}
+.RotationAddedPaymentBody
+{
+	border: 1px solid #1976d2;
+    border-radius: 6px;
+    margin-bottom: 13px;
+    background-color: #F9F6EE;
+        width: 99%;
+    margin: 0 auto;
+}
+
+/* CalendarRangePicker.css */
+
+/* Container styling for the date picker */
+.date-range-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px;
+      position: static;
+    z-index: 10;
+        background: aquamarine;
+}
+.date-range-picker {
+  display: flex; /* Set the container to flex */
+  gap: 10px; /* Optional: Adds space between the date pickers */
+}
+.centerAlign
+{
+	margin: 0 auto;
+    display: table;
+    font-size: 20px;
+    font-weight: 900;
+}
+
+.date-range-picker .react-datepicker-wrapper {
+  flex: 1; /* Ensures both pickers take equal space */
+}
+.FilterButton
+{
+	    margin-right: 7%;
+}
+/* Date range picker styling */
+.date-range-picker {
+  width: 100%;
+  max-width: 1000px; /* Set a maximum width */
+  overflow-x: auto;
+}
+
+/* Responsive styles for smaller screens */
+@media (max-width: 768px) {
+  .date-range-picker {
+    max-width: 100%; /* Full width on smaller screens */
+    width: 100%;
+    overflow-x: scroll; /* Allow horizontal scrolling if needed */
+  }
+}
+
+@media (max-width: 480px) {
+  .date-range-picker {
+    flex-direction: column;
+    width: 100%;
+    overflow-x: scroll;
+  }
+}
+
+
+.AddPaymentButton
+{
+	margin: 0 auto;
+    margin-bottom: 8px;
+    width: 280px;
+}
+.VisaLetter
+{
+	width:100%;
+}
+.VisaLetter .MuiGrid-item
+{
+	margin: 0 auto;
+	margin-bottom: 20px;
+}
+
+.AddSaveButton{
+	position: relative;
+    float: right;
+    margin-top: 30px;
+}
+.MatchPayment
+{
+	margin-top: 30px;
+	margin-left: 14px;
+}
+.InputLabel
+{
+	text-wrap: nowrap;
+    /*overflow: hidden;
+    text-overflow: ellipsis;*/
+    background: #FFF5EE;
+    min-height: 25px;
+    overflow-wrap: break-word;
+    white-space: normal;
+}
+.MuiFormControl-root
+{
+	/*margin-top: 23px !important;*/
+}
+.MuiGrid-root:has(.ant-picker) {
+   /*margin-top: 23px !important;*/
+}
+.custom-datepicker-dropdown {
+  z-index: 1400 !important; /* Adjust this value as needed */
+}
+.NoTop .MuiFormControl-root
+{
+	margin-top:0px !important;
+	width:100%;
+}
+.VisaLetterContainer
+{
+	width: 97%;
+    margin: 0 auto;
+}
+.MarginoAuto
+{
+	margin:0 auto !important;
+	margin-top: 20px !important;
+    margin-bottom: 20px !important;
+}
+.PlatinumAddedPaymentBody{
+	border: 1px solid #1976d2;
+    border-radius: 6px;
+    margin-bottom: 13px;
+    background-color: #b2ebf2;
+}
+.PlatinumAddedMeetings{
+	border: 1px solid #1976d2;
+    border-radius: 6px;
+    margin-bottom: 13px;
+    background-color: #FFF;
+}
+.PlatinumMeetings
+{
+margin-top: 30px;
+    margin-left: 14px;
+    background: #fff;
+}
+.PlatinumAddedMeetings .MuiGrid-container
+{
+	width: 98%;
+    margin: 0 auto;
+    padding: 0px;
+    margin-left: 0px;
+    margin-bottom: 16px !important;
+}
+.PlatinumAddedPaymentBody .MuiGrid-item
+{
+	width:97%;
+}
+.ant-layout
+{
+position: relative;
+}
+.css-c10ov2
+{
+	margin:0 auto;
+}
+
+
+.UserServices .container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.UserServices .title {
+  text-align: center;
+  font-size: 2.5em;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.UserServices .cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+}
+.welcomeRegister
+{
+	font-size: 1.5em;
+	color:#0a7cdc;
+}
+.SelectClass
+{
+	max-height:40px;
+	margin: 0px 0px 17px 0px;
+}
+.css-13cymwt-control
+{
+	height:auto;
+}
+.UserServices .card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  max-width: 400px;
+  width: 100%;
+}
+
+.UserServices .card h2 {
+  font-size: 1.5em;
+  margin-bottom: 15px;
+  color: #007BFF;
+}
+
+.UserServices .card p {
+  margin: 10px 0;
+  font-size: 1em;
+  color: #555;
+}
+
+.UserServices .card p strong {
+  color: #333;
+}
+
+@media (max-width: 768px) {
+ .UserServices .cards {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+.LoopPayment
+{
+	border: 2px solid ;
+}
+.css-m83pze-MuiFormControl-root-MuiTextField-root
+{
+	margin-top: 0px !important;
+}
+.css-1qks69w
+{
+	margin-top: 0px !important;
+}
+.css-1qot2op-MuiFormControl-root,.css-1u3bzj6-MuiFormControl-root-MuiTextField-root
+{
+	margin-top: 0px !important;
+}
+.css-drodb0, .css-i44wyl
+{
+	margin-top: 0px !important;
+}
+#normal_login
+{
+	width: 600px;
+}
+#normal_login input
+{
+	height: 40px;
+}
+#normal_login button
+{
+	height: 40px;
+    width: 104px;
+    background: yellowgreen;
+}

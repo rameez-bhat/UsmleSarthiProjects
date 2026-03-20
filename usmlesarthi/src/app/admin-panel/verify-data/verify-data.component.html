@@ -1,0 +1,700 @@
+<div class="card-body" [ngSwitch]="landing">
+  <div *ngSwitchCase="'List'">
+    <div *ngIf="loading; else loaded" class="text-center">
+      Fetching the list...
+    </div>
+    <ng-template #loaded>
+      <div class="row">
+      <div class=" mt-2">
+        <ng-select
+          placeholder="Filter by specialities"
+          class="mt-2"
+          [items]="programList"
+          [multiple]="true"
+          bindLabel="PName"
+          bindValue="PId"
+          [(ngModel)]="selectedPIds"
+          (change)="filterVerifyList()"
+        ></ng-select>
+      </div>
+      <div class=" mt-2 ml-2">
+        <ng-select
+          placeholder="Filter by States"
+          class="mt-2"
+          [items]="uniqueStates"
+          [multiple]="true"
+          [(ngModel)]="selectedStateList"
+          (change)="filterVerifyListState()"
+        ></ng-select>
+      </div>
+    </div>
+      <div class="table-responsive">
+        <table class="table table-striped table-hover">
+          <thead>
+            <tr>
+              <th scope="col" class="th-sm text-center">S.No.</th>
+              <th scope="col" class="th-md">User Email</th>
+              <th scope="col">TimeStamp</th>
+              <th scope="col">Specialty</th>
+              <th scope="col">Program Name</th>
+              <th scope="col">State</th>
+              <th scope="col">Frieda ID</th>
+              <th scope="col">Select if verified</th>
+              <th scope="col">Select if rejected</th>
+              <th scope="col">Comments</th>
+              <th scope="col">See the data</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let hospital of verifyList; index as i">
+              <td>{{ i + 1 }}</td>
+              <td>{{ hospital.user.email }}</td>
+              <td>{{ hospital.TimeStampDate }}</td>
+              <td>{{ programObject[hospital.PId].PName }}</td>
+              
+              <td>{{ hospital.hospital.HName }}</td>
+              <td>{{  hospital.hospital.State }}</td>
+              <td>{{  hospital.Frieda}}</td>
+              <td>
+                <input
+                  type="radio"
+                  [name]="hospital.HPInfoId"
+                  [(ngModel)]="hospital.Verified"
+                  value="Yes"
+                />
+              </td>
+              <td>
+                <input
+                  type="radio"
+                  [name]="hospital.HPInfoId"
+                  [(ngModel)]="hospital.Verified"
+                  value="Rejected"
+                />
+              </td>
+              <td><textarea
+                class="form-control"
+                name="imgpercentageComments"
+                aria-describedby="imgpercentageComments"
+                placeholder="Enter Comments Here"
+                rows="3"
+                style="overflow:hidden; resize:none;"
+                [(ngModel)]="hospital.VerifyComment"
+                (input)="adjustHeight($event)"
+              ></textarea></td>
+              <td>
+                <button
+                  [value]="hospital.HPInfoId"
+                  class="btn-flat btn-sm btn-outline-primary"
+                  (click)="takeMeToHospitalData(hospital)"
+                >
+                  View Details
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="text-center font-weight-bolder">
+        <span style="margin-right: 10px"
+          ><input
+            type="radio"
+            name="allDown"
+            value="allYes"
+            (click)="makeAllYes()"
+          />
+          <label> All Verified </label></span
+        >
+        <span style="margin-right: 10px"
+          ><input
+            type="radio"
+            name="allDown"
+            value="allNo"
+            (click)="makeAllReject()"
+          />
+          <label> All Rejected </label></span
+        >
+        <span
+          ><input
+            type="radio"
+            name="allDown"
+            value="allNA"
+            (click)="makeAllNA()"
+          />
+          <label> Unselect all </label></span
+        >
+        <button
+          class="btn btn-block btn-primary btn-outline-primary card-footer"
+          (click)="makeChanges()"
+        >
+          Save changes
+        </button>
+      </div>
+    </ng-template>
+  </div>
+  <div *ngSwitchCase="'Hospital'">
+    <div *ngIf="loading; else loaded" class="text-center">
+      Loading the hospital's data
+    </div>
+    <ng-template #loaded>
+      <div class="row">
+        <div class="col">
+          <button
+            class="btn btn-primary btn-outline-primary float-left"
+            (click)="landing = 'List'"
+          >
+            <i class="ft-arrow-left"></i> Back
+          </button>
+        </div>
+      </div>
+      <div class="container-fluid">
+        <h5 class="font-weight-bold text-uppercase text-center text-primary">
+          {{ selectedHospitalData.hospital.HName }}
+        </h5>
+        <div class="table-responsive">
+          <table class="table table-hover table-bordered table-striped">
+            <thead>
+              <tr>
+                <th>Specialty</th>
+                <th>City</th>
+                <th>State</th>
+                <th>Program type</th>
+                <th>Year of graduation</th>
+              </tr>
+            </thead>
+            <tbody id="table1">
+              <tr>
+                <td>{{ programObject[selectedHospitalData.PId].PName }}</td>
+                <td>{{ selectedHospitalData.hospital.City }}</td>
+                <td>{{ selectedHospitalData.hospital.State }}</td>
+                <!-- <td>
+                  <ng-template
+                    ngFor
+                    let-comment
+                    [ngForOf]="selectedHospitalData.VisaNames"
+                  >
+                    {{ comment }}
+                    <br />
+                  </ng-template>
+                </td> -->
+                <td>{{ selectedHospitalData.ProgramType }}</td>
+                <td>{{ selectedHospitalData.YOG }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover table-bordered table-striped">
+            <thead>
+              <tr>
+                <th>Participating in ERAS</th>
+                <th>DO Percentage</th>
+                <th>IMG Percentage</th>
+                <th>US MD Percentage</th>
+                <th>Last Updated</th>
+              </tr>
+            </thead>
+            <tbody id="table1">
+              <tr>
+                <td>{{ selectedHospitalData.Eras }}</td>
+                <td>{{ selectedHospitalData.doPercentageNew }}</td>
+                <td>{{ selectedHospitalData.imgpercentage }}</td>
+                <td>{{ selectedHospitalData.usmdPercentageNew }}</td>
+                <td>{{ selectedHospitalData.Date }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-hover table-bordered table-striped">
+            <thead>
+              <tr>
+                <th>
+                  Do not sponsor H1, do not accept J1(i.e. only accept GC/ US
+                  Citizen), do not accept H4 EAD
+                </th>
+                <th>J-1 visa sponsorship through ECFMG</th>
+                <th>H-1B visa</th>
+                <th>F-1 visa (OPT 1st year)</th>
+                <th>
+                  Do not sponsor H1, do not accept J1(i.e. only accept GC/ US
+                  Citizen), but accept H4 EAD
+                </th>
+              </tr>
+            </thead>
+            <tbody id="table2">
+              <tr>
+                <td>{{ selectedHospitalData.noVisaNew }}</td>
+                <td>{{ selectedHospitalData.j1VisaNew }}</td>
+                <td>{{ selectedHospitalData.h1VisaNew }}</td>
+                <td>{{ selectedHospitalData.f1VisaNew }}</td>
+                <td>{{ selectedHospitalData.h4VisaNew }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="table-responsive">
+          <h5 style="font-weight: bold" class="text-center text-primary">
+            Detailed Information
+          </h5>
+          <br />
+          <nav class="nav nav-pills nav-justified">
+            <li class="nav-item" *ngFor="let pane of allPanes">
+              <a
+                class="nav-link"
+                data-toggle="pane"
+                ngbNavLink
+                [ngClass]="{ active: pane == showPane }"
+                (click)="showPane = pane"
+                >{{ pane }}</a
+              >
+            </li>
+          </nav>
+          <div class="tab-content">
+            <div
+              class="tab-pane fade"
+              [ngClass]="{
+                'show active': showPane == 'Information from Frieda',
+                hide: showPane != 'Information from Frieda'
+              }"
+            >
+              <div class="table-responsive">
+                <br />
+                <table
+                  style="width: 100%"
+                  class="table table-hover table-bordered table-striped"
+                >
+                  <tr id="Frieda">
+                    <td style="font-weight: bold; width: 50%">
+                      ACGME FREIDA ID Number
+                    </td>
+                    <td>{{ selectedHospitalData.Frieda }}</td>
+                  </tr>
+
+                  <tr id="Frieda">
+                    <td style="font-weight: bold; width: 50%">
+                      Primary Teaching Site
+                    </td>
+                    <td>{{ selectedHospitalData.teachingSiteNew }}</td>
+                  </tr>
+
+                  <tr id="NrmpPrelim">
+                    <td style="font-weight: bold; width: 50%">
+                      NRMP Number (Preliminary)
+                    </td>
+                    <td>{{ selectedHospitalData.NrmpPrelim }}</td>
+                  </tr>
+
+                  <tr id="NrmpCategorical">
+                    <td style="font-weight: bold">NRMP Number (Categorial)</td>
+                    <td>{{ selectedHospitalData.NrmpCategorical }}</td>
+                  </tr>
+
+                  <tr id="NrmpPriCase">
+                    <td style="font-weight: bold">
+                      NRMP Number (Primary Care Categorial)
+                    </td>
+                    <td>{{ selectedHospitalData.NrmpPriCase }}</td>
+                  </tr>
+
+                  <tr id="NrmpAdvance">
+                    <td style="font-weight: bold">NRMP Number (Advance)</td>
+                    <td>{{ selectedHospitalData.NrmpAdvance }}</td>
+                  </tr>
+                  <tr id="usImgPercentage">
+                    <td style="font-weight: bold">US IMG percentage</td>
+                    <td>{{ selectedHospitalData.usImgPercentage }}</td>
+                  </tr>
+                  <tr id="nonUsImgPercentage">
+                    <td style="font-weight: bold">Non US IMG percentage</td>
+                    <td>{{ selectedHospitalData.nonUsImgPercentage }}</td>
+                  </tr>
+                  <tr id="imgpercentageCarribean">
+                    <td style="font-weight: bold">Carribean IMG percentage</td>
+                    <td>{{ selectedHospitalData.imgpercentageCarribean }}</td>
+                  </tr>
+                  <tr id="imgpercentageComments">
+                    <td style="font-weight: bold">
+                      Comments about IMG percentage and friendliness
+                    </td>
+                    <td>
+                      {{ selectedHospitalData.imgpercentageComments }}
+                    </td>
+                  </tr>
+                  <tr id="FirstYearSpots">
+                    <td style="font-weight: bold">
+                      Number of First Year Spots available - Categorical
+                    </td>
+                    <td>{{ selectedHospitalData.FirstYearSpots }}</td>
+                  </tr>
+                  <tr id="FirstYearSpotsPrelim">
+                    <td style="font-weight: bold">
+                      Number of First Year Spots available - Preliminary
+                    </td>
+                    <td>{{ selectedHospitalData.FirstYearSpotsPrelim }}</td>
+                  </tr>
+                  <tr id="FirstYearSpotsComments">
+                    <td style="font-weight: bold">
+                      Comments about Number of First Year Spots available
+                    </td>
+                    <td>
+                      {{ selectedHospitalData.FirstYearSpotsComments }}
+                    </td>
+                  </tr>
+                  <tr id="FirstYearSpotsPrelim">
+                    <td style="font-weight: bold">
+                      Number of First Year Spots available - Preliminary
+                    </td>
+                    <td>{{ selectedHospitalData.FirstYearSpotsPrelim }}</td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+            <div
+              class="tab-pane fade"
+              [ngClass]="{
+                'show active': showPane == 'Score Information',
+                hide: showPane != 'Score Information'
+              }"
+            >
+              <div class="table-responsive">
+                <br />
+                <table
+                  style="width: 100%"
+                  class="table table-hover table-bordered table-striped"
+                >
+                  <tr id="Step1Req">
+                    <td style="font-weight: bold">Preferred STEP 1 score</td>
+                    <td>{{ selectedHospitalData.Step1Req }}</td>
+                  </tr>
+                  <tr id="Step1ScoreLastYearMin">
+                    <td style="font-weight: bold">Minimum</td>
+                    <td>{{ selectedHospitalData.Step1ScoreLastYearMin }}</td>
+                  </tr>
+                  <!--<tr id="Step1ScoreLastYearMax">
+                    <td style="font-weight: bold">Maximum</td>
+                    <td>{{ selectedHospitalData.Step1ScoreLastYearMax }}</td>
+                  </tr>-->
+                  <tr id="Step1Accept">
+                    <td style="font-weight: bold; width: 50%">
+                      Condition about number of Step 1 attempts
+                    </td>
+                    <td>{{ selectedHospitalData.Step1Accept }}</td>
+                  </tr>
+                  <tr id="Step2Req">
+                    <td style="font-weight: bold">Preferred STEP 2 CK Score</td>
+                    <td>{{ selectedHospitalData.Step2Req }}</td>
+                  </tr>
+                  <tr id="Step2Min">
+                    <td style="font-weight: bold">Minimum</td>
+                    <td>{{ selectedHospitalData.Step2Min }}</td>
+                  </tr>
+                 <!-- <tr id="Step2Max">
+                    <td style="font-weight: bold">Maximum</td>
+                    <td>{{ selectedHospitalData.Step2Max }}</td>
+                  </tr>-->
+                  <tr id="Step1Accept">
+                    <td style="font-weight: bold; width: 50%">
+                      Applicants must have passed Step 2 to be considered
+                    </td>
+                    <td>{{ selectedHospitalData.Step2AcceptN || 'NA'}}</td>
+                  </tr>
+                  <tr id="Step2Accept">
+                    <td style="font-weight: bold">
+                      Condition about number of Step 2 CK attempts
+                    </td>
+                    <td>{{ selectedHospitalData.Step2Accept }}</td>
+                  </tr>
+                  <!--<tr id="Step2CSReq">
+                    <td style="font-weight: bold">OET Requirement</td>
+                    <td>{{ selectedHospitalData.Step2CSReq }}</td>
+                  </tr>
+                   <tr id="Step2CSAccept">
+                    <td style="font-weight: bold">
+                      Condition about number of Step 2 CS attempts
+                    </td>
+                    <td>{{ selectedHospitalData.Step2CSAccept }}</td>
+                  </tr> -->
+                  <tr id="Step3Accept">
+                    <td style="font-weight: bold">
+                      What is Step 3 requirement
+                    </td>
+                    <td>{{ selectedHospitalData.Step3Accept }}</td>
+                  </tr>
+                  <tr id="USMLEExamComments">
+                    <td style="font-weight: bold">
+                      General Comments about USMLE EXAMS (Step 1, Step 2 CK and
+                      CS, and Step 3)
+                    </td>
+                    <td>
+                      {{ selectedHospitalData.USMLEExamComments }}
+                    </td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+            <div
+              class="tab-pane fade"
+              [ngClass]="{
+                'show active': showPane == 'Applicant characteristics',
+                hide: showPane != 'Applicant characteristics'
+              }"
+            >
+              <div class="table-responsive">
+                <br />
+               
+                <div class="form-group">
+                  <div >
+                    <div *ngFor="let entry of this.yearDataArrayKeys">
+                      <ng-container *ngIf="entry">
+                        
+                    <table border="1"  cellpadding="8" style="width:100%">
+                     
+                      <tr id="Step3Accept">
+                        <td  style="font-weight: bold; width: 50%">
+                          {{ entry }} Applicant Count:
+                        </td>
+                        <td>{{selectedHospitalData.yearlyData[entry].TotalApplicantsForTheYear }}</td>
+                      </tr>
+                      <tr id="Step3Accept">
+                        <td style="font-weight: bold; width: 50%" >
+                          {{ entry }} Applicants Invited to Interview Count
+                        </td>
+                        <td>{{ selectedHospitalData.yearlyData[entry].TotalAplicantsInvitedForTheYear }}</td>
+                      </tr>
+                      
+                   
+                    </table>
+                  </ng-container>
+                </div>
+                <br>
+                    <div *ngFor="let entry of this.yearDataArrayKeys">
+                      <ng-container *ngIf="entry">
+                        <h3>{{ entry }} Interview Rates by Applicant Characteristic</h3>
+                    <table border="1" cellpadding="8" style="width:100%">
+                          <tr>
+                            <th colspan="3">Signal — Interview Rates <b style="margin-left:20px">(<font color="blue">Note:</font> For specialties that do not have separate gold or silver signals, put all signals under <font color="red">GOLD.</font>)</b></th>
+                            <th colspan="3">Geographic Preference — Interview Rates</th>
+                          </tr>
+                      <tr>
+                        <th>Category</th>
+                        <td>% Interview Invited</td>
+                        <th>Category</th>
+                        <td>% Interview Invited</td>
+                      </tr>
+                      <tr>
+                        <th>Gold Sent</th>
+                        <td>{{ selectedHospitalData.yearlyData[entry].GoldSentInterviewed}}</td>
+                        <th>Aligned</th>
+                        <td>{{selectedHospitalData.yearlyData[entry].AlignedInterviewed}}</td>
+                      </tr>
+                      <tr>
+                        <th>Silver Sent</th>
+                        <td>{{selectedHospitalData.yearlyData[entry].SilverInterviewed}}</td>
+                        <th>Not Aligned</th>
+                        <td>{{selectedHospitalData.yearlyData[entry].NotalignedInterviewed}}</td>
+                      </tr>
+                      <tr>
+                        <th>Did not sent</th>
+                        <td>{{selectedHospitalData.yearlyData[entry].DidnotInterviewed}}</td>
+                        <th>No Preference</th>
+                        <td>{{selectedHospitalData.yearlyData[entry].NopreferenceInterviewed}}</td>
+                      </tr>
+                    
+                    </table>
+                  </ng-container>
+                </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div
+              class="tab-pane fade"
+              [ngClass]="{
+                'show active': showPane == 'Additional Information',
+                hide: showPane != 'Additional Information'
+              }"
+            >
+              <div class="table-responsive">
+                <br />
+                <table
+                  style="width: 100%"
+                  class="table table-hover table-bordered table-striped"
+                >
+                  <tr id="AppDeadline">
+                    <td style="font-weight: bold">
+                      Application deadline for IMGs
+                    </td>
+                    <td>{{ selectedHospitalData.AppDeadline }}</td>
+                  </tr>
+                  <!--<tr id="NumInterviews">
+                    <td style="font-weight: bold">
+                      Number of interview last year
+                    </td>
+                    <td>{{ selectedHospitalData.NumInterviews }}</td>
+                  </tr>-->
+                  <tr id="LORNum">
+                    <td style="font-weight: bold">LOR Number required</td>
+                    <td>{{ selectedHospitalData.LORNum }}</td>
+                  </tr>
+
+                  <tr id="LORReq">
+                    <td style="font-weight: bold; width: 50%">
+                      Does Program require LOR from home country
+                    </td>
+                    <td>{{ selectedHospitalData.LORReq }}</td>
+                  </tr>
+                  <!----<tr id="PTALReq">
+                      <td style="font-weight: bold;">Is PTAL required (california specific requirement) at time of
+                        application </td>
+                      <td>{{selectedHospitalData.PTALReq}}</td>
+
+                    </tr>--->
+                  <tr id="SpanishReq">
+                    <td style="font-weight: bold">
+                      Is Spanish proficiency required
+                    </td>
+                    <td>{{ selectedHospitalData.SpanishReq }}</td>
+                  </tr>
+                  <tr id="USCEReq">
+                    <td style="font-weight: bold">
+                      How many months of USCE Required
+                    </td>
+                    <td>{{ selectedHospitalData.USCEReq }}</td>
+                  </tr>
+                  <tr id="USCENotCon">
+                    <td style="font-weight: bold">
+                      What type of USCE does it not consider
+                    </td>
+                    <td>{{ selectedHospitalData.USCENotCon }}</td>
+                  </tr>
+                  <tr id="USCEReqOrPref">
+                    <td style="font-weight: bold">Is USCE Required?</td>
+                    <td>
+                      {{ selectedHospitalData.USCEReqOrPref }}
+                    </td>
+                  </tr>
+                  <tr id="ECFMGReq">
+                    <td style="font-weight: bold">
+                      ECFMG certificate required at time of application
+                    </td>
+                    <td>{{ selectedHospitalData.ECFMG }}</td>
+                  </tr>
+                  <tr id="ResearchOpp">
+                    <td style="font-weight: bold">
+                      Does program offer research opportunities during residency
+                    </td>
+                    <td>{{ selectedHospitalData.ResearchOpp }}</td>
+                  </tr>
+                  <tr id="ProgramPref">
+                    <td style="font-weight: bold">
+                      Does program prefer any of the following?
+                    </td>
+                    <td>{{ selectedHospitalData.ProgramPref }}</td>
+                  </tr>
+                  <!-- <tr id="InhouseFellow">
+                    <td style="font-weight: bold">
+                      Are there inhouse fellowships
+                    </td>
+                    <td>{{ selectedHospitalData.InhouseFellow }}</td>
+                  </tr> -->
+                  <tr id="DirName">
+                    <td style="font-weight: bold">Program director details</td>
+                    <td>{{ selectedHospitalData.programDirectorNew }}</td>
+                  </tr>
+                  <!-- <tr id="DirEmail">
+                    <td style="font-weight: bold">Program director Email</td>
+                    <td>{{ selectedHospitalData.DirEmail }}</td>
+                  </tr> -->
+                  <tr id="CorName">
+                    <td style="font-weight: bold">Person to contact details</td>
+                    <td>{{ selectedHospitalData.personToContactNew }}</td>
+                  </tr>
+                  <!-- <tr id="CorEmail">
+                    <td style="font-weight: bold">Coordinator Email</td>
+                    <td>{{ selectedHospitalData.CorEmail }}</td>
+                  </tr>
+                  <tr id="CorPhone">
+                    <td style="font-weight: bold">Coordinator Phone</td>
+                    <td>{{ selectedHospitalData.CorPhone }}</td>
+                  </tr> -->
+                  <tr id="address">
+                    <td style="font-weight: bold">
+                      Full Correspondence Address
+                    </td>
+                    <td>{{ selectedHospitalData.address }}</td>
+                  </tr>
+                  <tr id="website">
+                    <td style="font-weight: bold">
+                      Website Address of the hospital
+                    </td>
+                    <td>{{ selectedHospitalData.website }}</td>
+                  </tr>
+                  <tr id="reLink">
+                    <td style="font-weight: bold">
+                      Residency Explorer Link :-
+                    </td>
+                    <td>{{ selectedHospitalData.reLink }}</td>
+                  </tr>
+                  <tr id="friedaLink">
+                    <td style="font-weight: bold">Frieda Link :-</td>
+                    <td>{{ selectedHospitalData.friedaLink }}</td>
+                  </tr>
+                  <!-- <tr id="websummary">
+                    <td style="font-weight: bold">
+                      Summary of the relevant info from the Hospital Website
+                    </td>
+                    <td>
+                      <ng-template
+                        ngFor
+                        let-comment
+                        [ngForOf]="selectedHospitalData.websummary"
+                      >
+                        {{ comment }}
+                        <br />
+                      </ng-template>
+                    </td>
+                  </tr>
+                  <tr id="notes">
+                    <td style="font-weight: bold">
+                      Source's personal notes about the hospital
+                    </td>
+                    <td>
+                      <ng-template
+                        ngFor
+                        let-comment
+                        [ngForOf]="selectedHospitalData.notes"
+                      >
+                        {{ comment }}
+                        <br />
+                      </ng-template>
+                    </td>
+                  </tr> -->
+                </table>
+              </div>
+            </div>
+          </div>
+          <div class="form-group row col-12">
+            <div class="form-group col-12"><textarea
+              class="form-control"
+              name="imgpercentageComments"
+              aria-describedby="imgpercentageComments"
+              placeholder="Enter Comments Here"
+              rows="3"
+              style="overflow:hidden; resize:none;"
+              [(ngModel)]="selectedHospitalData.VerifyComment"
+              (input)="adjustHeight($event)"
+            ></textarea></div>
+            <div class="form-group col-3">
+              <button class="btn btn-block btn-primary btn-outline-primary card-footer" (click)="rejectSelectedData()"  type="button">Reject</button>
+            </div>
+            <div class="form-group col-3">
+              <button class="btn btn-block btn-primary btn-outline-primary card-footer" (click)="verifySelectedData()" type="button">Verify</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ng-template>
+  </div>
+</div>

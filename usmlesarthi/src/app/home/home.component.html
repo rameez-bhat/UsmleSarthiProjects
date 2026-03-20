@@ -1,0 +1,145 @@
+<div class="bg-light card-outline-primary">
+  <div class="text-center row" *ngIf="landing==='user'">
+    <div class="col-sm-5 col-md-3 card m-3 mr-auto font-weight-bolder justify-content-center">
+      <img class="card-img-top" src="../../assets/RotationsLow.jpeg" alt="Image not added">
+      <div class="card-body">
+        <h6 class="card-title text-primary">
+          Clinical Rotations
+        </h6>
+        <br/>
+        <div class="card-text">
+          Find Clinical Rotations
+        </div>
+        </div>
+        <button class="btn btn-block btn-primary btn-outline-primary card-footer stretched-link" (click)="router.navigate(['rotations'])">
+          Continue
+        </button>
+    </div>
+      <div class="col-sm-5 col-md-3 card m-3 mr-auto font-weight-bolder justify-content-center" >
+        <img class="card-img-top" src="../../assets/UpdateListLow.jpeg" alt="Image not added">
+        <div class="card-body">
+          <h6 class="card-title text-primary">
+            Update List
+          </h6>
+          <br/>
+          <div class="card-text">
+            Provide Hospital Info to help enriching SarthiList
+          </div>
+        </div>
+          <button class="btn btn-block btn-primary btn-outline-primary card-footer stretched-link" (click)="router.navigate(['crowdsourcing'])">
+            Continue
+          </button>
+      </div>
+      <div class="col-sm-5 col-md-3 card m-3 mr-auto font-weight-bolder justify-content-center">
+        <img class="card-img-top" src="../../assets/SarthiListLow.jpeg" alt="Image not added">
+        <div class="card-body">
+          <h6 class="card-title text-primary">
+            Sarthi List
+          </h6>
+          <br/>
+          <div class="card-text">
+            Search Hospitals which are good fit for your profile
+          </div>
+          </div>
+          <button class="btn btn-block btn-primary btn-outline-primary card-footer stretched-link" (click)="router.navigate(['sarthilist'])">
+            Continue
+          </button>
+      </div>
+      <div class="col-sm-5 col-md-3 card m-3 mr-auto font-weight-bolder justify-content-center">
+        <img class="card-img-top" src="../../assets/InterviewLow.jpeg" alt="Image not added">
+        <div class="card-body">
+          <h6 class="card-title text-primary">
+            Interview Insights
+          </h6>
+          <br/>
+          <div class="card-text">
+            Access Interview Data and Share your Interview Experience
+          </div>
+          </div>
+          <button class="btn btn-block btn-primary btn-outline-primary card-footer stretched-link" (click)="router.navigate(['interviews'])">
+            Continue
+          </button>
+      </div>
+      <div class="col-sm-5 col-md-3 card m-3 mr-auto font-weight-bolder justify-content-center">
+        <img class="card-img-top" src="../../assets/rolLow.jpeg" alt="Image not added">
+        <div class="card-body">
+          <h6 class="card-title text-primary">
+            Rank Order List
+          </h6>
+          <br/>
+          <div class="card-text">
+            Create Your Personalized Rank Order List
+          </div>
+          </div>
+          <button class="btn btn-block btn-primary btn-outline-primary card-footer stretched-link" (click)="router.navigate(['rol'])">
+            Continue
+          </button>
+      </div>
+      <div class="col-sm-5 col-md-3  m-3 mr-auto font-weight-bolder justify-content-center bg-light">
+        
+      </div>
+  </div>
+  <div class="text-center row" *ngIf="landing==='unknown'">
+    <div class="col-sm-12 col-md-5 card mt-5 ml-auto mr-auto font-weight-bolder justify-content-center">
+      <img class="card-img-top" src="../../assets/RotationsLow.jpeg" alt="Image not added">
+      <div class="card-body">
+        <h6 class="card-title text-primary">
+          Clinical Rotations
+        </h6>
+        <br/>
+        <div class="card-text">
+          Find Clinical Rotations
+        </div>
+        </div>
+        <button class="btn btn-block btn-primary btn-outline-primary card-footer stretched-link" (click)="router.navigate(['rotations'])">
+          Continue
+        </button>
+    </div>
+    <div class="col-sm-12 col-md-5 card mt-5 ml-auto mr-auto font-weight-bolder justify-content-center" >
+        <img class="card-img-top" src="../../assets/Match.jpeg" alt="Image not added">
+        <div class="card-body">
+          <h6 class="card-title text-primary">
+            Match
+          </h6>
+          <br/>
+          <div class="card-text">
+            Find Match Plans
+          </div>
+        </div>
+          <button class="btn btn-block btn-primary btn-outline-primary card-footer stretched-link" (click)="router.navigate(['match'])">
+            Continue
+          </button>
+      </div>
+      <div class="col-sm-12 col-md-5 card mt-5 ml-auto mr-auto font-weight-bolder justify-content-center" >
+        <img class="card-img-top" src="../../assets/Research.jpeg" alt="Image not added">
+        <div class="card-body">
+          <h6 class="card-title text-primary">
+            Research
+          </h6>
+          <br/>
+          <div class="card-text">
+            Find Research Plans
+          </div>
+        </div>
+          <button class="btn btn-block btn-primary btn-outline-primary card-footer stretched-link" (click)="router.navigate(['research'])">
+            Continue
+          </button>
+      </div>
+      <div class="col-sm-12 col-md-5 card mt-5 ml-auto mr-auto font-weight-bolder justify-content-center" >
+        <img class="card-img-top" src="../../assets/SarthiStudentsLow.jpeg" alt="Image not added">
+        <div class="card-body">
+          <h6 class="card-title text-primary">
+            Sarthi Students
+          </h6>
+          <br/>
+          <div class="card-text">
+            Resources for Sarthi Students
+          </div>
+        </div>
+          <button class="btn btn-block btn-primary btn-outline-primary card-footer stretched-link" (click)="takeMeToUser()">
+            Continue
+          </button>
+      </div>
+      
+  </div>
+</div>

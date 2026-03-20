@@ -1,0 +1,261 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+      function isSignedIn() {
+        return request.auth.uid != null;
+      }
+      function isAdmin() {
+        return request.auth.token.admin == true
+      }
+      function isAuthor() {
+        return request.auth.token.author == true
+      }
+      function hasAnyPersmission() {
+        return isAdmin()||isAuthor();
+      }
+      function isAuthorized() {
+        return isSignedIn() && hasAnyPersmission();
+      }
+      function getRole() {
+      	return get(/databases/$(database)/documents/UsersRoles/$(request.auth.uid)).data.Role;
+      }
+      function isAllowed() {
+      	return getRole()=="Admin" || getRole()=="Silver" || getRole()=="Mentor";
+      }
+    // This rule allows anyone on the internet to view, edit, and delete
+    // all data in your Firestore database. It is useful for getting
+    // started, but it is configured to expire after 30 days because it
+    // leaves your app open to attackers. At that time, all client
+    // requests to your Firestore database will be denied.
+    //
+    // Make sure to write security rules for your app before that time, or else
+    // your app will lose access to your Firestore database
+    match /adminUserInfo/{cartID} {
+      allow read, create, update, delete: if isSignedIn() && isAdmin();
+    }
+    match /userInfo/{uuiidd} {
+      allow read, create, update, delete: if request.auth.uid == uuiidd || isAdmin();
+    }
+    match /resourceTypes/{rts} {
+      allow create, update, delete: if isAuthorized();
+      allow read: if isSignedIn();
+    }
+    match /resources/{res} {
+      allow create, update, delete: if isAuthorized();
+      allow read: if isSignedIn();
+    }
+    match /highYieldSubTopics/{hy} {
+      allow create, update, delete: if isAuthorized();
+      allow read: if isSignedIn();
+    }
+    match /subjects/{uuiidd} {
+      allow create, update, delete: if isAuthorized();
+      allow read: if isSignedIn();
+    }
+    match /tags/{uuiidd} {
+      allow create, update, delete: if isAuthorized();
+      allow read: if isSignedIn();
+    }
+    match /topics/{uuiidd} {
+      allow create, update, delete: if isAuthorized();
+      allow read: if isSignedIn();
+    }
+    match /pspNames/{uuiidd} {
+      allow create, update, delete: if isAuthorized();
+      allow read: if isSignedIn();
+    }
+    match /pspLists/{uuiidd} {
+      allow create, update, delete: if isAuthorized();
+      allow read: if isSignedIn();
+    }
+    match /assessments/{uuiidd} {
+      allow create, update, delete: if isAuthorized();
+      allow read: if isSignedIn();
+    }
+    match /designatedAssessmentsPerTopic/{uuiidd} {
+      allow create, update, delete: if isAuthorized();
+      allow read: if isSignedIn();
+    }
+    match /revisionNode/{uuiidd} {
+      allow create, update, delete: if isAuthorized();
+      allow read: if isSignedIn();
+    }
+    match /privateStudyNotes/{examid}/{uuiidd}/{rid} {
+      allow create, update, delete: if isSignedIn()&&uuiidd==request.auth.uid;
+      allow read: if isSignedIn()&&uuiidd==request.auth.uid;
+    }
+    match /sharedStudyNotes-USMLE1/{id} {
+      allow create, update, delete: if isSignedIn();
+      allow read: if isSignedIn();
+    }
+    match /reportedProblems/{autoid} {
+      allow create, update, delete: if isSignedIn();
+      allow read: if isSignedIn();
+    }
+    match /reportedFeedback/{autoid} {
+      allow create, update, delete: if isSignedIn();
+      allow read: if isSignedIn();
+    }
+    match /feedbackElements/{autoid} {
+      allow create, update, delete: if isSignedIn();
+      allow read: if isSignedIn();
+    }
+    match /generalfbElements/{autoid} {
+      allow create, update, delete: if isSignedIn();
+      allow read: if isSignedIn();
+    }
+    match /generalUserInfoElements/{autoid} {
+      allow create, update, delete: if isSignedIn();
+      allow read: if true;
+    }
+    match /hotList/{autoid} {
+      allow create, update, delete: if isSignedIn();
+      allow read: if true;
+    }
+    match /banners/{autoid} {
+      allow create, update, delete: if isSignedIn();
+      allow read: if true;
+    }
+    match /mail/{autoid} {
+      allow create, update, delete: if isSignedIn();
+      allow read: if isSignedIn();
+    }
+    match /Users/{uuiidd}{
+    	allow read : if isSignedIn(); 
+      allow write: if isSignedIn() && (request.auth.uid == uuiidd || getRole()=="Admin");
+    }
+    match /Visa/{document=**}{
+    	allow read: if isSignedIn();
+      allow write: if isSignedIn() && getRole()=="Admin";
+    }
+    match /Hospital/{document=**}{
+    	allow read : if isSignedIn() && isAllowed(); 
+      allow write: if isSignedIn() && getRole()=="Admin";
+    }
+    match /HospitalsReplacedRecords/{document=**}{
+    	allow read : if isSignedIn() && isAllowed(); 
+      allow write: if isSignedIn() && getRole()=="Admin";
+    }
+    match /HospitalProgram/{document=**}{
+    	allow read, write : if isSignedIn() && isAllowed(); 
+    }
+    match /HospitalProgramInfo/{document=**}{
+    	allow read : if isSignedIn() && isAllowed(); 
+      allow write: if isSignedIn() && isAllowed();
+    }
+    match /Interviews/{document=**}{
+    	allow read, write: if isSignedIn() && isAllowed();
+    }
+    match /InterviewsInfo/{document=**}{
+    	allow read, write: if isSignedIn() && isAllowed();
+    }
+    match /Observership/{document=**}{
+    	allow read, write: if isSignedIn() && isAllowed();
+    }
+    match /Program/{document=**}{
+    	allow read : if isSignedIn() && isAllowed(); 
+      allow write: if isSignedIn() && getRole()=="Admin";
+    }
+    match /UsersMatch/{document=**}{
+    	allow read : if isSignedIn() && isAllowed(); 
+      allow write: if isSignedIn() && getRole()=="Admin";
+    }
+    match /UsersPayments/{uuiidd}{
+    	allow read : if isSignedIn(); 
+      allow write: if isSignedIn() && getRole()=="Admin";
+    }
+    match /ReferralCodes/{uuiidd}{
+    	allow read : if isSignedIn() && (request.auth.uid == uuiidd || getRole()=="Admin"); 
+      allow write: if isSignedIn() && getRole()=="Admin";
+    }
+    match /MeetingNotes/{uuiidd}{
+    	allow read : if isSignedIn() && (request.auth.uid == uuiidd || getRole()=="Admin"|| getRole()=="Mentor"); 
+      allow write: if isSignedIn() && (request.auth.uid == uuiidd || getRole()=="Admin");
+    }
+    match /UserFav/{document=**}{
+    	allow read, write: if isSignedIn() && isAllowed();
+    }
+    match /UserNote/{document=**}{
+    	allow read, write: if isSignedIn() && isAllowed();
+    }
+    match /Factors/{document=**}{
+    	allow read, write: if isSignedIn() && isAllowed();
+    }
+    match /FactorsWeights/{document=**}{
+    	allow read, write: if isSignedIn() && isAllowed();
+    }
+    match /HospitalScores/{document=**}{
+    	allow read, write: if isSignedIn() && isAllowed();
+    }
+    match /UsersExtraData/{uuiidd}{
+    	allow read : if isSignedIn() ; 
+      allow write: if isSignedIn() && (request.auth.uid == uuiidd || getRole()=="Admin");
+    }
+    match /OtherHospitalProgramInfo/{document=**}{
+    	allow read, write: if isSignedIn() && isAllowed();
+    }
+    match /UsersRoles/{uuiidd}{
+    	allow read, create : if isSignedIn() && (request.auth.uid == uuiidd || getRole()=="Admin" || getRole()=="Mentor"); 
+      allow update, delete: if isSignedIn() && getRole()=="Admin";
+    }
+    match /Rotations/{document=**}{
+    	allow read : if true;
+      allow write, update, delete : if isSignedIn() && (getRole ()=="Admin" || getRole()=="Mentor");
+    }
+     match /Housings/{document=**}{
+      allow read : if true;
+      allow write, update, delete : if isSignedIn() && (getRole ()=="Admin" || getRole()=="Mentor");
+    }
+    match /RotationReviews/{document=**}{
+    	allow read : if true;
+      allow write, update, delete : if isSignedIn() && getRole ()=="Admin";
+    }
+    match /RotationEmails/{document=**}{
+      allow read, write, update, delete : if isSignedIn() && (getRole ()=="Admin" || getRole()=="Mentor");
+    }
+    match /Enquiries/{document=**}{
+    	allow read: if isSignedIn();
+      allow write: if true;
+    }
+    match /HousingEnquiries/{document=**}{
+      allow read: if isSignedIn();
+      allow write: if true;
+    }
+    match /FAQs/{document=**}{
+    	allow read : if true;
+      allow write, update, delete : if isSignedIn() && getRole ()=="Admin";
+    }
+    //match /{document=**} {
+  	//	allow read, write: if isSignedIn();
+  	//}  //Added for UsmleSarthi V2 -- Lovish
+//    match /{document=**} {
+//      allow read, write: if request.time < timestamp.date(2020, 12, 29);
+//    }   
+match /{document=**} {
+			allow read : if true;
+      allow write, update, delete : if isSignedIn() && getRole ()=="Admin";
+    }
+  }
+    match /databases/{database}/documents {
+      match /customers/{uid} {
+        allow read: if request.auth.uid == uid;
+
+      match /checkout_sessions/{id} {
+        allow read, write: if request.auth.uid == uid;
+      }
+      match /subscriptions/{id} {
+        allow read: if request.auth.uid == uid;
+      }
+    }
+
+    match /products/{id} {
+      allow read: if true;
+
+      match /prices/{id} {
+        allow read: if true;
+      }
+    }
+  }  
+}
+
+

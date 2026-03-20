@@ -1,0 +1,347 @@
+<div class=" mt-5 text-center animate__animated animate__fadeIn" *ngIf="PaymentSuccessFailur=='success'">
+  <div class="card shadow-lg border-0 rounded-4 p-2 mx-auto" >
+   <div *ngIf="!paymentscreen && FeeType=='Application'">
+    <div class="success-checkmark">
+      <div class="check-icon">
+        <span class="icon-line line-tip"></span>
+        <span class="icon-line line-long"></span>
+        <div class="icon-circle"></div>
+        <div class="icon-fix"></div>
+      </div>
+    </div>
+    <h2 class="text-success mt-4">Payment Successful 🎉</h2>
+    <p class="text-muted mt-3">
+      <strong>{{studentEmail}}</strong>!.
+    </p>
+      <p>Thank you for your payment — your transaction as below,</p>
+      <div class="mt-4">
+        <p><strong>Location Code:</strong> {{rotationCode}}</p>
+        <p><strong>Email ID:</strong> {{studentEmail}}</p>
+        <p><strong>Amount Paid:</strong> ${{Amount / 100}}</p>
+      </div>
+      <p>has been successfully completed. Our team will share your rotation contract within the next 24–48 hours.
+    </p>
+    <div *ngIf="rotationFeeCollectedBy=='usmle'">
+    <p>
+      Please note that to <b>reserve your slot and be officially connected with the physician,</b> the <b>full rotation fee</b> must be paid.
+    </p>
+    <div>You can complete your payment of Rotation:{{rotationCode}} here</div>
+    <div class="action-buttons">
+      <button class="btn primary"  (click)="choosePaymentType()">Pay Rotation Fee</button>
+      <!--<button class="btn outline-success ml-2" (click)="openWhatsApp()">Write Query to Support</button>
+      <button class="btn outline-danger ml-2" (click)="openGmail()">Email Support</button>-->
+      <button class="btn outline-danger ml-2" (click)="openGmail()"><img src="https://www.svgrepo.com/show/223047/gmail.svg" alt="Gmail" width="18" class="gmailicon"></button>
+                <button class="btn outline-success ml-2" (click)="openWhatsApp()"> <i class="fa fa-whatsapp"></i></button>
+    </div>
+    <div class="m-2">
+      If you prefer not to pay the full amount now, you may do so <b>45 days prior to your start date.</b> However, please note that <b>availability may change,</b> so it is important to <b>recheck the availability</b> at that time.
+    </div>
+    <div class="m-2">If you need visa or acceptance letter please complete the form below:
+      <a href="https://docs.google.com/forms/d/e/1FAIpQLSf2LAAkyopF-QUhln6El5nhDr3atrTizfoOFUSMBrRcGiFRhQ/viewform" target="_blank">Here</a>
+    </div>
+  </div>
+  <div *ngIf="rotationFeeCollectedBy!='usmle'">
+    <div class="m-2">
+      Once the contract is signed, our team will connect you with the physician via email .
+    </div>
+    <div class="m-2">If you need visa or acceptance letter please complete the form below:
+      <a href="https://docs.google.com/forms/d/e/1FAIpQLSf2LAAkyopF-QUhln6El5nhDr3atrTizfoOFUSMBrRcGiFRhQ/viewform" target="_blank">Here</a>
+    </div>
+    <div>If you have any questions or require assistance, please contact us</div>
+    <div class="action-buttons">
+      
+      <button class="btn outline-danger ml-2" (click)="openGmail()"><img src="https://www.svgrepo.com/show/223047/gmail.svg" alt="Gmail" width="18" class="gmailicon"></button>
+                <button class="btn outline-success ml-2" (click)="openWhatsApp()"> <i class="fa fa-whatsapp"></i></button>
+    </div>
+  </div>
+
+</div>
+<div *ngIf="!paymentscreen && (FeeType=='MatchFee' || FeeType=='ResearchFee')">
+  <div class="success-checkmark">
+    <div class="check-icon">
+      <span class="icon-line line-tip"></span>
+      <span class="icon-line line-long"></span>
+      <div class="icon-circle"></div>
+      <div class="icon-fix"></div>
+    </div>
+  </div>
+  <h2 class="text-success mt-4">Payment Successful 🎉</h2>
+  <p class="text-muted mt-3">
+    <strong>{{studentEmail}}</strong>!.
+  </p>
+    <p>Thank you for your payment — your transaction as below,</p>
+    <div class="mt-4">
+      <p><strong>Plan Code:</strong> {{rotationCode}}</p>
+      <p><strong>Email ID:</strong> {{studentEmail}}</p>
+      <p *ngIf="TotalInstallementsPaid==1"><strong>Amount Paid:</strong> ${{Amount / 100}}</p>
+      <p *ngIf="TotalInstallementsPaid>1"><strong>Your Agreed To Pay Full Amount In :</strong> {{TotalInstallementsPaid}} Installements</p>
+      <p *ngIf="TotalInstallementsPaid>1"><strong>You Paid Your Installement No : {{InstallementNo}}</strong>  of : ${{(Amount / 100)/2}}</p>
+      <p *ngIf="Amount-feePaidtoShow>0"><strong>Processing Charges 4% + $0.30 :</strong> ${{(Amount-feePaidtoShow) / 100}}</p>
+      <p *ngIf="Amount-feePaidtoShow>0"><strong>Net Payment:</strong> ${{feePaidtoShow / 100}}</p>
+    </div>
+    <p>has been successfully completed. Our team will contact you within the <b>next 24–48 hours.</b>
+  </p>
+  <div>
+  <div>If you have any questions or need assistance, please feel free to reach out to us at</div>
+  <div class="action-buttons">
+
+    <button class="btn outline-danger ml-2" (click)="openGmail()"><img src="https://www.svgrepo.com/show/223047/gmail.svg" alt="Gmail" width="18" class="gmailicon"></button>
+              <button class="btn outline-success ml-2" (click)="openWhatsApp()"> <i class="fa fa-whatsapp"></i></button>
+  </div>
+</div>
+</div>
+<div *ngIf="!paymentscreen && FeeType=='Rotation' && TotalInstallementsPaid==1 && InstallementNo==1">
+  <div class="success-checkmark">
+    <div class="check-icon">
+      <span class="icon-line line-tip"></span>
+      <span class="icon-line line-long"></span>
+      <div class="icon-circle"></div>
+      <div class="icon-fix"></div>
+    </div>
+  </div>
+  <h2 class="text-success mt-4">Payment Successful 🎉</h2>
+  <p class="text-muted mt-3">
+    <strong>{{studentEmail}}</strong>!.
+  </p>
+    <p>Thank you for your payment — your transaction as below,</p>
+    <div class="mt-4">
+      <p><strong>Location Code:</strong> {{rotationCode}}</p>
+      <p><strong>Email ID:</strong> {{studentEmail}}</p>
+      <p><strong>Amount Paid:</strong> ${{Amount / 100}}</p>
+      <p *ngIf="Amount-feePaidtoShow>0"><strong>Processing Charges 4% + $0.30 :</strong> ${{(Amount-feePaidtoShow) / 100}}</p>
+      <p *ngIf="Amount-feePaidtoShow>0"><strong>Net Payment:</strong> ${{feePaidtoShow / 100}}</p>
+    </div>
+    <p>has been successfully completed. Our team will connect you with the Physician within the <b>next 24–48 hours.</b>
+  </p>
+  <div>
+  <div>If you have any questions or need assistance, please feel free to reach out to us at</div>
+  <div class="action-buttons">
+
+    <button class="btn outline-danger ml-2" (click)="openGmail()"><img src="https://www.svgrepo.com/show/223047/gmail.svg" alt="Gmail" width="18" class="gmailicon"></button>
+              <button class="btn outline-success ml-2" (click)="openWhatsApp()"> <i class="fa fa-whatsapp"></i></button>
+  </div>
+</div>
+</div>
+<div *ngIf="!paymentscreen && FeeType=='Rotation' && TotalInstallementsPaid>1 && InstallementNo!=TotalInstallementsPaid">
+  <div class="success-checkmark">
+    <div class="check-icon">
+      <span class="icon-line line-tip"></span>
+      <span class="icon-line line-long"></span>
+      <div class="icon-circle"></div>
+      <div class="icon-fix"></div>
+    </div>
+  </div>
+  <h2 class="text-success mt-4">Payment Successful 🎉</h2>
+  <p class="text-muted mt-3">
+    <strong>{{studentEmail}}</strong>!.
+  </p>
+    <p>Thank you for your payment — your transaction as below,</p>
+    <div class="mt-4">
+      <p><strong>Location Code:</strong> {{rotationCode}}</p>
+      <p><strong>Email ID:</strong> {{studentEmail}}</p>
+      <p><strong>Amount Paid:</strong> ${{Amount / 100}}</p>
+    </div>
+    <p>has been successfully completed.
+  </p>
+  <div>
+    <p>
+      Please note that in order to <b>be connected with the physician and reserve your spot,</b> the <b>entire rotation fee</b> must be paid in full.
+    </p>
+    <div class="m-2">
+      If you prefer not to pay the full amount now, you may do so <b>45 days prior to your start date.</b> However, please note that <b>availability may change,</b> so it is important to <b>recheck the availability</b> at that time.
+    </div>
+  <div>If you have any questions or need assistance, please feel free to reach out to us at</div>
+  <div class="action-buttons">
+
+    <button class="btn outline-danger ml-2" (click)="openGmail()"><img src="https://www.svgrepo.com/show/223047/gmail.svg" alt="Gmail" width="18" class="gmailicon"></button>
+    <button class="btn outline-success ml-2" (click)="openWhatsApp()"> <i class="fa fa-whatsapp"></i></button>
+  </div>
+</div>
+</div>
+    
+
+    <!--<button class="btn btn-success btn-lg rounded-pill mt-4" ng-click="goToDashboard()">
+      Back to Dashboard
+    </button>-->
+    <div class="booking-box payment-screen" *ngIf="paymentscreen">
+  
+     
+  
+      <div class="payment-container">
+        <h3 class="text-center mb-3">Select Your Payment Method</h3>
+        <label class="terms-inline">
+          <input type="checkbox" [(ngModel)]="termsAccepted" />
+          I agree with the above terms
+        </label>
+        <div class="payment-buttons">
+          <button 
+            class="btn m-2"
+            [ngClass]="{ 'btn-primary active-method': paymentSelectionType === 'stripe', 'btn-outline-primary': paymentSelectionType !== 'stripe' }"
+            [disabled]="!termsAccepted"
+            (click)="pay('stripe')"
+          >
+            💳 Credit/Debit Card
+          </button>
+      
+          <button 
+            class="btn m-2"
+            [ngClass]="{ 'btn-warning active-method': paymentSelectionType === 'zelle', 'btn-outline-warning': paymentSelectionType !== 'zelle' }"
+            [disabled]="!termsAccepted"
+            (click)="pay('zelle')"
+          >
+            🟣 Pay via Zelle
+          </button>
+      
+          <button 
+            class="btn m-2"
+            [ngClass]="{ 'btn-secondary active-method': paymentSelectionType === 'wire', 'btn-outline-secondary': paymentSelectionType !== 'wire' }"
+            [disabled]="!termsAccepted"
+            (click)="pay('wire')"
+          >
+            🏦 Wire Transfer
+          </button>
+        </div>
+      
+        <!-- Zelle Block -->
+        <div class="payment-block ZelleB" *ngIf="paymentSelectionType === 'zelle'">
+          <div class="tooltip-arrow zelle-arrow"></div>
+          <div class="payment-info card shadow-sm">
+            <div class="card-body">
+              <h4>💜 Zelle Payment Details</h4>
+              <div class="info-row"><span>Name:</span><span>MedSarthi LLC</span></div>
+              <div class="info-row"><span>Email:</span><span>pawankhera@usmlesarthi.com</span></div>
+              <div class="info-row"><span>Instructions:</span><span>Include the student’s name in notes and email <b>enroll@usmlesarthi.com</b> with payment proof.</span></div>
+              <div class="info-row"><span>Rotation Fee:</span><span>${{ RotationFee }}</span></div>
+              <div class="info-row" *ngIf="discountAmount"><span>Congratulations! You are eligible for a discount 👇</span></div>
+              <div class="info-row" *ngIf="discountAmount"><span>Discount:</span><span>${{ discountAmount }}</span></div>
+              <div class="info-row" *ngIf="PromotorDiscountsAmount"><span>Referral Discount:</span><span>${{PromotorDiscountsAmount}}</span></div>
+              <div class="info-row"><span>Total Fee:</span><span>${{ (RotationFee-discountAmount-PromotorDiscountsAmount) }}</span></div>
+      
+              <div class="action-row">
+                
+                <button class="btn outline-danger ml-2" (click)="openGmail()"><img src="https://www.svgrepo.com/show/223047/gmail.svg" alt="Gmail" width="18" class="gmailicon"></button>
+                <button class="btn outline-success ml-2" (click)="openWhatsApp()"> <i class="fa fa-whatsapp"></i></button>
+                <!--<button class="btn btn-outline-danger" (click)="openGmail()">
+                  <i class="bi bi-envelope-fill"></i> Email Support
+                </button>-->
+              </div>
+            </div>
+          </div>
+        </div>
+      
+        <!-- Stripe Block -->
+        <div class="payment-block StripB" *ngIf="paymentSelectionType === 'stripe'">
+          <div class="tooltip-arrow stripe-arrow"></div>
+          <div class="payment-info card shadow-sm">
+            <div class="card-body">
+              <h4>💳 Stripe Payment Details</h4>
+              <div class="info-row"><span>Name:</span><span>MedSarthi LLC</span></div>
+              <div class="info-row"><span>Rotation Fee:</span><span>${{ RotationFee }}</span></div>
+              <div class="info-row" *ngIf="discountAmount"><span>Congratulations! You are eligible for a discount 👇</span></div>
+              <div class="info-row" *ngIf="discountAmount"><span>Discount:</span><span>${{ discountAmount }}</span></div>
+              <div class="info-row"><span>Processing Fee:</span><span>${{ (((RotationFee)*4/100)+0.30) | number:'1.2-2' }}</span></div>
+              <div class="info-row" *ngIf="PromotorDiscountsAmount"><span>Referral Discount:</span><span>${{PromotorDiscountsAmount}}</span></div>
+              <div class="info-row"><span>Total Payment:</span><span><b>${{ (0.30 + (RotationFee-discountAmount-PromotorDiscountsAmount) + ((RotationFee)*4/100)) | number:'1.2-2' }}</b></span></div>
+              <div class="info-row" *ngIf="TotalInstallements>1 && !payOtherAmount">
+                <span> No Of Installements</span>
+                <span ><ng-select
+                  class="form-control"
+                  name="doctorofrotation"
+                  bindLabel="text"
+                  bindValue="value"   
+                  [items]="TotalInstallementDropDown"
+                  [multiple]="false"
+                  [(ngModel)]="TotalInstallementsSelected"
+                  style="padding:0px"
+                ></ng-select></span>
+            </div>
+            <label class="terms-inline" style="display:table">
+          <input type="checkbox" [(ngModel)]="payOtherAmount" />
+          Pay Other Amount
+        </label>
+         <div class="info-row" *ngIf="payOtherAmount">Enter Amount You Want To Pay<input type="text" [(ngModel)]="enterOtherAmount" style="width:100%" /></div>
+              <div class="action-row">
+                <button *ngIf="UserLoggedIn" class="btn btn-primary" (click)="proceedToPayStripe()">💼 Proceed To Pay</button>
+      
+                <div *ngIf="!UserLoggedIn" class="guest-pay">
+                  <label>Enter Your Email to Pay as Guest</label>
+                  <input type="email" [(ngModel)]="enteredEmail" class="guest-email" />
+                  <div class="guest-actions">
+                    <button class="btn btn-warning m-2" (click)="redirectToLogin()">Login / Register</button>
+                    <button class="btn btn-primary m-2" (click)="proceedToPayStripe()">Pay As Guest</button>
+                  </div>
+                </div>
+              </div>
+      
+              <div class="action-row">
+                <button class="btn outline-danger ml-2" (click)="openGmail()"><img src="https://www.svgrepo.com/show/223047/gmail.svg" alt="Gmail" width="18" class="gmailicon"></button>
+                <button class="btn outline-success ml-2" (click)="openWhatsApp()"> <i class="fa fa-whatsapp"></i></button><a href="https://wa.me/+919306193724"></a>
+              </div>
+            </div>
+          </div>
+        </div>
+      
+        <!-- Wire Block -->
+        <div class="payment-block WireB" *ngIf="paymentSelectionType === 'wire'">
+          <div class="tooltip-arrow wire-arrow"></div>
+          <div class="payment-info card shadow-sm">
+            <div class="card-body">
+              <h4>🏦 Wire Transfer Details</h4>
+              <div class="info-row"><span>Wire To:</span><span>Medsarthi LLC</span></div>
+              <div class="info-row"><span>Bank Name:</span><span>Bank of America</span></div>
+              <div class="info-row"><span>Account Number:</span><span>4570-4639-8400</span></div>
+              <div class="info-row"><span>SWIFT Code:</span><span>BOFAUS3N</span></div>
+              <div class="info-row"><span>Rotation Fee:</span><span>${{ RotationFee }}</span></div>
+              <div class="info-row" *ngIf="discountAmount"><span>Congratulations! You are eligible for a discount 👇</span></div>
+              <div class="info-row" *ngIf="discountAmount"><span>Discount:</span><span>${{ discountAmount }}</span></div>
+              <div class="info-row"><span>Processing Fee:</span><span>$35</span></div>
+              <div class="info-row" *ngIf="PromotorDiscountsAmount"><span>Referral Discount:</span><span>${{PromotorDiscountsAmount}}</span></div>
+              <div class="info-row"><span>Total Fee:</span><span>${{ (RotationFee-discountAmount-PromotorDiscountsAmount)+35 }}</span></div>
+      
+              <div class="action-row">
+                <button class="btn outline-danger ml-2" (click)="openGmail()"><img src="https://www.svgrepo.com/show/223047/gmail.svg" alt="Gmail" width="18" class="gmailicon"></button>
+                <button class="btn outline-success ml-2" (click)="openWhatsApp()"> <i class="fa fa-whatsapp"></i></button><a href="https://wa.me/+919306193724"></a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+  
+</div>
+<div class="mt-5 text-center animate__animated animate__fadeIn" 
+     *ngIf="PaymentSuccessFailur=='failure' || PaymentSuccessFailur=='error' || PaymentSuccessFailur=='fail'">
+
+  <div class="card shadow-lg border-0 rounded-4 p-2 mx-auto" >
+    <div class="error-icon mb-4">
+      <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" fill="none" viewBox="0 0 24 24" stroke="red" stroke-width="2">
+        <circle cx="12" cy="12" r="10" stroke="red" fill="none"></circle>
+        <line x1="15" y1="9" x2="9" y2="15"></line>
+        <line x1="9" y1="9" x2="15" y2="15"></line>
+      </svg>
+    </div>
+
+    <h2 class="text-danger mt-3">Payment Failed ❌</h2>
+    <p class="text-muted mt-3">
+      Sorry, <strong>{{studentEmail || 'user'}}</strong> — your payment could not be completed.  
+      Please check your internet connection or try again later.
+    </p>
+
+    <div class="mt-4">
+      <p><strong>Location Code:</strong> {{rotationCode || 'N/A'}}</p>
+      <p><strong>Email ID:</strong> {{studentEmail || 'N/A'}}</p>
+      <p><strong>Amount Attempted:</strong> ${{Amount / 100 || '0.00'}}</p>
+    </div>
+
+    <!--<button class="btn btn-outline-danger btn-lg rounded-pill mt-4" ng-click="retryPayment()">
+      Try Again
+    </button>-->
+  </div>
+</div>
+ <!-- LOADING OVERLAY -->
+ <div *ngIf="loading" class="overlay">
+  <div class="spinner"></div>
+  <p class="loading-text">Please Wait...</p>
+</div>

@@ -1,0 +1,790 @@
+<div class="row text-left">
+  <div class="display-4 m-2 p-2 row">Rank Ordered List</div>
+</div>
+<div class="row m-2">
+  <button
+    class="btn btn-block btn-primary btn-outline-primary mt-2 float-left"
+    (click)="open(instructions)"
+  >
+    Instructions to use
+  </button>
+</div>
+<div class="card m-2" [ngSwitch]="landing">
+  <div class="card-body">
+    <ng-template #instructions let-modal>
+      <div class="modal-content">
+        <div class="modal-header font-weight-bold">
+          <h4 class="modal-title" id="modal-basic-title">Instructions</h4>
+        </div>
+        <div
+          class="modal-body h6 font-weight-bolder"
+          style="word-break: break-word"
+        >
+          <h4 class="text-center">Welcome to Rank order List tool, SARAL</h4>
+          <p>
+            SARAL The Sarthi ROL tool will help you identify and quantify the
+            factors on which you can base your Rank Order List. Based on your
+            responses, our panel can give feedback to help you rank the programs
+            that are the best fit for you.
+          </p>
+          <h5>Before you start</h5>
+          <ul>
+            <li>
+              The panelist(s) will only review the programs which are on this
+              ROL list. So make sure this list is complete.
+            </li>
+            <li>
+              If you entered your programs in the ‘Interview Insights’, these
+              will be automatically transferred to the ROL list.You will need to
+              manually enter all programs into the Interview Insight Tab. (see
+              instructions below if needed)
+            </li>
+            <li>
+              If you are a Platinum student, you will be able to discuss the
+              list with our mentor. For other students, depending on their
+              needs, we will hold separate sessions.
+            </li>
+          </ul>
+          <h5>Getting Started</h5>
+          <p>
+            After logging in, go to the ROL factors tab. You will see a list of
+            pre-populated factors. These are based on experience of other Sarthi
+            students from previous seasons. You can add other factors unique to
+            you as well, by clicking the “Add more ROL factors”.<br />
+            You will then assign weights to these factors.
+          </p>
+          <ul>
+            <li>The total for all factors should be 100.</li>
+            <li>
+              This one-time step will quantify the overall importance of the
+              factors to you. These weights will not change for each program.
+              You can come back and edit these factors later if needed.
+            </li>
+            <li>
+              If any pre-populated factor is not important or applicable to you,
+              you can leave it blank or put zero. It is important to assign a
+              reason for your distribution. This will help you analyze the
+              factors and help our panelists understand your way of thinking.
+            </li>
+            <li>
+              Once you have completed 100/100 ranking (including adding any
+              unique features to you), click “Save & Continue.”
+            </li>
+          </ul>
+          <h5>Scoring the programs</h5>
+          <p>Now you are ready to assign scores to the programs.</p>
+          <ul>
+            <li>
+              You will score the same set of factors that you identified earlier
+              and score each of these for a specific program- on a scale of 1 to
+              10.
+            </li>
+            <li>
+              For example, let’s say you had identified ‘Type of Visa Offered’
+              as a factor and assigned it a weight of 60 (out of total 100).
+              This would mean that Visa is quite an important factor for you
+              (let’s say you prefer H1B). Now if Program A offers H1B, you
+              should score the ‘Type of visa offered’ for this program as a 10
+              or some high score- since they offer the visa you want.
+            </li>
+            <li>
+              Score all factors for a program. Don’t forget to add a reason for
+              your choice so that we can better understand your needs/wants.
+            </li>
+            <li>
+              Each factor for a program is scored independently. The total does
+              not need to add up to 100 or any total..
+            </li>
+            <li>Complete scoring for all programs.</li>
+          </ul>
+          <h5>Adding programs to the ROL list</h5>
+          <p>
+            If any program is missing from your ROL list it means it was not
+            added to your Interview Insights database. Go to the ‘Interview
+            Insights’ tab.
+          </p>
+          <ul>
+            <li>
+              If the Program is listed on your dashboard, but you have not
+              entered the experience, please provide the experience now.
+            </li>
+            <li>
+              If the program is not listed on your dashboard, this means the
+              program was not reported. You have to enter the program now. For
+              the interview date, select the current date if the interview is in
+              the future. This will allow you to submit your interview
+              experience. If the interview is yet to happen, you can’t put the
+              interview experience and therefore it will not show up in the ROL.
+            </li>
+            <li>
+              Once you have added all your programs and experiences, go back to
+              the ROL Order List tab- you should then be able to see the
+              programs on your dashboard and you can continue to rank each of
+              them.
+            </li>
+          </ul>
+          <p>
+            You are now ready to generate your Rank Order List! Scroll to the
+            bottom of the page and click “Get Rank Ordered List” to see all
+            programs in order of ranking or “Get Summary” to see each feature
+            you ranked for each program. .
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-success btn-outline-success"
+            (click)="modalService.dismissAll()"
+          >
+            Let's Start
+          </button>
+        </div>
+      </div>
+    </ng-template>
+  </div>
+  <div class="card-body" *ngSwitchCase="'factors'">
+    <div *ngIf="loading; else loaded" class="text-center">Loading....</div>
+    <ng-template #loaded>
+      <div *ngIf="lockFactors" class="row font-weight-bolder">
+        <div class="col">
+          <button
+            class="btn btn-block btn-success btn-outline-success mt-2 float-right card-footer"
+            (click)="takeMeToList()"
+          >
+            <i class="ft-arrow-left"></i> Back To List
+          </button>
+        </div>
+      </div>
+      <h5 class="font-weight-bolder text-center">ROL FACTORS</h5>
+      <br />
+      <h6 style="font-weight: 500">
+        Please weigh the following ROL factors according to your preferences
+        <span class="text-warning"
+          >(Make sure all the weights together add up to 100)</span
+        >
+      </h6>
+      <form ngNativeValidate (ngSubmit)="saveFactorsWeights()">
+        <div class="row" *ngFor="let factor of dataObject.factors">
+          <div class="col-md-5 col-sm-12 mt-2">
+            <label> {{ factor.AttrName }} </label>
+            <br />
+            <input
+              class="form-control"
+              type="number"
+              [name]="'weight' + factor.AttrName"
+              [(ngModel)]="factor.Value"
+              [disabled]="lockFactors"
+              (keyup)="getNewSum()"
+            />
+          </div>
+          <div class="col-md-5 col-sm-8 mt-2">
+            <label> Reason For This Weight </label>
+            <br />
+            <input
+              class="form-control"
+              type="text"
+              [name]="'reason' + factor.AttrName"
+              [(ngModel)]="factor.Reason"
+              placeholder="Please explain a reason for this weight"
+              [disabled]="lockFactors"
+              [required]="factor.Value > 0"
+            />
+          </div>
+          <div class="col-md-2 col-sm-4 mt-2">
+            <label> Average Weight </label>
+            <br />
+            <span class="text-info">{{ factor.ExpWt || "NA" }}</span>
+          </div>
+        </div>
+        <div class="row" *ngFor="let factor of dataObject.userFactors">
+          <div class="col-md-5 col-sm-12 mt-2">
+            <label> {{ factor.AttrName }}</label>
+            <br />
+            <input
+              class="form-control"
+              type="number"
+              [name]="'weight' + factor.AttrName"
+              [(ngModel)]="factor.Value"
+              [disabled]="lockFactors"
+              (keyup)="getNewSum()"
+            />
+          </div>
+          <div class="col-md-5 col-sm-8 mt-2">
+            <label> Reason For This Weight </label>
+            <br />
+            <input
+              class="form-control"
+              type="text"
+              [name]="'reason' + factor.AttrName"
+              [(ngModel)]="factor.Reason"
+              placeholder="Please explain a reason for this weight"
+              [disabled]="lockFactors"
+              [required]="factor.Value > 0"
+            />
+          </div>
+          <div class="col-md-2 col-sm-4 mt-2">
+            <button
+              class="btn btn-danger btn-outline-danger mt-1"
+              (click)="deleteFactor(factor)"
+              type="button"
+              [disabled]="lockFactors"
+            >
+              Delete Factor
+            </button>
+          </div>
+        </div>
+        <div *ngIf="!lockFactors" class="row mt-2 ml-1">
+          <button
+            class="btn btn-success btn-outline-success"
+            type="button"
+            (click)="open(newFactor)"
+          >
+            Add More Factors
+          </button>
+        </div>
+        <ng-template #newFactor let-modal>
+          <div class="modal-content">
+            <div class="modal-header font-weight-bold">
+              <h4 class="modal-title" id="modal-basic-title">New ROL Factor</h4>
+            </div>
+            <div
+              class="modal-body h6 font-weight-bolder"
+              style="word-break: break-word"
+            >
+              <label> Name of the new factor </label>
+              <input
+                class="form-control"
+                type="text"
+                #factorName
+                placeholder="Please enter the name of the factor"
+              />
+            </div>
+            <div class="modal-footer">
+              <button
+                type="button"
+                class="btn btn-primary btn-outline-primary"
+                (click)="addFactor(factorName.value)"
+              >
+                Add
+              </button>
+            </div>
+          </div>
+        </ng-template>
+        <button
+          *ngIf="!lockFactors"
+          class="btn btn-block btn-success card-footer btn-outline-success mt-2"
+          type="submit"
+        >
+          Save & Continue
+        </button>
+      </form>
+      <div
+        class="card rounded font-weight-bolder text-white"
+        [ngClass]="
+          sumOfWeights < 100
+            ? 'bg-primary'
+            : sumOfWeights == 100
+            ? 'bg-success'
+            : 'bg-danger'
+        "
+        style="position: fixed; right: 0; bottom: 50%; border-width: thick"
+      >
+        <div class="card-body">Total : {{ sumOfWeights }}/100</div>
+      </div>
+    </ng-template>
+  </div>
+  <div class="card-body" *ngSwitchCase="'list'">
+    <div *ngIf="loading; else loaded" class="text-center">Loading....</div>
+    <ng-template #loaded>
+      <div class="row font-weight-bolder">
+        <div class="col">
+          <button
+            class="btn btn-block btn-success btn-outline-success mt-2 float-left card-footer"
+            (click)="landing = 'factors'"
+          >
+            See/Edit Overall Factors
+          </button>
+        </div>
+      </div>
+      <h4 class="text-center col-12 font-weight-bolder">
+        Submitted Interviews
+      </h4>
+      <h6 style="font-weight: 500">
+        Click on the submit score button to enter the score for the hospital
+      </h6>
+      <div class="col-12" *ngFor="let interview of interviews">
+        <div class="card bg-light">
+          <div class="card-body">
+            <h5 class="card-title font-medium-1">
+              {{ interview.hospital.HName }}
+            </h5>
+            <div class="row text-left pl-2">
+              <div class="col-md-8 col-sm-12 mt-2">
+                Place: {{ interview.hospital.City }} ,
+                {{ interview.hospital.State }}
+                <br />
+                Speciality: {{ programObject[interview.PId].PName }}
+              </div>
+              <button
+                type="button"
+                class="col-md-2 mt-2 col-sm-6 btn btn-primary btn-outline-primary card-footer rounded-0"
+                (click)="getExtraInfo(interview)"
+              >
+                Get More Info
+              </button>
+              <button
+                type="button"
+                class="col-md-2 mt-2 col-sm-6 btn btn-primary btn-outline-primary card-footer rounded-0"
+                (click)="chooseForm(interview)"
+              >
+                {{ interview.isScoreSubmitted ? "Update" : "Submit" }} Score
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row font-weight-bolder">
+        <div class="col">
+          <button
+            class="btn btn-block btn-success btn-outline-success mt-2 float-left card-footer"
+            (click)="takeMeToRankOrder()"
+          >
+            Get Rank Ordered List
+          </button>
+        </div>
+        <div class="col">
+          <button
+            class="btn btn-block btn-warning btn-outline-warning mt-2 float-right card-footer"
+            (click)="takeMeToSummary()"
+          >
+            Get Summary
+          </button>
+        </div>
+      </div>
+    </ng-template>
+  </div>
+  <div class="card-body" *ngSwitchCase="'display'">
+    <div *ngIf="loading; else loaded" class="text-center">
+      Loading the hospital's data
+    </div>
+    <ng-template #loaded>
+      <div class="container-fluid">
+        <div class="row font-weight-bolder">
+          <div class="col">
+            <button
+              class="btn btn-block btn-success btn-outline-success mt-2 float-left card-footer"
+              (click)="takeMeToList()"
+            >
+              <i class="ft-arrow-left"></i> Back To List
+            </button>
+          </div>
+        </div>
+        <h4 class="text-center col-12 font-weight-bolder">
+          {{ selectedInterview.hospital.HName }}
+        </h4>
+        <h6 class="text-center text-primary font-weight-bolder">
+          {{ selectedInterview.hospital.City }},
+          {{ selectedInterview.hospital.State }}
+        </h6>
+        <div class="table-responsive">
+          <br />
+          <table
+            style="width: 100%"
+            class="table table-hover table-bordered table-striped"
+          >
+            <tr>
+              <td style="font-weight: bold; width: 50%">Size of Hospital</td>
+              <td>{{ selectedInterview.extraInfo.size }}</td>
+            </tr>
+
+            <tr>
+              <td style="font-weight: bold; width: 50%">
+                Available in House Fellowships
+              </td>
+              <td>{{ selectedInterview.extraInfo.fellowships }}</td>
+            </tr>
+
+            <tr>
+              <td style="font-weight: bold">Away Electives</td>
+              <td>{{ selectedInterview.extraInfo.electives }}</td>
+            </tr>
+
+            <tr>
+              <td style="font-weight: bold">University Affiliation</td>
+              <td>{{ selectedInterview.extraInfo.affiliation }}</td>
+            </tr>
+
+            <tr>
+              <td style="font-weight: bold">Fellowship Match Rate</td>
+              <td>{{ selectedInterview.extraInfo.matchRate }}</td>
+            </tr>
+            <tr>
+              <td style="font-weight: bold">Additional Comments</td>
+              <td>
+                <ng-template
+                  ngFor
+                  let-comment
+                  [ngForOf]="selectedInterview.extraInfo.comments"
+                >
+                  {{ comment }}
+                  <br />
+                </ng-template>
+              </td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    </ng-template>
+  </div>
+  <div class="card-body" *ngSwitchCase="'extraInfo'">
+    <div *ngIf="loading; else loaded" class="text-center">Loading...</div>
+    <ng-template #loaded>
+      <div class="container-fluid">
+        <div class="row font-weight-bolder">
+          <div class="col">
+            <button
+              class="btn btn-block btn-success btn-outline-success mt-2 float-left card-footer"
+              (click)="takeMeToList()"
+            >
+              <i class="ft-arrow-left"></i> Back To List
+            </button>
+          </div>
+          <div class="col">
+            <button
+              class="btn btn-block btn-warning btn-outline-warning mt-2 float-left card-footer"
+              (click)="takeMeToScore(selectedInterview)"
+            >
+              <i class="ft-arrow-right"></i> Skip, if information is unavailable
+            </button>
+          </div>
+        </div>
+        <h4 class="text-center col-12 font-weight-bolder">
+          {{ selectedInterview.hospital.HName }}
+        </h4>
+        <h6 class="text-center text-primary font-weight-bolder">
+          {{ selectedInterview.hospital.City }},
+          {{ selectedInterview.hospital.State }}
+        </h6>
+        <div class="h6 font-weight-bold text-warning">
+          Fill the additional hospital data
+        </div>
+        <form ngNativeValidate (ngSubmit)="fillExtraInfoData()">
+          <div class="row mt-2">
+            <label for="size"
+              >Size of Hospital
+              <span class="text-primary">(Number of Beds)</span>
+            </label>
+            <input
+              class="form-control"
+              type="text"
+              required
+              name="size"
+              id="size"
+              [(ngModel)]="selectedHospitalDoc.size"
+            />
+          </div>
+          <div class="row mt-2">
+            <label for="fellowships">Available in house fellowships</label>
+            <input
+              class="form-control"
+              type="text"
+              required
+              name="fellowships"
+              id="fellowships"
+              [(ngModel)]="selectedHospitalDoc.fellowships"
+            />
+          </div>
+          <div class="row mt-2">
+            <label for="electives">Away Electives</label>
+            <input
+              class="form-control"
+              type="text"
+              required
+              name="electives"
+              id="electives"
+              [(ngModel)]="selectedHospitalDoc.electives"
+            />
+          </div>
+          <div class="row mt-2">
+            <label for="affiliation">University Affiliation</label>
+            <input
+              class="form-control"
+              type="text"
+              required
+              name="affiliation"
+              id="affiliation"
+              [(ngModel)]="selectedHospitalDoc.affiliation"
+            />
+          </div>
+          <div class="row mt-2">
+            <label for="matchRate">Fellowship Match Rate</label>
+            <input
+              class="form-control"
+              type="text"
+              required
+              name="matchRate"
+              id="matchRate"
+              [(ngModel)]="selectedHospitalDoc.matchRate"
+            />
+          </div>
+          <div class="row mt-2">
+            <label for="comments">Additional Comments</label>
+            <input
+              class="form-control"
+              type="text"
+              required
+              name="comments"
+              id="comments"
+              [(ngModel)]="selectedHospitalDoc.additionalComments"
+            />
+          </div>
+          <div class="row mt-2">
+            <button
+              type="submit"
+              class="btn btn-block btn-primary btn-outline-primary card-footer"
+              name="submit"
+            >
+              Submit and Proceed
+            </button>
+          </div>
+        </form>
+      </div>
+    </ng-template>
+  </div>
+  <div class="card-body" *ngSwitchCase="'score'">
+    <div *ngIf="loading; else loaded" class="text-center">Loading....</div>
+    <ng-template #loaded>
+      <div class="row font-weight-bolder">
+        <div class="col">
+          <button
+            class="btn btn-block btn-success btn-outline-success mt-2 float-left card-footer"
+            (click)="takeMeToList()"
+          >
+            <i class="ft-arrow-left"></i> Back To List
+          </button>
+        </div>
+      </div>
+      <h4 class="text-center col-12 font-weight-bolder">
+        {{ selectedInterview.hospital.HName }}
+      </h4>
+      <h6 class="text-center text-primary font-weight-bolder">
+        {{ selectedInterview.hospital.City }},
+        {{ selectedInterview.hospital.State }}
+      </h6>
+      <h6 class="mt-2 text-warning" style="font-weight: 500">
+        On a scale of 1 to 10, with 1 being the lowest and 10 being the highest,
+        assign scores to the hospital for the following factors.
+        <br />
+      </h6>
+      <form ngNativeValidate>
+        <div class="row mt-2" *ngFor="let factor of dataObject.factors">
+          <div class="col-md-6 col-sm-12 mt-2">
+            <label> {{ factor.AttrName }} </label>
+            <br />
+            <ng5-slider
+              [name]="'score' + factor.AttrName"
+              [(ngModel)]="selectedScoreDoc.Scores[factor.AttrId].Score"
+              [options]="scores"
+            >
+            </ng5-slider>
+          </div>
+          <div class="col-md-6 col-sm-12 mt-2">
+            <label> Reason For This Score </label>
+            <br />
+            <input
+              class="form-control"
+              type="text"
+              [name]="'reason' + factor.AttrName"
+              [(ngModel)]="selectedScoreDoc.Scores[factor.AttrId].Reason"
+              placeholder="Please explain a reason for this score"
+            />
+          </div>
+        </div>
+        <div class="row mt-2" *ngFor="let factor of dataObject.userFactors">
+          <div class="col-md-6 col-sm-12 mt-2">
+            <label> {{ factor.AttrName }} </label>
+            <br />
+            <ng5-slider
+              [name]="'score' + factor.AttrName"
+              [(ngModel)]="selectedScoreDoc.Scores[factor.AttrId].Score"
+              [options]="scores"
+            >
+            </ng5-slider>
+          </div>
+          <div class="col-md-6 col-sm-12 mt-2">
+            <label> Reason For This Score </label>
+            <br />
+            <input
+              class="form-control"
+              type="text"
+              [name]="'reason' + factor.AttrName"
+              [(ngModel)]="selectedScoreDoc.Scores[factor.AttrId].Reason"
+              placeholder="Please explain a reason for this score"
+            />
+          </div>
+        </div>
+        <button
+          class="mt-2 btn btn-block btn-primary btn-outline-primary card-footer"
+          (click)="submitScore()"
+        >
+          {{ selectedInterview.isScoreSubmitted ? "Update" : "Submit" }} Score
+        </button>
+      </form>
+    </ng-template>
+  </div>
+  <div class="card-body" *ngSwitchCase="'rankorder'">
+    <div *ngIf="loading; else loaded" class="text-center">Loading....</div>
+    <ng-template #loaded>
+      <div class="row font-weight-bolder">
+        <div class="col">
+          <button
+            class="btn btn-block btn-success btn-outline-success mt-2 float-left card-footer"
+            (click)="takeMeToList()"
+          >
+            <i class="ft-arrow-left"></i> Back To List
+          </button>
+        </div>
+        <div class="col">
+          <button
+            class="btn btn-block btn-warning btn-outline-warning mt-2 float-left card-footer"
+            (click)="exportRanksToExcel()"
+          >
+            <i class="ft-upload"></i> Export To Excel
+          </button>
+        </div>
+      </div>
+      <h4 class="text-center col-12 font-weight-bolder">Hospital Ranks</h4>
+      <div class="table-responsive fluid">
+        <table
+          class="table table-striped table-hover table-bordered"
+          id="rank-table"
+        >
+          <thead class="thead-dark">
+            <tr>
+              <th>S.No.</th>
+              <th>Hospital Name</th>
+              <th>Rank</th>
+              <th>Overall Score</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let interview of rankedInterviews; index as i">
+              <td>
+                {{ i + 1 }}
+              </td>
+              <td>
+                {{ interview.hospital.HName }}
+              </td>
+              <td>
+                {{ i + 1 }}
+              </td>
+              <td>
+                {{ interview.OverallScore }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </ng-template>
+  </div>
+  <div class="card-body" *ngSwitchCase="'summary'">
+    <div *ngIf="loading; else loaded" class="text-center">Loading....</div>
+    <ng-template #loaded>
+      <div class="row font-weight-bolder">
+        <div class="col-sm-12 col-md-6">
+          <button
+            class="btn btn-block btn-success btn-outline-success mt-2 float-left card-footer"
+            (click)="takeMeToList()"
+          >
+            <i class="ft-arrow-left"></i> Back To List
+          </button>
+        </div>
+        <div class="col">
+          <button
+            class="btn btn-block btn-warning btn-outline-warning mt-2 float-left card-footer"
+            (click)="exportSummaryToExcel()"
+          >
+            <i class="ft-upload"></i> Export To Excel
+          </button>
+        </div>
+      </div>
+      <h4 class="text-center col-12 font-weight-bolder">Summary</h4>
+      <div class="table-responsive fluid">
+        <table
+          class="table table-striped table-hover table-bordered"
+          id="summary-table"
+        >
+          <thead class="thead-dark">
+            <tr>
+              <th>Factor Name</th>
+              <th>Weight</th>
+              <th>Reason for the weight</th>
+              <ng-template ngFor let-interview [ngForOf]="rankedInterviews">
+                <th>
+                  {{ interview.hospital.HName }}
+                </th>
+                <th>Reason</th>
+              </ng-template>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let factor of dataObject.factors; index as i">
+              <td>
+                {{ factor.AttrName }}
+              </td>
+              <td>
+                {{ factor.Value }}
+              </td>
+              <td>
+                {{ factor.Reason }}
+              </td>
+              <ng-template ngFor let-interview [ngForOf]="rankedInterviews">
+                <td>
+                  {{ interview.scoreDoc.Scores[factor.AttrId].Score }}
+                </td>
+                <td>
+                  {{ interview.scoreDoc.Scores[factor.AttrId].Reason }}
+                </td>
+              </ng-template>
+            </tr>
+            <tr *ngFor="let factor of dataObject.userFactors; index as i">
+              <td>
+                {{ factor.AttrName }}
+              </td>
+              <td>
+                {{ factor.Value }}
+              </td>
+              <td>
+                {{ factor.Reason }}
+              </td>
+              <ng-template ngFor let-interview [ngForOf]="rankedInterviews">
+                <td>
+                  {{
+                    interview.scoreDoc.Scores[factor.AttrId]
+                      ? interview.scoreDoc.Scores[factor.AttrId].Score
+                      : ""
+                  }}
+                </td>
+                <td>
+                  {{
+                    interview.scoreDoc.Scores[factor.AttrId]
+                      ? interview.scoreDoc.Scores[factor.AttrId].Reason
+                      : ""
+                  }}
+                </td>
+              </ng-template>
+            </tr>
+            <tr class="text-center font-weight-bold">
+              <td colspan="3">Overall Score</td>
+              <ng-template ngFor let-interview [ngForOf]="rankedInterviews">
+                <td colspan="2">
+                  {{ interview.OverallScore }}
+                </td>
+              </ng-template>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </ng-template>
+  </div>
+</div>

@@ -1,0 +1,193 @@
+<div class="row text-left"  >
+  <div class="display-4 m-2 p-2 row">
+    Use this list to find USCE/Research Opportunities
+  </div>
+</div>
+<div class="row m-2">
+  <button class="btn btn-md btn-success btn-outline-success col-12"
+    (click)="isFiltersCollapsed = !isFiltersCollapsed" > <i class='fa fa-filter'></i> Use the filters to narrow down search</button>
+  <div class="col-12 card card-body" [ngbCollapse]="isFiltersCollapsed">
+    <div class="row">
+      <div class="col-sm-12 col-md-6 mt-2">
+        Specialties
+        <br/>
+          <ng-select class="mt-2" [items]="specialities" [multiple]="true" [(ngModel)]="selectedSpecialities"></ng-select>
+      </div>
+      <div class="col-sm-6 col-md-6 mt-2">
+        Type of Rotation
+        <br/>
+          <ng-select class="mt-2" [items]="rotations" [multiple]="true" [(ngModel)]="selectedRotations"></ng-select>
+      </div>
+      <!----<div class="col-sm-6 col-md-4 mt-2">
+        Duration
+        <br/>
+          <ng-select class="mt-2" [items]="durations" [multiple]="true" [(ngModel)]="selectedDurations"></ng-select>
+      </div>--->
+      <div class="col-sm-6 col-md-4 mt-2">
+        City
+        <br/>
+          <ng-select class="mt-2" [items]="cities" [multiple]="true"  [(ngModel)]="selectedCities"></ng-select>
+      </div>
+      <div class="col-sm-6 col-md-4 mt-2">
+        State
+        <br/>
+          <ng-select class="mt-2" [items]="states" [multiple]="true"  [(ngModel)]="selectedStates"></ng-select>
+      </div>
+      <div class="col-4 mt-2">
+        <br/>
+        <button class="btn btn-block btn-warning btn-outline-warning ml-auto"
+        (click)="applyFilters()">Apply Filters </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="card m-2" [ngSwitch]="landing">
+  <div class="card-body" *ngSwitchCase="'list'">
+    <div *ngIf="loading else loaded" class="text-center">
+      Fetching the hospitals list...
+    </div>
+    <ng-template #loaded>
+      <div class="card-content ml-2 mr-2">
+        <div class="row">
+          <div class="col-sm-4 col-md-2">
+            <button class="btn btn-md  mt-2 float-left"
+            (click)="onPreviousPage()" [ngClass]="(this.pageStart >0) ? 'btn-warning btn-outline-warning': 'disabled btn-black btn-outline-black' "><i class="ft-arrow-left"> </i>Previous Page</button>
+          </div>
+          <div class="col-sm-4 col-md-8 text-center">
+            <span class="text-primary h5 font-weight-bolder">{{(pageEnd>0)?pageStart+1:0}}-{{pageEnd}} of {{refinedHospitals.length}}</span>
+          </div>
+          <div class="col-sm-4 col-md-2">
+            <button class="btn btn-md mt-2 float-right"
+            (click)="onNextPage()" [ngClass]="this.pageEnd + 1<this.refinedHospitals.length ? 'btn-warning btn-outline-warning': 'disabled btn-black btn-outline-black' ">Next Page <i class="ft-arrow-right"></i></button>
+          </div>
+        </div>
+        <div class="row" matchHeight="card" >
+          <h4 class="text-right col-12 font-weight-bolder">Hospitals/Clinics </h4>
+          <div class='col-sm-12 col-md-6' *ngFor="let hospital of pageHospitals">
+            <div class="card">
+              <div class="card-body">
+                <div class="card card-outline-primary bg-light">
+                  <h5 class="card-body font-weight-bold text-uppercase text-center text-primary">
+                    {{hospital.HospitalName}}
+                  </h5>
+                  </div>
+                <div class='row  text-left mt-2 pl-2'>
+                  <div class="col">
+                    Place: {{hospital.City}} , {{hospital.State}}
+                    <br/>
+                    Specialty: {{hospital.Speciality}}
+                  </div>
+                  <div class="col">
+                    Rotation: {{hospital.Rotation}}
+                  </div>
+                </div>
+              </div>
+              <button type="button" class="btn btn-block btn-primary btn-outline-primary card-footer stretched-link"
+                (click)="open(content, hospital)">See Details <i class="ft-arrow-right"></i></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ng-template>
+  </div>
+</div>
+<ng-template #content let-modal>
+    <div class="modal-content">
+      <div class="modal-header font-weight-bold">
+        <h4 class="modal-title" id="modal-basic-title">{{selectedHospital.HospitalName}}</h4>
+      </div>
+      <div class="modal-body h6 font-weight-bolder" style="word-break:break-word;">
+        <div class="row mt-2 mr-2">
+          <div class="col-6">
+            City
+          </div>
+          <div class="col-6">
+            {{selectedHospital.City}}
+          </div>
+        </div>
+        <div class="row mt-2 mr-2">
+          <div class="col-6">
+            State
+          </div>
+          <div class="col-6">
+            {{selectedHospital.State}}
+          </div>
+        </div>
+        <div class="row mt-2 mr-2">
+          <div class="col-6">
+            Duration
+          </div>
+          <div class="col-6">
+            {{selectedHospital.Duration}}
+          </div>
+        </div>
+        <div class="row mt-2 mr-2">
+          <div class="col-6">
+            Rotation
+          </div>
+          <div class="col-6">
+            {{selectedHospital.Rotation}}
+          </div>
+        </div>
+        <div class="row mt-2 mr-2">
+          <div class="col-6">
+            Contact Person
+          </div>
+          <div class="col-6">
+            {{selectedHospital.ContactPerson}}
+          </div>
+        </div>
+        <div class="row mt-2 mr-2">
+          <div class="col-6">
+            Email of Contact Person
+          </div>
+          <div class="col-6">
+            {{selectedHospital.Email}}
+          </div>
+        </div>
+        <div class="row mt-2 mr-2">
+          <div class="col-6">
+            Application Website
+          </div>
+          <div class="col-6">
+            {{selectedHospital.ApplicationWebsite}}
+          </div>
+        </div>
+        <div class="row mt-2 mr-2">
+          <div class="col-6">
+            Application Requirements
+          </div>
+          <div class="col-6">
+            {{selectedHospital.ApplicationRequirements}}
+          </div>
+        </div>
+        <div class="row mt-2 mr-2">
+          <div class="col-6">
+            Fees
+          </div>
+          <div class="col-6">
+            {{selectedHospital.Fees}}
+          </div>
+        </div>
+        <div class="row mt-2 mr-2">
+          <div class="col-6">
+            Student's Comments
+          </div>
+          <div class="col-6">
+            {{selectedHospital.comments}}
+          </div>
+        </div>
+        <div class="row mt-2 mr-2">
+          <div class="col-6">
+            Last Checked
+          </div>
+          <div class="col-6">
+            {{selectedHospital.Date}}
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary btn-outline-primary" (click)="modal.close()">Close</button>
+      </div>
+    </div>
+</ng-template>

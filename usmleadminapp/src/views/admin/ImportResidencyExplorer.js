@@ -1,0 +1,211 @@
+import React, { useState,useRef } from 'react';
+import * as XLSX from 'xlsx';
+
+//import CryptoJS from 'crypto-js';
+import { useLoading } from '../../layout/LoadingContext';
+import {
+  TextField,
+  Grid,
+	Typography,
+  Button,
+  Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle,FormControl
+} from '@mui/material';
+import {
+  CCard,
+  CCardBody,
+  CCardHeader,
+  CCol,
+  CRow,
+  CButton,
+  CToaster,
+  CForm,
+  CFormFeedback,
+  CFormInput,
+} from "@coreui/react";
+let messageFull="";
+import {  CenteredBox, CenteredBoxInfo } from '../../components/css/CustomStyles';
+function convertEmailToDocumentId(email) {
+  return CryptoJS.MD5(email).toString(CryptoJS.enc.Hex); // MD5 hash of email
+}
+ let PId=0;
+ const nowDate = new Date();
+let HId=0;
+let ProgramNameList="Internal Medicine"
+const hospitalCache = new Map(); // HName → HId
+    	const hpCache = new Set(); // "HId_PId"
+       let HPId="";
+let conditionsArray=[];
+function ImportExcel() {
+  const [excelData, setExcelData] = useState([]);
+    const [errors, setErrors] = useState({});
+    const [speciality, setSpeciality] = useState("");
+  const { showLoading, hideLoading,updateWhereFieldEquals,DeleteDocumentWhere,removePidFromHospital,DeleteDocumentWhereMultiple,TooltipsPopovers,SelectWithComplexConditions,handleAdd,handleUpdateOrCreateByField, API_KEY,SelectWithWhereAnd,copyCollection,updateOrAddFieldInCollection,DatabaseName,getMaxStudentUniqueId,handleUpdate, FetchDataFromCollection,Timestamp } = useLoading();
+	 const [toast, addToast] = useState(0);
+  const toaster = useRef();
+  const processDataToTable= async (row)=>
+  {
+console.log("row=---------->",row)
+const currentYear = new Date().getFullYear();
+let HospitalProgramInfo={};
+HospitalProgramInfo['Frieda']='';
+HospitalProgramInfo['yearlyData']={};
+HospitalProgramInfo['yearlyData'][currentYear]={}
+HospitalProgramInfo['reLink']='';
+HospitalProgramInfo['TotalApplicantsForTheYear']='';
+HospitalProgramInfo['TotalAplicantsInvitedForTheYear']='';
+
+
+if (row?.['Frieda']) {
+  HospitalProgramInfo['Frieda'] = String(row['Frieda']);
+  //HospitalProgramInfo['imgpercentage'] = row['FREIDA ID'];
+}
+if (row?.['TotalApplicantsForTheYear']) {
+  HospitalProgramInfo['yearlyData'][currentYear]['TotalApplicantsForTheYear'] = row['TotalApplicantsForTheYear'];
+}
+if (row?.['TotalAplicantsInvitedForTheYear']) {
+  HospitalProgramInfo['yearlyData'][currentYear]['TotalAplicantsInvitedForTheYear'] = row['TotalAplicantsInvitedForTheYear'];
+}
+if (row?.['reLink']) {
+  HospitalProgramInfo['reLink'] = row['reLink'];
+}
+	
+	let resultGot= await updateWhereFieldEquals("HospitalProgramInfo", "Frieda", "==",HospitalProgramInfo['Frieda'], HospitalProgramInfo)
+    console.log("resultGot======>",resultGot)
+    return resultGot;
+        
+  }
+  const handleFileUpload = async (event) => {
+    const file = event.target.files[0];
+    let MaxStudentUniqueId=await getMaxStudentUniqueId("Program","PIdN");
+    let NextProgramId=MaxStudentUniqueId+1;
+   if(speciality==="")
+   {
+   	ProgramNameList=speciality;
+   	hideLoading();
+   	TooltipsPopovers("success", "Please Enter Speciality", "Status");
+   }
+   else
+   {
+   		ProgramNameList=speciality;
+    const ProgramTableData = await FetchDataFromCollection("Program", 20, "PName", "==", ProgramNameList, 0);
+    	if(ProgramTableData.length)
+    	{
+    		PId=ProgramTableData[0].PId;
+    	}
+    	else
+    	{
+    	let NextId=NextProgramId.toString()
+    	let ProgramDataToSend={
+    	"MinHosLatestInfo":"10",
+    	PId:NextId,
+    	PIdN:NextProgramId,
+    	PName:ProgramNameList,
+    	}
+    	let res=await handleUpdate("Program",NextId,ProgramDataToSend)
+    	console.log("res--->",res)
+    	PId=NextId;
+    }
+    	const reader = new FileReader();
+
+    	reader.onload = async (e) => {
+      const data = e.target.result;
+      const workbook = XLSX.read(data, { type: 'binary' });
+      console.log("workbook-->",workbook)
+      const firstSheet = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[firstSheet];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet, {
+        header: 1,
+      });
+      ///console.log("jsonData---->",jsonData)
+       const headers = jsonData[0].map((header) =>
+        typeof header === "string" ? header.trim() : header
+      ); // Clean up header names
+      const dataRows = jsonData.slice(1); // Get the rest of the rows
+      const processedData = dataRows.map((row) => {
+        const rowData = {};
+        headers.forEach((header, index) => {
+          rowData[header] = row[index] || ""; // Assign blank string if value is missing
+        });
+        return rowData;
+      });
+       //console.log("jsonData-->",jsonData)
+       
+       showLoading();
+        for (const row of processedData) 
+        {
+        	await processDataToTable(row);
+        }
+     
+hideLoading();
+if(messageFull==="")
+{
+	messageFull="No New Changes Found."
+}
+TooltipsPopovers("success", messageFull, "Status");
+      //setExcelData(processedData);
+    };
+
+    	reader.readAsBinaryString(file);
+	}
+  };
+
+  return (
+  <>
+   <CRow>
+      <CCol xs={12}>
+        <CCard className="mb-4">
+          <CToaster ref={toaster} push={toast} placement="top-end" />
+          <CCardHeader>
+            <strong>Validate Excel</strong>
+          </CCardHeader>
+          <CCardBody>
+            <CForm className="row g-3 needs-validation">
+            <CCol md={4}>
+                <div>
+                  <CFormInput
+                    type="text"
+                    id="specialityName"
+                    label="Speciality Name"
+                    value={speciality}
+                    onChange={(e) => setSpeciality(e.target.value)}
+                  />
+                </div>
+              </CCol>
+              <CCol md={4}>
+                <div>
+                  <CFormInput
+                    type="file"
+                    size="lg"
+                    accept=".xls,.xlsx"
+                    id="formFileLg"
+                    label="Import Program List Excel"
+                    onChange={handleFileUpload}
+                  />
+                  {errors.file && (
+                    <CFormFeedback invalid>{errors.file}</CFormFeedback>
+                  )}
+                </div>
+              </CCol>
+              
+               <CCol md={4}>
+               <div>
+
+              
+    </div>
+     </CCol>
+              {/*<CCol xs={12}>
+                <CButton color="primary" type="button">
+                  Submit
+                </CButton>
+              </CCol>*/}
+            </CForm>
+          </CCardBody>
+        </CCard>
+      </CCol>
+    </CRow>
+ 
+    </>
+  );
+}
+
+export default ImportExcel;

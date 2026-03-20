@@ -1,0 +1,142 @@
+<div class="card-body">
+  <div *ngIf="loading; else loaded" class="text-center">
+    Fetching the data...
+  </div>
+  <ng-template #loaded>
+    <div class="row">
+      <button
+        class="btn btn-primary btn-outline-primary btn-md text-center"
+        (click)="fetchPaymentsData()"
+      >
+        Generate Data
+      </button>
+    </div>
+    <div class="row">
+      <button
+        class="btn btn-block btn-warning btn-outline-warning mt-2"
+        (click)="exportInterviewsToExcel()"
+      >
+        <i class="ft-upload"></i> Export To Excel
+      </button>
+    </div>
+    <div class="row card-body text-center justify-content-center">
+      <ul class="nav nav-pills nav-justified font-weight-bolder">
+        <li class="nav-item" *ngFor="let land of allLandings">
+          <a
+            class="nav-link"
+            data-toggle="tab"
+            ngbNavLink
+            [ngClass]="{ active: land == landing, disabled: loading }"
+            (click)="takeMeTo(land)"
+            >{{ land }} Data</a
+          >
+        </li>
+      </ul>
+    </div>
+    <div class="table-responsive">
+      <br />
+      <div [ngSwitch]="landing">
+        <table
+          *ngSwitchCase="'Meeting'"
+          class="table table-striped table-hover text-left"
+          id="Meeting-List"
+        >
+          <thead>
+            <tr>
+              <th scope="col">S.No.</th>
+              <th scope="col">Student Name</th>
+              <th scope="col">Student Email</th>
+              <th scope="col">Mentor</th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-template
+              ngFor
+              let-payment
+              [ngForOf]="paymentsData"
+              let-i="index"
+            >
+              <tr *ngIf="payment?.meetingNotes?.length || payment?.adminNotes">
+                <td>{{ i + 1 }}</td>
+                <td>{{ payment?.user?.displayName }}</td>
+                <td>{{ payment?.user?.email }}</td>
+                <td>{{ payment?.user?.mentor }}</td>
+              </tr>
+              <ng-template
+                ngFor
+                let-matchPayment
+                [ngForOf]="payment?.meetingNotes"
+                let-ind="index"
+              >
+                <tr *ngIf="matchPayment?.meetingNotes">
+                  <td><b>Year:</b> {{ matchPayment?.year }}</td>
+                  <td><b>Month:</b> {{ matchPayment?.month }}</td>
+                  <td><b>Notes:</b> {{ matchPayment?.meetingNotes }}</td>
+                  <td>
+                    <b>Admin Notes:</b> {{ matchPayment?.adminMeetingNotes }}
+                  </td>
+                </tr>
+              </ng-template>
+              <tr *ngIf="payment?.adminNotes">
+                <td>General Notes</td>
+                <td colspan="3" style="white-space: break-spaces">
+                  {{ payment.adminNotes }}
+                </td>
+              </tr>
+            </ng-template>
+          </tbody>
+        </table>
+        <table
+          *ngSwitchCase="'Match Plan'"
+          class="table table-striped table-hover text-left"
+          id="Match Plan-List"
+        >
+          <thead>
+            <tr>
+              <th>S.No.</th>
+              <th scope="col">Student Name</th>
+              <th scope="col">Student Email</th>
+              <th scope="col">Mentor</th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-template
+              ngFor
+              let-payment
+              [ngForOf]="paymentsData"
+              let-i="index"
+            >
+              <tr *ngIf="payment?.meetingNotes?.length">
+                <td>{{ i + 1 }}</td>
+                <td>{{ payment?.user?.displayName }}</td>
+                <td>{{ payment?.user?.email }}</td>
+                <td>{{ payment?.extraData?.mentor }}</td>
+              </tr>
+              <ng-template
+                ngFor
+                let-matchPayment
+                [ngForOf]="payment?.meetingNotes"
+                let-ind="index"
+              >
+                <tr *ngIf="matchPayment?.matchPlans?.length">
+                  <td></td>
+                  <td><b>Year:</b> {{ matchPayment?.year }}</td>
+                  <td><b>Month:</b> {{ matchPayment?.month }}</td>
+                  <td>
+                    <b>Plan:</b> {{ matchPayment?.matchPlans?.join(", ") }}
+                  </td>
+                </tr>
+                <tr *ngIf="matchPayment?.matchPlans?.length">
+                  <td></td>
+                  <td><b>Goals:</b> {{ matchPayment?.goals }}</td>
+                  <td><b>Needs:</b> {{ matchPayment?.needs }}</td>
+                  <td><b>Notes:</b>{{ matchPayment?.matchNotes }}</td>
+                </tr>
+              </ng-template>
+            </ng-template>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </ng-template>
+</div>

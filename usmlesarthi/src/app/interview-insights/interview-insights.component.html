@@ -1,0 +1,1005 @@
+<div class="row text-left">
+  <div class="display-4 m-2 p-2 row">Interview Insights</div>
+</div>
+<div class="card m-2" [ngSwitch]="landing">
+  <div class="card-body" *ngSwitchCase="'basic'">
+    <div *ngIf="loading; else loaded" class="text-center">Loading....</div>
+    <ng-template #loaded>
+      <div class="row" style="justify-content: flex-end">
+        <button
+          class="btn btn-primary btn-md btn-outline-primary float-right"
+          (click)="takeMeToList()"
+        >
+          See your interviews
+        </button>
+      </div>
+      <div class="form-group">
+        <label for="Number of hospitals"
+          >Please specify the number of hospitals from where you have received
+          interview invitations:</label
+        >
+        <input
+          type="number"
+          class="form-control"
+          name="numHos"
+          id="numHos"
+          aria-describedby="Number of hospitals"
+          placeholder="Number of hospitals"
+          [(ngModel)]="numHos"
+          max="10"
+          min="1"
+          required
+        />
+      </div>
+      <div class="form-group">
+        <label for="Speciality"
+          >Please select the specialty for which you have received the
+          interviews:
+        </label>
+        <select
+          class="form-control"
+          data-toggle="dropdown"
+          id="Speciality"
+          name="Speciality"
+          [(ngModel)]="speciality"
+          required
+        >
+          <option class="dropdown-item" value="">Choose one option</option>
+          <option
+            class="dropdown-item"
+            [value]="program.PId"
+            *ngFor="let program of programList"
+          >
+            {{ program.PName }}
+          </option>
+        </select>
+      </div>
+      <button
+        class="btn btn-block btn-primary btn-outline-primary card-footer"
+        (click)="getSelects()"
+      >
+        Continue
+      </button>
+    </ng-template>
+  </div>
+  <div class="card-body" *ngSwitchCase="'selection'">
+    <div *ngIf="loading; else loaded" class="text-center">
+      Fetching Data....
+    </div>
+    <ng-template #loaded>
+      <div class="card-body">
+        <div class="row">
+          <button
+            class="btn btn-primary btn-md btn-outline-primary float-right"
+            (click)="takeMeToBasic()"
+          >
+            <i class="fa fa-arrow-left"></i> Back
+          </button>
+        </div>
+        <h5 class="font-weight-bold text-uppercase text-center text-primary">
+          {{ programObject[speciality].PName }}
+        </h5>
+      </div>
+      <div class="table-responsive" style="overflow: visible">
+        <table
+          class="table table-striped table-hover"
+          style="margin-bottom: 20rem"
+        >
+          <thead>
+            <tr>
+              <th scope="col" style="width: 40%">
+                Please select the name of hospital:
+              </th>
+              <th scope="col" style="width: 30%">
+                Please select the actual date of interview:
+              </th>
+              <th scope="col" style="width: 30%">
+                Did you signal this program (if applicable)?
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let select of selectValues; index as i">
+              <td>
+                <select
+                  class="form-control"
+                  [id]="i"
+                  [name]="i"
+                  [(ngModel)]="select.hid"
+                >
+                  <option value="" disabled>Choose a hospital</option>
+                  <option
+                    [value]="hospital.HId"
+                    *ngFor="let hospital of hospitalsList"
+                  >
+                    {{ hospital.HName }} ({{ hospital.City }})
+                  </option>
+                </select>
+              </td>
+              <td>
+                <div class="input-group">
+                  <input
+                    class="form-control"
+                    placeholder="yyyy-mm-dd"
+                    [name]="'data' + i"
+                    [(ngModel)]="select.date"
+                    ngbDatepicker
+                    [minDate]="calendar.getToday()"
+                    [maxDate]=""
+                    #d="ngbDatepicker"
+                  />
+                  <div class="input-group-append">
+                    <button
+                      class="btn btn-outline-secondary calendar"
+                      (click)="d.toggle()"
+                      type="button"
+                    >
+                      <i class="fa fa-calendar" aria-hidden="true"></i>
+                    </button>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div style="display: flex">
+                  <label class="form-check form-check-label">
+                    <input
+                      type="radio"
+                      class="form-check-input"
+                      name="signal-{{ i }}"
+                      id="signalYes-{{ i }}"
+                      value="yes"
+                      [(ngModel)]="select.signal"
+                      required
+                    />
+                    Yes
+                  </label>
+                  <label class="form-check form-check-label ml-2">
+                    <input
+                      type="radio"
+                      class="form-check-input"
+                      name="signal-{{ i }}"
+                      id="signalNo-{{ i }}"
+                      value="no"
+                      [(ngModel)]="select.signal"
+                    />
+                    No
+                  </label>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <button
+        class="btn btn-block btn-primary btn-outline-primary card-footer"
+        (click)="postSelections()"
+      >
+        Continue
+      </button>
+    </ng-template>
+  </div>
+  <div class="card-body" *ngSwitchCase="'list'">
+    <div *ngIf="loading; else loaded" class="text-center">
+      Fetching your interviews list...
+    </div>
+    <ng-template #loaded>
+      <div class="table-responsive text-center">
+        <div>
+          <button
+            class="btn btn-primary btn-md btn-outline-primary float-right"
+            (click)="takeMeToBasic()"
+          >
+            <i class="fa fa-plus"></i> Add interviews
+          </button>
+        </div>
+        <h5 class="font-weight-bold text-uppercase text-center text-primary">
+          Your Interviews
+        </h5>
+        <br />
+        <h6 class="text-left">
+          Here is the list of hospitals that you have filled on previous page.
+          To gather information about the hospitals click the link specified for
+          them.
+        </h6>
+        <br />
+        <table class="table table-striped table-hover text-left">
+          <thead>
+            <tr>
+              <th scope="col">S.No.</th>
+              <th scope="col">Hospital Name</th>
+              <th scope="col">Program Type</th>
+              <th scope="col">Interview Date</th>
+              <th scope="col">State</th>
+              <th scope="col">City</th>
+              <th scope="col">Access Info</th>
+              <th scope="col">Provide Info</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let interview of interviewsList; index as i">
+              <th scope="row">{{ i + 1 }}</th>
+              <td>{{ interview.hospital.HName }}</td>
+              <td>{{ programObject[interview.PId].PName }}</td>
+              <td>{{ interview.Date }}</td>
+              <td>{{ interview.hospital.State }}</td>
+              <td>{{ interview.hospital.City }}</td>
+              <td>
+                <button
+                  class="btn-flat btn-sm btn-outline-primary"
+                  (click)="takeMeToInfo(interview, i)"
+                >
+                  See Info
+                </button>
+              </td>
+              <td *ngIf="interview.ProvidedInfo == 'Yes'; else enter">
+                <span class="text-primary">Already Entered</span>
+              </td>
+              <ng-template #enter>
+                <td>
+                  <button
+                    class="btn-flat btn-sm btn-outline-primary"
+                    (click)="takeMeToForm(interview.InterviewId)"
+                  >
+                    Enter Info
+                  </button>
+                </td>
+              </ng-template>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </ng-template>
+  </div>
+  <div class="card-body" *ngSwitchCase="'display'">
+    <div *ngIf="loading; else loaded" class="text-center">
+      Fetching your interviews list...
+    </div>
+    <ng-template #loaded>
+      <div class="card-body">
+        <div class="row">
+          <button
+            class="btn btn-primary btn-md btn-outline-primary float-right"
+            (click)="takeMeToList()"
+          >
+            <i class="fa fa-arrow-left"></i> Back
+          </button>
+        </div>
+        <div class="form-group table-responsive">
+          <label>
+            <h6 class="text-primary font-weight-bolder">
+              Experience of Sarthi students who appeared for the interview in
+              the specified hospitals is listed below.
+            </h6>
+          </label>
+
+          <div
+            class="card card-body bg-light card-outline-primary"
+            style="align-items: center"
+          >
+            <div class="row h4 font-weight-bold">
+              {{ selectedInterview.hospital.HName }}
+            </div>
+            <div class="row h5 p-2 font-weight-bold text-primary">
+              {{ selectedInterview.hospital.City }},
+              {{ selectedInterview.hospital.State }}
+            </div>
+            <div class="row h6 p-2 font-weight-bolder">
+              {{ programObject[selectedInterview.PId].PName }}
+            </div>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table
+            class="table table-hover table-bordered table-striped"
+            id="table1"
+          >
+            <thead>
+              <tr>
+                <th>S.No.</th>
+                <th>Interview Type</th>
+                <th>Interview Platform</th>
+                <th>Number of interview in a day</th>
+                <th>Average duration of interviews (in min)</th>
+                <th>Interviewer Designations</th>
+                <th>Specific questions asked</th>
+                <th>Pre-interview dinner or equivalent</th>
+                <th>PD presentation</th>
+                <th>Approximate time allowed for PD presentation</th>
+                <th>
+                  Things that have been discussed/presented in PD presentation
+                </th>
+                <th>
+                  Unique/different (good or bad) about the interview
+                  day/interview questions/ overall experience?
+                </th>
+                <th>Dicussion/Questions on Telerotations</th>
+                <th>Questions asked on Supplemental ERAS CV?</th>
+                <th>Did you signal this program in supplemental (IM)?</th>
+                <th>Specific questions asked by PD during interview</th>
+                <th>The Interview Day environment was relaxed and friendly</th>
+                <th>The residents looked happy and satisfied</th>
+                <!-- <th>There seems to be hierarchy among senior and junior residents</th> -->
+                <th>IMG friendly</th>
+                <th>
+                  I will rank this program highly and will be happy if I match
+                  there
+                </th>
+                <th>Overall experience</th>
+              </tr>
+            </thead>
+            <tbody id="table1">
+              <tr *ngFor="let interview of interviewsInfo; index as i">
+                <td>{{ i + 1 }}</td>
+                <td>{{ interview.InterviewType }}</td>
+                <td>
+                  {{
+                    interview.interviewPlatform === "Others"
+                      ? interview.otherPlatform
+                      : interview.interviewPlatform
+                  }}
+                </td>
+                <td>{{ interview.NumInterviews }}</td>
+                <td>{{ interview.Duration }}</td>
+                <td>{{ interview.InterviewerDesignations }}</td>
+                <td>{{ interview.QuestionsToOther }}</td>
+                <td>{{ interview.PreInterview }}</td>
+                <td>{{ interview.PDPpt }}</td>
+                <td>{{ interview.PDPptDur }}</td>
+                <td>{{ interview.PDDiscussion }}</td>
+                <td>{{ interview.UniquePoints }}</td>
+                <td>{{ interview.teleRotations }}</td>
+                <td>{{ interview.suppEras }}</td>
+                <td>{{ interview.signalProgram }}</td>
+                <td>{{ interview.QuestionsInPD }}</td>
+                <td>{{ interview.FriendlyEnv }}</td>
+                <td>{{ interview.ResidentstSatisfac }}</td>
+                <!-- <td>{{interview.SenJunHierarchy}}</td> -->
+                <td>{{ interview.IMGFriendly }}</td>
+                <td>{{ interview.ProgramHighRating }}</td>
+                <td>{{ interview.OverallExp }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </ng-template>
+  </div>
+  <div class="card-body" *ngSwitchCase="'form'">
+    <div *ngIf="loading; else loaded" class="text-center">
+      Fetching your interviews list...
+    </div>
+    <ng-template #loaded>
+      <div class="card-body">
+        <div class="row">
+          <button
+            class="btn btn-primary btn-md btn-outline-primary float-right"
+            (click)="takeMeToBasic()"
+          >
+            <i class="fa fa-arrow-left"></i> Back
+          </button>
+        </div>
+        <div
+          class="card card-body bg-light card-outline-primary"
+          style="align-items: center"
+        >
+          <div class="row h4 font-weight-bold">
+            {{ selectedInterview.hospital.HName }}
+          </div>
+          <div class="row h5 p-2 font-weight-bold text-primary">
+            {{ selectedInterview.hospital.City }},
+            {{ selectedInterview.hospital.State }}
+          </div>
+          <div class="row h6 p-2 font-weight-bolder">
+            {{ programObject[selectedInterview.PId].PName }}
+          </div>
+        </div>
+
+        <form ngNativeValidate (ngSubmit)="submitData()">
+          <div class="form-group">
+            <label for="interviewtype"
+              >Types of Interview<span style="color: red"> *</span></label
+            >
+            <select
+              class="form-control"
+              id="interviewtype"
+              name="interviewtype"
+              [(ngModel)]="selectedInterviewData.InterviewType"
+              required
+            >
+              <option value="" selected>Select your option</option>
+              <option value="Onsite">Onsite</option>
+              <option value="Virtual">Virtual</option>
+            </select>
+          </div>
+
+          <div
+            *ngIf="selectedInterviewData.InterviewType === 'Virtual'"
+            class="form-group"
+          >
+            <label for="interviewtype"
+              >Platform used if Virtual<span style="color: red"> *</span></label
+            >
+            <select
+              class="form-control"
+              id="interviewPlatform"
+              name="interviewPlatform"
+              [(ngModel)]="selectedInterviewData.interviewPlatform"
+              [required]="selectedInterviewData.InterviewType === 'Virtual'"
+            >
+              <option value="" selected>Select your option</option>
+              <option value="Zoom">Zoom</option>
+              <option value="Thallamus">Thallamus</option>
+              <option value="Skype">Skype</option>
+              <option value="Others">Others</option>
+            </select>
+
+            <span
+              class="col-12 mt-2"
+              *ngIf="selectedInterviewData.interviewPlatform === 'Others'"
+            >
+              <input
+                type="text"
+                name="otherPlatform"
+                [(ngModel)]="selectedInterviewData.otherPlatform"
+                class="form-control"
+                placeholder="Please specify"
+                [required]="
+                  selectedInterviewData.InterviewType === 'Virtual' &&
+                  selectedInterviewData.interviewPlatform === 'Others'
+                "
+              />
+            </span>
+          </div>
+
+          <div class="form-group">
+            <label for="howmanyinterview"
+              >How many interviews you have during that day?<span
+                style="color: red"
+              >
+                *</span
+              ></label
+            >
+            <input
+              type="number"
+              class="form-control"
+              id="howmanyinterview"
+              name="howmanyinterview"
+              placeholder="Enter number of interviews"
+              onfocus="this.placeholder = ''"
+              onblur="this.placeholder='Enter number of interviews'"
+              [(ngModel)]="selectedInterviewData.NumInterviews"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="duration"
+              >Approximate duration of each interview (in minutes)<span
+                style="color: red"
+              >
+                *</span
+              ></label
+            >
+            <input
+              type="number"
+              class="form-control"
+              id="duration"
+              name="duration"
+              placeholder="Enter duration (approximate) of interviews"
+              onfocus="this.placeholder = ''"
+              onblur="this.placeholder='Enter duration (approximate) of interviews'"
+              [(ngModel)]="selectedInterviewData.Duration"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="designation"
+              >Interviewer Designations (PD, Attending, chief of endocrine,
+              chief of rheumatology, etc)<span style="color: red">
+                *</span
+              ></label
+            >
+            <input
+              type="text"
+              class="form-control"
+              id="designation"
+              name="designation"
+              placeholder="Enter designation of interviewer"
+              onfocus="this.placeholder = ''"
+              onblur="this.placeholder='Enter designation of interviewer'"
+              [(ngModel)]="selectedInterviewData.InterviewerDesignations"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="specificother"
+              >Specific questions asked in other interviews that day (don't say
+              general chit chat)<span style="color: red"> *</span></label
+            >
+            <input
+              type="text"
+              class="form-control"
+              id="specificother"
+              name="specificother"
+              placeholder="Enter specific questions asked in other interviews that day"
+              onfocus="this.placeholder = ''"
+              onblur="this.placeholder='Enter specific questions asked in other interviews that day'"
+              [(ngModel)]="selectedInterviewData.QuestionsToOther"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="dinner"
+              >Was there a pre-interview dinner or equivalent?<span
+                style="color: red"
+              >
+                *</span
+              ></label
+            >
+            <select
+              class="form-control"
+              id="dinner"
+              name="dinner"
+              [(ngModel)]="selectedInterviewData.PreInterview"
+              required
+            >
+              <option value="">Select your option</option>
+              <option value="Yes, only faculty was present">
+                Yes, only faculty was present
+              </option>
+              <option value="Yes, only residents were present">
+                Yes, only residents were present
+              </option>
+              <option value="Yes, both faculty and residents were present">
+                Yes, both faculty and residents were present
+              </option>
+              <option value="No">No</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="pd"
+              >Was there a PD presentation?<span style="color: red">
+                *</span
+              ></label
+            >
+            <select
+              class="form-control"
+              id="pd"
+              name="pd"
+              [(ngModel)]="selectedInterviewData.PDPpt"
+              required
+            >
+              <option value="">Select your option</option>
+              <option value="Live">Live</option>
+              <option value="Recorded">Recorded</option>
+              <option value="None">None</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="pdduration"
+              >If there was a PD presentation, then what was approximate time
+              allowed/allotted for the presentation (in minutes)<span
+                style="color: red"
+              >
+                *</span
+              ></label
+            >
+            <input
+              type="number"
+              class="form-control"
+              id="pdduration"
+              name="pdduration"
+              placeholder="Enter the duration"
+              onfocus="this.placeholder = ''"
+              onblur="this.placeholder='Enter the duration'"
+              [(ngModel)]="selectedInterviewData.PDPptDur"
+              [required]="selectedInterviewData.PDPpt !== 'None'"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="pdif"
+              >If there was a PD presentation, then what was
+              discussed/presented?<span style="color: red"> *</span></label
+            >
+            <input
+              type="text"
+              class="form-control"
+              id="pdif"
+              name="pdif"
+              placeholder="Enter what was discussed/presented"
+              onfocus="this.placeholder = ''"
+              onblur="this.placeholder='Enter what was discussed/presented'"
+              [(ngModel)]="selectedInterviewData.PDDiscussion"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="unique"
+              >Anything unique/different (good or bad) about the interview
+              day/interview questions/ overall experience?<span
+                style="color: red"
+              >
+                *</span
+              ></label
+            >
+            <input
+              type="text"
+              class="form-control"
+              id="unique"
+              name="unique"
+              placeholder="Enter anything unique/different (good or bad) about the interview day/interview questions/ overall experience"
+              onfocus="this.placeholder = ''"
+              onblur="this.placeholder='Enter anything unique/different (good or bad) about the interview day/interview questions/ overall experience'"
+              [(ngModel)]="selectedInterviewData.UniquePoints"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="specificpd"
+              >Specific questions asked by PD during interview (don't say
+              general chit chat)<span style="color: red"> *</span></label
+            >
+            <input
+              type="text"
+              class="form-control"
+              id="specificpd"
+              name="specificpd"
+              placeholder="Enter specific questions asked by PD during interview"
+              onfocus="this.placeholder = ''"
+              onblur="this.placeholder='Enter specific questions asked by PD during interview'"
+              [(ngModel)]="selectedInterviewData.QuestionsInPD"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="unique"
+              >If your CV had telerotations, what was the discussion/questions
+              on telerotations?<span style="color: red"> *</span></label
+            >
+            <input
+              type="text"
+              class="form-control"
+              id="teleRotations"
+              name="teleRotations"
+              placeholder="Enter about the discussion/questions on telerotations"
+              [(ngModel)]="selectedInterviewData.teleRotations"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="unique"
+              >Questions asked on Supplemental ERAS CV?<span style="color: red">
+                *</span
+              ></label
+            >
+            <input
+              type="text"
+              class="form-control"
+              id="suppEras"
+              name="suppEras"
+              placeholder="Enter the questions on Supplemental ERAS CV"
+              [(ngModel)]="selectedInterviewData.suppEras"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="unique"
+              >Did you signal this program in supplemental (IM)?<span
+                style="color: red"
+              >
+                *</span
+              ></label
+            >
+            <input
+              type="text"
+              class="form-control"
+              id="signalProgram"
+              name="signalProgram"
+              placeholder="Enter the response here"
+              [(ngModel)]="selectedInterviewData.signalProgram"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="rating"
+              >Please express your opinion based on your interview experience.
+              Indicate how strongly do you agree with the following
+              statements.<span style="color: red"> *</span></label
+            >
+            <table class="table striped-columns border table-responsive">
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>Strongly Agree</th>
+                  <th>Agree</th>
+                  <th>Neutral</th>
+                  <th>Disagree</th>
+                  <th>Strongly Disagree</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    The Interview Day environment was relaxed and friendly
+                  </td>
+                  <td>
+                    <input
+                      type="radio"
+                      value="Strongly Agree"
+                      name="relaxed"
+                      [(ngModel)]="selectedInterviewData.FriendlyEnv"
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="radio"
+                      value="Agree"
+                      name="relaxed"
+                      [(ngModel)]="selectedInterviewData.FriendlyEnv"
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="radio"
+                      value="Neutral"
+                      name="relaxed"
+                      [(ngModel)]="selectedInterviewData.FriendlyEnv"
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="radio"
+                      value="Disagree"
+                      name="relaxed"
+                      [(ngModel)]="selectedInterviewData.FriendlyEnv"
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="radio"
+                      value="Strongly Disagree"
+                      name="relaxed"
+                      [(ngModel)]="selectedInterviewData.FriendlyEnv"
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <td>The residents looked happy and satisfied</td>
+                  <td>
+                    <input
+                      type="radio"
+                      value="Strongly Agree"
+                      name="satisfied"
+                      [(ngModel)]="selectedInterviewData.ResidentstSatisfac"
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="radio"
+                      value="Agree"
+                      name="satisfied"
+                      [(ngModel)]="selectedInterviewData.ResidentstSatisfac"
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="radio"
+                      value="Neutral"
+                      name="satisfied"
+                      [(ngModel)]="selectedInterviewData.ResidentstSatisfac"
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="radio"
+                      value="Disagree"
+                      name="satisfied"
+                      [(ngModel)]="selectedInterviewData.ResidentstSatisfac"
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="radio"
+                      value="Strongly Disagree"
+                      name="satisfied"
+                      [(ngModel)]="selectedInterviewData.ResidentstSatisfac"
+                    />
+                  </td>
+                </tr>
+                <!-- <tr>
+                  <td>There seems to be hierarchy among senior and junior residents</td>
+                  <td><input type="radio" value="Strongly Agree" name="senior"
+                      [(ngModel)]="selectedInterviewData.SenJunHierarchy" /></td>
+                  <td><input type="radio" value="Agree" name="senior"
+                      [(ngModel)]="selectedInterviewData.SenJunHierarchy" /></td>
+                  <td><input type="radio" value="Neutral" name="senior"
+                      [(ngModel)]="selectedInterviewData.SenJunHierarchy" /></td>
+                  <td><input type="radio" value="Disagree" name="senior"
+                      [(ngModel)]="selectedInterviewData.SenJunHierarchy" /></td>
+                  <td><input type="radio" value="Strongly Disagree" name="senior"
+                      [(ngModel)]="selectedInterviewData.SenJunHierarchy" /></td>
+                </tr> -->
+                <tr>
+                  <td>IMG friendly</td>
+                  <td>
+                    <input
+                      type="radio"
+                      value="Strongly Agree"
+                      name="friendly"
+                      [(ngModel)]="selectedInterviewData.IMGFriendly"
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="radio"
+                      value="Agree"
+                      name="friendly"
+                      [(ngModel)]="selectedInterviewData.IMGFriendly"
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="radio"
+                      value="Neutral"
+                      name="friendly"
+                      [(ngModel)]="selectedInterviewData.IMGFriendly"
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="radio"
+                      value="Disagree"
+                      name="friendly"
+                      [(ngModel)]="selectedInterviewData.IMGFriendly"
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="radio"
+                      value="Strongly Disagree"
+                      name="friendly"
+                      [(ngModel)]="selectedInterviewData.IMGFriendly"
+                    />
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    I will rank this program highly and will be happy if I match
+                    there
+                  </td>
+                  <td>
+                    <input
+                      type="radio"
+                      value="Strongly Agree"
+                      name="match"
+                      [(ngModel)]="selectedInterviewData.ProgramHighRating"
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="radio"
+                      value="Agree"
+                      name="match"
+                      [(ngModel)]="selectedInterviewData.ProgramHighRating"
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="radio"
+                      value="Neutral"
+                      name="match"
+                      [(ngModel)]="selectedInterviewData.ProgramHighRating"
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="radio"
+                      value="Disagree"
+                      name="match"
+                      [(ngModel)]="selectedInterviewData.ProgramHighRating"
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="radio"
+                      value="Strongly Disagree"
+                      name="match"
+                      [(ngModel)]="selectedInterviewData.ProgramHighRating"
+                    />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="form-group">
+            <label for="experience"
+              >Your overall program experience
+              <span class="text-primary"> (1-Lowest, 5-Highest)</span></label
+            >
+            <table
+              class="table striped-columns table-responsive"
+              style="width: auto"
+            >
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>1</th>
+                  <th>2</th>
+                  <th>3</th>
+                  <th>4</th>
+                  <th>5</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Rate your overall experience</td>
+                  <td>
+                    <input
+                      type="radio"
+                      value="1"
+                      name="overall"
+                      [(ngModel)]="selectedInterviewData.OverallExp"
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="radio"
+                      value="2"
+                      name="overall"
+                      [(ngModel)]="selectedInterviewData.OverallExp"
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="radio"
+                      value="3"
+                      name="overall"
+                      [(ngModel)]="selectedInterviewData.OverallExp"
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="radio"
+                      value="4"
+                      name="overall"
+                      [(ngModel)]="selectedInterviewData.OverallExp"
+                    />
+                  </td>
+                  <td>
+                    <input
+                      type="radio"
+                      value="5"
+                      name="overall"
+                      [(ngModel)]="selectedInterviewData.OverallExp"
+                    />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <button
+            class="btn btn-block btn-primary btn-outline-primary card-footer"
+            type="submit"
+            name="submit"
+          >
+            Submit
+          </button>
+        </form>
+      </div>
+    </ng-template>
+  </div>
+</div>

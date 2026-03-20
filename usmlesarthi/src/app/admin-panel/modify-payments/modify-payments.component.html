@@ -1,0 +1,708 @@
+<div class="card-body" [ngSwitch]="landing">
+  <div *ngSwitchCase="'list'">
+    <div *ngIf="loading; else loaded" class="text-center">
+      Fetching the details
+    </div>
+    <ng-template #loaded>
+      <div class="card row" *ngIf="addNew">
+        <div class="card-body">
+          <div class="text-primary">
+            Note: Please check the email before adding a new one, as this will
+            cause redundancy in our database.
+          </div>
+          <form class="m-2" ngNativeValidate>
+            <div class="row mt-2">
+              <label>User Email</label>
+              <input
+                class="form-control"
+                type="email"
+                name="email"
+                id="email"
+                [(ngModel)]="newUser.email"
+                required
+              />
+            </div>
+            <div class="row mt-2">
+              <button
+                class="btn btn-success btn-block btn-outline-success"
+                type="submit"
+                (click)="addNewUser()"
+              >
+                Add User To the Database
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+      <div>
+        <label>Payments Report</label>
+        <div class="row">
+          <div class="col">
+            <div class="input-group">
+              <input
+                class="form-control"
+                placeholder="yyyy-mm-dd"
+                name="reportDateFrom"
+                [(ngModel)]="reportDateFrom"
+                ngbDatepicker
+                #reportDate="ngbDatepicker"
+              />
+              <div class="input-group-append">
+                <button
+                  class="btn btn-outline-secondary calendar"
+                  (click)="reportDate.toggle()"
+                  type="button"
+                >
+                  <i class="fa fa-calendar" aria-hidden="true"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="col">
+            <button
+              style="margin-right: 10px"
+              class="btn btn-primary btn-outline-primary btn-md text-center float-left"
+              (click)="generateReport()"
+              [disabled]="!reportDateFrom"
+            >
+              Generate
+            </button>
+            <button
+              class="btn btn-success btn-outline-success float-right"
+              (click)="generateReport('all')"
+            >
+              Generate for all users
+            </button>
+          </div>
+        </div>
+      </div>
+      <div>
+        <label> Write the user's email you are looking for..</label>
+        <input type="text" class="form-control" #userEmail />
+        <br />
+        <div class="row">
+          <div class="col">
+            <button
+              style="margin-right: 10px"
+              class="btn btn-primary btn-outline-primary btn-md text-center float-left"
+              (click)="fetchSome(userEmail.value)"
+            >
+              Search
+            </button>
+          </div>
+          <div class="col">
+            <button
+              class="btn btn-success btn-outline-success float-right"
+              (click)="addNew = !addNew"
+            >
+              Add New User
+            </button>
+          </div>
+        </div>
+      </div>
+      <div *ngIf="reportUsers.length">
+        <div class="w-100 font-weight-bolder text-align-right">
+          <div class="col">
+            <button
+              class="btn btn-block btn-warning btn-outline-warning mt-2 float-left card-footer"
+              (click)="exportReportToExcel()"
+            >
+              <i class="ft-upload"></i> Export To Excel
+            </button>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table id="Payments-List" class="table table-striped table-hover">
+            <thead>
+              <tr>
+                <th scope="col">S.No</th>
+                <th scope="col">Email</th>
+                <th scope="col">Name</th>
+                <th scope="col">Phone</th>
+                <th scope="col">Match Plan?</th>
+                <th scope="col">Rotations?</th>
+                <th scope="col">Research?</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let user of reportUsers; index as i">
+                <td>{{ i + 1 }}</td>
+                <td>{{ user.email }}</td>
+                <td>{{ user.name }}</td>
+                <td>{{ user.phone }}</td>
+                <td>
+                  {{
+                    user.matchPayments && user.matchPayments.length
+                      ? "Yes"
+                      : "No"
+                  }}
+                </td>
+                <td>
+                  {{ user.rotations && user.rotations.length ? "Yes" : "No" }}
+                </td>
+                <td>
+                  {{
+                    user.researchPayments && user.researchPayments.length
+                      ? "Yes"
+                      : "No"
+                  }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div *ngIf="usersList.length">
+        <label class="text-center"> See/Modify the payments of users.</label>
+        <div class="table-responsive">
+          <table class="table table-striped table-hover">
+            <thead>
+              <tr>
+                <th scope="col">S.No</th>
+                <th scope="col">User Email</th>
+                <th scope="col">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let user of usersList; index as i">
+                <td>{{ i + 1 }}</td>
+                <td>{{ user.email }}</td>
+                <td>
+                  <button
+                    class="btn btn-primary btn-outline-primary"
+                    (click)="takeMeToUser(user.email)"
+                  >
+                    Update
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </ng-template>
+  </div>
+  <div *ngSwitchCase="'user'">
+    <div *ngIf="loading; else loaded" class="text-center">
+      Fetching the details...
+    </div>
+    <ng-template #loaded>
+      <div class="row">
+        <div class="col">
+          <button
+            class="btn btn-primary btn-outline-primary float-left"
+            (click)="landing = 'list'"
+          >
+            <i class="ft-arrow-left"></i> Back
+          </button>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col text-center">
+          <h4 class="font-weight-bolder">{{ selectedUser.email }}</h4>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-12">
+          <label>Name</label>
+        </div>
+        <div class="col-12">
+          <div class="input-group">
+            <input
+              class="form-control"
+              name="name"
+              [(ngModel)]="selectedUser.name"
+            />
+          </div>
+        </div>
+        <div class="col-12">
+          <label>Phone Number</label>
+        </div>
+        <div class="col-12">
+          <div class="input-group">
+            <input
+              class="form-control"
+              name="phone"
+              [(ngModel)]="selectedUser.phone"
+            />
+          </div>
+        </div>
+      </div>
+      <div class="font-weight-bold h4 text-primary m-2 p-2">Payments</div>
+      <div class="row mt-2">
+        <div class="font-weight-bold h5 m-2 p-2">Match Plan Payments</div>
+        <div class="col-12">
+          <label>Date of Enrollment</label>
+        </div>
+        <div class="col-12">
+          <div class="input-group">
+            <input
+              class="form-control"
+              placeholder="yyyy-mm-dd"
+              name="matchEnrollmentDate"
+              [(ngModel)]="selectedUser.matchEnrollmentDate"
+              ngbDatepicker
+              #matchDate="ngbDatepicker"
+            />
+            <div class="input-group-append">
+              <button
+                class="btn btn-outline-secondary calendar"
+                (click)="matchDate.toggle()"
+                type="button"
+              >
+                <i class="fa fa-calendar" aria-hidden="true"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="col-12"><label>Payment Plan?</label></div>
+        <div class="col-12">
+          <select
+            class="form-control"
+            name="match-paymentmode"
+            [(ngModel)]="selectedUser.matchPaymentType"
+          >
+            <option value="Full">Full</option>
+            <option value="Installments">Installments</option>
+          </select>
+        </div>
+        <div class="col-12"><label>Enrollment Plan</label></div>
+        <div class="col-12">
+          <input
+            type="text"
+            class="form-control"
+            [(ngModel)]="selectedUser.plan"
+            name="match-plan"
+            aria-describedby="yogError"
+            onfocus="this.placeholder = ''"
+          />
+        </div>
+        <div
+          class="col-12 row border border-primary m-2 p-2"
+          *ngFor="let payment of selectedUser.matchPayments; index as i"
+        >
+          <div class="font-weight-bold h6 col-12 mt-2">Payment {{ i + 1 }}</div>
+          <div class="col-12">
+            <label>Amount of Payment?</label>
+          </div>
+          <div class="col-12">
+            <input
+              type="number"
+              class="form-control"
+              [(ngModel)]="payment.amount"
+              name="match-payment-{{ i }}-amount"
+              aria-describedby="yogError"
+              onfocus="this.placeholder = ''"
+            />
+          </div>
+          <div class="col-12">
+            <label>Date of Payment?</label>
+          </div>
+          <div class="col-12">
+            <div class="input-group">
+              <input
+                class="form-control"
+                placeholder="yyyy-mm-dd"
+                name="match-payment-{{ i }}-date"
+                [(ngModel)]="payment.date"
+                ngbDatepicker
+                #d="ngbDatepicker"
+              />
+              <div class="input-group-append">
+                <button
+                  class="btn btn-outline-secondary calendar"
+                  (click)="d.toggle()"
+                  type="button"
+                >
+                  <i class="fa fa-calendar" aria-hidden="true"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="col-12"><label>Mode of Payment?</label></div>
+          <div class="col-12">
+            <select
+              class="form-control"
+              name="match-payment-{{ i }}-mode"
+              [(ngModel)]="payment.mode"
+            >
+              <option value="Bank Check">Bank Check</option>
+              <option value="Zelle">Zelle</option>
+              <option value="Direct Deposit">Direct Deposit</option>
+              <option value="Website">Website</option>
+              <option value="Wire Transfer">Wire Transfer</option>
+            </select>
+          </div>
+          <div class="col-12"><label>Payment Received?</label></div>
+          <div class="col-12">
+            <select
+              class="form-control"
+              name="match-payment-{{ i }}-nature"
+              [(ngModel)]="payment.received"
+            >
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+          <div class="col-12">
+            <label> Notes </label>
+          </div>
+          <div class="col-12">
+            <textarea
+              autosize
+              type="text"
+              name="match-payment-{{ i }}-notes"
+              [(ngModel)]="payment.notes"
+              class="form-control"
+              placeholder="Please explain here.."
+            >
+            </textarea>
+          </div>
+          <div class="col-12 mt-2">
+            <button
+              class="btn btn-dange btn-outline-danger btn-md text-center float-right"
+              type="button"
+              (click)="deleteElement(i, 'matchPayments')"
+            >
+              Delete Installment
+            </button>
+          </div>
+        </div>
+        <div class="col-12 mt-2">
+          <button
+            class="btn btn-primary btn-outline-primary btn-md text-center float-left"
+            type="button"
+            (click)="addElement('matchPayments')"
+          >
+            Add Installment
+          </button>
+          <button
+            class="btn btn-primary btn-outline-primary btn-md text-center float-left ml-2"
+            type="button"
+            (click)="duplicateElement('matchPayments')"
+          >
+            Duplicate the last installment
+          </button>
+        </div>
+      </div>
+      <div class="row mt-2">
+        <div class="font-weight-bold h5 m-2 p-2">Rotation Payments</div>
+        <div class="col-12">
+          <label>Date of Enrollment</label>
+        </div>
+        <div class="col-12">
+          <div class="input-group">
+            <input
+              class="form-control"
+              placeholder="yyyy-mm-dd"
+              name="rotationEnrollmentDate"
+              [(ngModel)]="selectedUser.rotationEnrollmentDate"
+              ngbDatepicker
+              #rotationDate="ngbDatepicker"
+            />
+            <div class="input-group-append">
+              <button
+                class="btn btn-outline-secondary calendar"
+                (click)="rotationDate.toggle()"
+                type="button"
+              >
+                <i class="fa fa-calendar" aria-hidden="true"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div
+          class="col-12 row border border-primary m-2 p-2"
+          *ngFor="let payment of selectedUser.rotations; index as i"
+        >
+          <div class="font-weight-bold h6 col-12 mt-2">
+            Rotation {{ i + 1 }}
+          </div>
+          <div class="col-12">
+            <label>Amount of Registration Fee?</label>
+          </div>
+          <div class="col-12">
+            <input
+              type="number"
+              class="form-control"
+              [(ngModel)]="payment.amount"
+              name="rotation-payment-{{ i }}-amount"
+              aria-describedby="yogError"
+              onfocus="this.placeholder = ''"
+            />
+          </div>
+          <div class="col-12">
+            <label>Location?</label>
+          </div>
+          <div class="col-12">
+            <input
+              type="text"
+              class="form-control"
+              [(ngModel)]="payment.location"
+              name="rotation-payment-{{ i }}-location"
+              aria-describedby="yogError"
+              onfocus="this.placeholder = ''"
+            />
+          </div>
+          <div class="col-12">
+            <label>Start Date of Rotation?</label>
+          </div>
+          <div class="col-12">
+            <div class="input-group">
+              <input
+                class="form-control"
+                placeholder="yyyy-mm-dd"
+                name="rotation-payment-{{ i }}-date"
+                [(ngModel)]="payment.date"
+                ngbDatepicker
+                #d="ngbDatepicker"
+              />
+              <div class="input-group-append">
+                <button
+                  class="btn btn-outline-secondary calendar"
+                  (click)="d.toggle()"
+                  type="button"
+                >
+                  <i class="fa fa-calendar" aria-hidden="true"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="col-12"><label>Mode of Payment?</label></div>
+          <div class="col-12">
+            <select
+              class="form-control"
+              name="rotation-payment-{{ i }}-mode"
+              [(ngModel)]="payment.mode"
+            >
+              <option value="Bank Check">Bank Check</option>
+              <option value="Zelle">Zelle</option>
+              <option value="Direct Deposit">Direct Deposit</option>
+              <option value="Website">Website</option>
+              <option value="Wire Transfer">Wire Transfer</option>
+            </select>
+          </div>
+          <div class="col-12"><label>Payment Received?</label></div>
+          <div class="col-12">
+            <select
+              class="form-control"
+              name="rotation-payment-{{ i }}-nature"
+              [(ngModel)]="payment.received"
+            >
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+          <div class="col-12">
+            <label>Date of Enrollment?</label>
+          </div>
+          <div class="col-12">
+            <input
+              type="text"
+              class="form-control"
+              [(ngModel)]="payment.time"
+              name="rotation-payment-{{ i }}-time"
+              aria-describedby="yogError"
+              onfocus="this.placeholder = ''"
+            />
+          </div>
+          <div class="col-12">
+            <label> Notes </label>
+          </div>
+          <div class="col-12">
+            <textarea
+              autosize
+              type="text"
+              name="rotation-payment-{{ i }}-notes"
+              [(ngModel)]="payment.notes"
+              class="form-control"
+              placeholder="Please explain here.."
+            >
+            </textarea>
+          </div>
+          <div class="col-12 mt-2">
+            <button
+              class="btn btn-dange btn-outline-danger btn-md text-center float-right"
+              type="button"
+              (click)="deleteElement(i, 'rotations')"
+            >
+              Delete Rotation
+            </button>
+          </div>
+        </div>
+        <div class="col-12 mt-2">
+          <button
+            class="btn btn-primary btn-outline-primary btn-md text-center float-left"
+            type="button"
+            (click)="addElement('rotations')"
+          >
+            Add Rotation
+          </button>
+          <button
+            class="btn btn-primary btn-outline-primary btn-md text-center float-left ml-2"
+            type="button"
+            (click)="duplicateElement('rotations')"
+          >
+            Duplicate the last rotation
+          </button>
+        </div>
+      </div>
+      <div class="row mt-2">
+        <div class="font-weight-bold h5 m-2 p-2">Research Payments</div>
+        <div class="col-12">
+          <label>Course Start Date</label>
+        </div>
+        <div class="col-12">
+          <div class="input-group">
+            <input
+              class="form-control"
+              placeholder="yyyy-mm-dd"
+              name="researchEnrollmentDate"
+              [(ngModel)]="selectedUser.researchEnrollmentDate"
+              ngbDatepicker
+              #researchDate="ngbDatepicker"
+            />
+            <div class="input-group-append">
+              <button
+                class="btn btn-outline-secondary calendar"
+                (click)="researchDate.toggle()"
+                type="button"
+              >
+                <i class="fa fa-calendar" aria-hidden="true"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div
+          class="col-12 row border border-primary m-2 p-2"
+          *ngFor="let payment of selectedUser.researchPayments; index as i"
+        >
+          <div class="font-weight-bold h6 col-12 mt-2">Payment {{ i + 1 }}</div>
+          <div class="col-12">
+            <label>Amount of Payment?</label>
+          </div>
+          <div class="col-12">
+            <input
+              type="number"
+              class="form-control"
+              [(ngModel)]="payment.amount"
+              name="research-payment-{{ i }}-amount"
+              aria-describedby="yogError"
+              onfocus="this.placeholder = ''"
+            />
+          </div>
+          <div class="col-12">
+            <label>Date of Payment?</label>
+          </div>
+          <div class="col-12">
+            <div class="input-group">
+              <input
+                class="form-control"
+                placeholder="yyyy-mm-dd"
+                name="research-payment-{{ i }}-date"
+                [(ngModel)]="payment.date"
+                ngbDatepicker
+                #d="ngbDatepicker"
+              />
+              <div class="input-group-append">
+                <button
+                  class="btn btn-outline-secondary calendar"
+                  (click)="d.toggle()"
+                  type="button"
+                >
+                  <i class="fa fa-calendar" aria-hidden="true"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="col-12"><label>Mode of Payment?</label></div>
+          <div class="col-12">
+            <select
+              class="form-control"
+              name="research-payment-{{ i }}-mode"
+              [(ngModel)]="payment.mode"
+            >
+              <option value="Bank Check">Bank Check</option>
+              <option value="Zelle">Zelle</option>
+              <option value="Direct Deposit">Direct Deposit</option>
+              <option value="Website">Website</option>
+              <option value="Wire Transfer">Wire Transfer</option>
+            </select>
+          </div>
+          <div class="col-12"><label>Payment Received?</label></div>
+          <div class="col-12">
+            <select
+              class="form-control"
+              name="research-payment-{{ i }}-nature"
+              [(ngModel)]="payment.received"
+            >
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+          <div class="col-12"><label>Type of Research?</label></div>
+          <div class="col-12">
+            <select
+              class="form-control"
+              name="research-payment-{{ i }}-type"
+              [(ngModel)]="payment.type"
+            >
+              <option value="Abstract">Abstract</option>
+              <option value="Manuscript">Manuscript</option>
+              <option value="Combo Plan">Combo Plan</option>
+              <option value="Case Report">Case Report</option>
+              <option value="Triple Play">Triple Play</option>
+            </select>
+          </div>
+          <div class="col-12">
+            <label> Notes </label>
+          </div>
+          <div class="col-12">
+            <textarea
+              autosize
+              type="text"
+              name="research-payment-{{ i }}-notes"
+              [(ngModel)]="payment.notes"
+              class="form-control"
+              placeholder="Please explain here.."
+            >
+            </textarea>
+          </div>
+          <div class="col-12 mt-2">
+            <button
+              class="btn btn-dange btn-outline-danger btn-md text-center float-right"
+              type="button"
+              (click)="deleteElement(i, 'researchPayments')"
+            >
+              Delete Installment
+            </button>
+          </div>
+        </div>
+        <div class="col-12">
+          <button
+            class="btn btn-primary btn-outline-primary btn-md text-center float-left"
+            type="button"
+            (click)="addElement('researchPayments')"
+          >
+            Add Installment
+          </button>
+          <button
+            class="btn btn-primary btn-outline-primary btn-md text-center float-left ml-2"
+            type="button"
+            (click)="duplicateElement('researchPayments')"
+          >
+            Duplicate the last installment
+          </button>
+        </div>
+      </div>
+      <button
+        type="submit"
+        class="btn btn-block btn-primary btn-outline-primary card-footer"
+        name="submit"
+        (click)="updatePayments()"
+      >
+        Update Payments
+      </button>
+    </ng-template>
+  </div>
+</div>

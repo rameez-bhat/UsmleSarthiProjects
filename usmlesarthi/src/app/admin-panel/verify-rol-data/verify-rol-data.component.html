@@ -1,0 +1,135 @@
+<div class="card-body" [ngSwitch]="landing" >
+  <div *ngSwitchCase="'List'">
+    <div *ngIf="loading else loaded" class="text-center">
+      Fetching the list...
+    </div>
+    <ng-template #loaded>
+      <div class="table-responsive">
+        <table class="table table-striped table-hover">
+          <thead>
+            <tr>
+              <th scope="col" class="th-sm text-center">S.No.</th>
+              <th scope="col" class="th-md">User Email</th>
+              <th scope="col">TimeStamp</th>
+              <th scope="col">Program</th>
+              <th scope="col">Hospital Name</th>
+              <th scope="col">Select if verified</th>
+              <th scope="col">Select if rejected</th>
+              <th scope="col">See the data</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let hospital of verifyList; index as i">
+              <td>{{i+1}}</td>
+              <td>{{hospital.user.email}}</td>
+              <td>{{hospital.TimeStamp}}</td>
+              <td>{{programObject[hospital.PId].PName}}</td>
+              <td>{{hospital.hospital.HName}}</td>
+              <td><input type='radio' [name]="hospital.id" [(ngModel)]="hospital.Verified" value='Yes'></td>
+              <td><input type='radio' [name]="hospital.id" [(ngModel)]="hospital.Verified" value='Rejected'></td>
+              <td> <button [value]="hospital.id" class="btn-flat btn-sm btn-outline-primary"
+                (click)="takeMeToHospitalData(hospital)">View and Edit</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="text-center font-weight-bolder">
+        <span style="margin-right: 10px;"><input type='radio' name="allDown" value='allYes' (click)="makeAllYes()"> <label> All Verified </label></span>
+        <span style="margin-right: 10px;"><input type='radio' name="allDown" value='allNo' (click)="makeAllReject()"> <label> All Rejected </label></span>
+        <span><input type='radio' name="allDown" value='allNA' (click)="makeAllNA()"> <label> Unselect all </label></span>
+        <button class="btn btn-block btn-primary btn-outline-primary card-footer" (click)="makeChanges()">
+          Save changes
+        </button>
+      </div>
+    </ng-template>
+  </div>
+  <div *ngSwitchCase="'Hospital'">
+    <div *ngIf="loading else loaded" class="text-center">
+      Loading the hospital's data
+    </div>
+    <ng-template #loaded>
+        <div class="row">
+          <div class="col">
+            <button class="btn btn-primary btn-outline-primary float-left" (click)="landing='List'">
+              <i class="ft-arrow-left"></i> Back
+            </button>
+          </div>
+        </div>
+        <div class="container-fluid">
+          <h5 class="font-weight-bold text-uppercase text-center text-primary">
+            {{selectedHospitalData.hospital.HName}}
+          </h5>
+          <h6 class="font-weight-bold text-uppercase text-center text-primary">
+            {{selectedHospitalData.hospital.City}}, {{selectedHospitalData.hospital.State}}
+          </h6>
+          <h6 class="font-weight-bold">
+            Last Verified Data
+          </h6>
+          <table style="width:100%" class="table table-hover table-bordered table-striped">
+                  
+            <tr>
+              <td style="font-weight: bold; width:50%">  Size of Hospital </td>
+              <td>{{selectedHospitalLatestData.size}}</td>
+            </tr>
+
+            <tr>
+              <td style="font-weight: bold; width:50%">Available in House Fellowships </td>
+              <td>{{selectedHospitalLatestData.fellowships}}</td>
+            </tr>
+
+            <tr>
+              <td style="font-weight: bold;">Away Electives </td>
+              <td>{{selectedHospitalLatestData.electives}}</td>
+            </tr>
+
+            <tr>
+              <td style="font-weight: bold;">University Affiliation </td>
+              <td>{{selectedHospitalLatestData.affiliation}}</td>
+            </tr>
+
+            <tr>
+              <td style="font-weight: bold;">Fellowship Match Rate</td>
+              <td>{{selectedHospitalLatestData.matchRate}}</td>
+            </tr>
+
+          </table>
+          <div class="row mt-2">
+            <label for="size">Size of Hospital <span class="text-primary">(Number of Beds)</span> </label>
+            <input class="form-control" type="text" required name="size" id="size" [(ngModel)]="selectedHospitalData.size">
+          </div>
+          <div class="row mt-2">
+            <label for="fellowships">Available in house fellowships</label>
+            <input class="form-control"  type="text" required name="fellowships" id="fellowships" [(ngModel)]="selectedHospitalData.fellowships">
+          </div>
+          <div class="row mt-2">
+            <label for="electives">Away Electives</label>
+            <input class="form-control"  type="text" required name="electives" id="electives" [(ngModel)]="selectedHospitalData.electives">
+          </div>
+          <div class="row mt-2">
+            <label for="affiliation">University Affiliation</label>
+            <input class="form-control"  type="text" required name="affiliation" id="affiliation" [(ngModel)]="selectedHospitalData.affiliation">
+          </div>
+          <div class="row mt-2">
+            <label for="matchRate">Fellowship Match Rate</label>
+            <input class="form-control"  type="text" required  name="matchRate" id="matchRate" [(ngModel)]="selectedHospitalData.matchRate">
+          </div>
+          <div class="row mt-2">
+            <label for="comments">Additional Comments</label>
+            <input class="form-control"  type="text" required name="comments" id="comments" [(ngModel)]="selectedHospitalData.additionalComments">
+          </div>
+          <div class="row mt-2">
+            <div class="col">
+              <button class="btn btn-primary btn-block btn-outline-primary float-left" (click)="takeActionOnHospital('Yes')">
+                Accepted
+              </button>
+            </div>
+            <div class="col">
+              <button class="btn btn-danger btn-block btn-outline-danger" (click)="takeActionOnHospital('Rejected')">
+                Rejected
+              </button>
+            </div>
+          </div>
+        </div>
+    </ng-template>
+  </div>
+  </div>

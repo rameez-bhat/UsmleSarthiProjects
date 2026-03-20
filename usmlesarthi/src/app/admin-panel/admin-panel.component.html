@@ -1,0 +1,19 @@
+<div class="row text-left"  >
+  <div class="display-4 m-2 p-2 row">
+    {{userProfile?.Role}} Panel
+  </div>
+</div>
+<div class="card m-2">
+  <div class="card-body">
+    <ul class="nav nav-pills nav-justified font-weight-bolder">
+      <li class="nav-item" *ngFor="let land of allLandings; index as i">
+        <a class="nav-link " data-toggle="tab" ngbNavLink
+        routerLinkActive = "active font-weight-bold"
+          [routerLink]='routeLinks[i]' >{{land}} </a>
+      </li>
+    </ul>
+  </div>
+  <div class="card-body">
+    <router-outlet></router-outlet>
+  </div>
+</div>

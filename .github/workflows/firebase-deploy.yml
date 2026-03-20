@@ -1,0 +1,318 @@
+name: Smart Firebase Deploy
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+
+  # 🔍 STEP 1: Detect which project changed
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      admin: ${{ steps.filter.outputs.admin }}
+      leads: ${{ steps.filter.outputs.leads }}
+      residency: ${{ steps.filter.outputs.residency }}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Detect changes
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            admin:
+              - 'usmleadminapp/**'
+            leads:
+              - 'usmleleads/**'
+            residency:
+              - 'usmlesarthi/**'
+
+  # 🚀 ADMIN DEPLOY
+  deploy-admin:
+    needs: detect-changes
+    if: github.ref == 'refs/heads/main' && needs.detect-changes.outputs.admin == 'true'
+    runs-on: ubuntu-latest
+    environment: usmleadminapp
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Create .env file
+        run: |
+            cat > usmleadminapp/.env.production << EOF
+            VITE_APP_FIREBASE_apiKey=${{ secrets.VITE_APP_FIREBASE_APIKEY }}
+            VITE_APP_FIREBASE_appId=${{ secrets.VITE_APP_FIREBASE_APPID }}
+            VITE_APP_FIREBASE_authDomain=${{ secrets.VITE_APP_FIREBASE_AUTHDOMAIN }}
+            VITE_APP_FIREBASE_databaseURL=${{ secrets.VITE_APP_FIREBASE_DATABASEURL }}
+            VITE_APP_FIREBASE_measurementId=${{ secrets.VITE_APP_FIREBASE_MEASUREMENTID }}
+            VITE_APP_FIREBASE_messagingSenderId=${{ secrets.VITE_APP_FIREBASE_MESSAGINGSENDERID }}
+            VITE_APP_FIREBASE_projectId=${{ secrets.VITE_APP_FIREBASE_PROJECTID }}
+            VITE_APP_FIREBASE_storageBucket=${{ secrets.VITE_APP_FIREBASE_STORAGEBUCKET }}
+            CLIENT_ID=${{ secrets.CLIENT_ID }}
+            ClientSecret=${{ secrets.CLIENTSECRET }}
+            EOF
+            cp usmleadminapp/.env.production usmleadminapp/.env.development
+      - name: Build Admin
+        run: |
+          cd usmleadminapp
+          npm install
+          npm run build
+
+      - name: Deploy Admin
+        run: |
+          npm install -g firebase-tools
+
+          echo '${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON_S3 }}' > $HOME/firebase-key.json
+          export GOOGLE_APPLICATION_CREDENTIALS=$HOME/firebase-key.json
+
+          cd usmleadminapp
+          firebase deploy --only hosting:adminappli --project usmlesarthi-residency-match
+
+  # 🚀 LEADS DEPLOY
+  deploy-leads:
+    needs: detect-changes
+    if: github.ref == 'refs/heads/main' && needs.detect-changes.outputs.leads == 'true'
+    runs-on: ubuntu-latest
+    environment: usmleleads
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Create .env file
+        run: |
+            cat > usmleleads/.env.production << EOF
+            VITE_APP_FIREBASE_apiKey=${{ secrets.VITE_APP_FIREBASE_APIKEY }}
+            VITE_APP_FIREBASE_appId=${{ secrets.VITE_APP_FIREBASE_APPID }}
+            VITE_APP_FIREBASE_authDomain=${{ secrets.VITE_APP_FIREBASE_AUTHDOMAIN }}
+            VITE_APP_FIREBASE_databaseURL=${{ secrets.VITE_APP_FIREBASE_DATABASEURL }}
+            VITE_APP_FIREBASE_measurementId=${{ secrets.VITE_APP_FIREBASE_MEASUREMENTID }}
+            VITE_APP_FIREBASE_messagingSenderId=${{ secrets.VITE_APP_FIREBASE_MESSAGINGSENDERID }}
+            VITE_APP_FIREBASE_projectId=${{ secrets.VITE_APP_FIREBASE_PROJECTID }}
+            VITE_APP_FIREBASE_storageBucket=${{ secrets.VITE_APP_FIREBASE_STORAGEBUCKET }}
+            CLIENT_ID=${{ secrets.CLIENT_ID }}
+            ClientSecret=${{ secrets.CLIENTSECRET }}
+            EOF
+            cp usmleleads/.env.production usmleleads/.env.development
+      - name: Build Leads
+        run: |
+          cd usmleleads
+          npm install
+          npm run build
+
+      - name: Deploy Leads
+        run: |
+          npm install -g firebase-tools
+
+          echo '${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON_LEADS }}' > $HOME/firebase-key.json
+          export GOOGLE_APPLICATION_CREDENTIALS=$HOME/firebase-key.json
+
+          cd usmleleads
+          firebase deploy --only hosting --project lead-tracker-20ef2
+
+  # 🚀 RESIDENCY DEPLOY
+  deploy-residency:
+    needs: detect-changes
+    if: github.ref == 'refs/heads/main' && needs.detect-changes.outputs.residency == 'true'
+    runs-on: ubuntu-latest
+    environment: usmlesarthi
+
+    steps:
+      - uses: actions/checkout@v3
+      
+      - uses: actions/setup-node@v3
+        with:
+            node-version: 12.22.12
+
+      - name: Debug Environment
+        run: |
+          node -v
+          npm -v
+      - name: Install dependencies
+        run: |
+          cd usmlesarthi
+          npm install --legacy-peer-deps
+      - name: Create .env file
+        run: |
+            cat > usmlesarthi/src/environments/environment.prod.ts << EOF
+            export const environment = {
+            production: true,
+            firebaseConfig: {
+              apiKey: "${{ secrets.USMLE_FIREBASE_API_KEY }}",
+              authDomain: "${{ secrets.USMLE_FIREBASE_AUTH_DOMAIN }}",
+              databaseURL: "${{ secrets.USMLE_FIREBASE_DATABASE_URL }}",
+              projectId: "${{ secrets.USMLE_FIREBASE_PROJECT_ID }}",
+              storageBucket: "${{ secrets.USMLE_FIREBASE_STORAGE_BUCKET }}",
+              messagingSenderId: "${{ secrets.USMLE_FIREBASE_MESSAGING_SENDER_ID }}",
+              appId: "${{ secrets.USMLE_FIREBASE_APP_ID }}",
+              measurementId: "${{ secrets.USMLE_FIREBASE_MEASUREMENT_ID }}",
+              STRIPE_PUBLIC_KEY_TESTING: "${{ secrets.USMLE_STRIPE_PUBLIC_KEY_TESTING }}",
+              STRIPE_PUBLIC_KEY_LIVE: "${{ secrets.USMLE_STRIPE_PUBLIC_KEY_LIVE }}"
+            }
+            };
+            EOF
+            cp usmlesarthi/src/environments/environment.prod.ts usmlesarthi/src/environments/environment.ts
+      - name: Build Residency
+        run: |
+          cd usmlesarthi
+          npm run build -- --prod
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+      - name: Deploy Residency
+        run: |
+          npm install -g firebase-tools@11
+
+          echo '${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON_S3 }}' > $HOME/firebase-key.json
+          export GOOGLE_APPLICATION_CREDENTIALS=$HOME/firebase-key.json
+
+          cd usmlesarthi
+          firebase deploy --only hosting:usmlesarthiv2 --project usmlesarthi-residency-match
+
+  # 🔥 PREVIEW ADMIN
+  preview-admin:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    environment: usmleadminapp
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Create .env file
+        run: |
+            cat > usmleadminapp/.env.production << EOF
+            VITE_APP_FIREBASE_apiKey=${{ secrets.VITE_APP_FIREBASE_APIKEY }}
+            VITE_APP_FIREBASE_appId=${{ secrets.VITE_APP_FIREBASE_APPID }}
+            VITE_APP_FIREBASE_authDomain=${{ secrets.VITE_APP_FIREBASE_AUTHDOMAIN }}
+            VITE_APP_FIREBASE_databaseURL=${{ secrets.VITE_APP_FIREBASE_DATABASEURL }}
+            VITE_APP_FIREBASE_measurementId=${{ secrets.VITE_APP_FIREBASE_MEASUREMENTID }}
+            VITE_APP_FIREBASE_messagingSenderId=${{ secrets.VITE_APP_FIREBASE_MESSAGINGSENDERID }}
+            VITE_APP_FIREBASE_projectId=${{ secrets.VITE_APP_FIREBASE_PROJECTID }}
+            VITE_APP_FIREBASE_storageBucket=${{ secrets.VITE_APP_FIREBASE_STORAGEBUCKET }}
+            CLIENT_ID=${{ secrets.CLIENT_ID }}
+            ClientSecret=${{ secrets.CLIENTSECRET }}
+            EOF
+            cp usmleadminapp/.env.production usmleadminapp/.env.development
+      - name: Build Admin
+        run: |
+          cd usmleadminapp
+          npm install
+          npm run build
+
+      - name: Deploy Admin Preview
+        run: |
+          npm install -g firebase-tools
+
+          echo '${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON_S3 }}' > $HOME/firebase-key.json
+          export GOOGLE_APPLICATION_CREDENTIALS=$HOME/firebase-key.json
+
+          cd usmleadminapp
+          firebase hosting:channel:deploy pr-${{ github.event.number }} \
+            --only hosting:adminappli \
+            --project usmlesarthi-residency-match \
+            --expires 7d
+
+  # 🔥 PREVIEW LEADS
+  preview-leads:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    environment: usmleleads
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Build Leads
+        run: |
+          cd usmleleads
+          npm install
+          npm run build
+
+      - name: Create .env file
+        run: |
+            cat > usmleleads/.env.production << EOF
+            VITE_APP_FIREBASE_apiKey=${{ secrets.VITE_APP_FIREBASE_APIKEY }}
+            VITE_APP_FIREBASE_appId=${{ secrets.VITE_APP_FIREBASE_APPID }}
+            VITE_APP_FIREBASE_authDomain=${{ secrets.VITE_APP_FIREBASE_AUTHDOMAIN }}
+            VITE_APP_FIREBASE_databaseURL=${{ secrets.VITE_APP_FIREBASE_DATABASEURL }}
+            VITE_APP_FIREBASE_measurementId=${{ secrets.VITE_APP_FIREBASE_MEASUREMENTID }}
+            VITE_APP_FIREBASE_messagingSenderId=${{ secrets.VITE_APP_FIREBASE_MESSAGINGSENDERID }}
+            VITE_APP_FIREBASE_projectId=${{ secrets.VITE_APP_FIREBASE_PROJECTID }}
+            VITE_APP_FIREBASE_storageBucket=${{ secrets.VITE_APP_FIREBASE_STORAGEBUCKET }}
+            CLIENT_ID=${{ secrets.CLIENT_ID }}
+            ClientSecret=${{ secrets.CLIENTSECRET }}
+            EOF
+            cp usmleleads/.env.production usmleleads/.env.development
+      - name: Deploy Leads Preview
+        run: |
+          npm install -g firebase-tools
+
+          echo '${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON_LEADS }}' > $HOME/firebase-key.json
+          export GOOGLE_APPLICATION_CREDENTIALS=$HOME/firebase-key.json
+
+          cd usmleleads
+          firebase hosting:channel:deploy pr-${{ github.event.number }} \
+            --only hosting:leadstracker \
+            --project lead-tracker-20ef2 \
+            --expires 7d
+
+  # 🔥 PREVIEW RESIDENCY
+  preview-residency:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    environment: usmlesarthi
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 12.22.12
+
+
+      - name: Install dependencies
+        run: |
+          cd usmlesarthi
+          npm install --legacy-peer-deps
+
+      - name: Create .env file
+        run: |
+            cat > usmlesarthi/src/environments/environment.prod.ts << EOF
+            export const environment = {
+            production: true,
+            firebaseConfig: {
+              apiKey: "${{ secrets.USMLE_FIREBASE_API_KEY }}",
+              authDomain: "${{ secrets.USMLE_FIREBASE_AUTH_DOMAIN }}",
+              databaseURL: "${{ secrets.USMLE_FIREBASE_DATABASE_URL }}",
+              projectId: "${{ secrets.USMLE_FIREBASE_PROJECT_ID }}",
+              storageBucket: "${{ secrets.USMLE_FIREBASE_STORAGE_BUCKET }}",
+              messagingSenderId: "${{ secrets.USMLE_FIREBASE_MESSAGING_SENDER_ID }}",
+              appId: "${{ secrets.USMLE_FIREBASE_APP_ID }}",
+              measurementId: "${{ secrets.USMLE_FIREBASE_MEASUREMENT_ID }}",
+              STRIPE_PUBLIC_KEY_TESTING: "${{ secrets.USMLE_STRIPE_PUBLIC_KEY_TESTING }}",
+              STRIPE_PUBLIC_KEY_LIVE: "${{ secrets.USMLE_STRIPE_PUBLIC_KEY_LIVE }}"
+            }
+            };
+            EOF
+            cp usmlesarthi/src/environments/environment.prod.ts usmlesarthi/src/environments/environment.ts
+      - name: Build Residency
+        run: |
+          cd usmlesarthi
+          npm run build -- --prod
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+      - name: Deploy Residency Preview
+        run: |
+          npm install -g firebase-tools@11
+          echo '${{ secrets.GOOGLE_APPLICATION_CREDENTIALS_JSON_S3 }}' > $HOME/firebase-key.json
+          export GOOGLE_APPLICATION_CREDENTIALS=$HOME/firebase-key.json
+          cd usmlesarthi
+          firebase hosting:channel:deploy pr-${{ github.event.number }} \
+            --only hosting:usmlesarthiv2 \
+            --project usmlesarthi-residency-match \
+            --expires 7d

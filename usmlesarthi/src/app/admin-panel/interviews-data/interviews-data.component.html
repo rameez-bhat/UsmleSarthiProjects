@@ -1,0 +1,139 @@
+<div class="card-body">
+  <div *ngIf="loading; else loaded" class="text-center">
+    Fetching the interviews list...
+  </div>
+  <ng-template #loaded>
+    <div class="text-center">
+      <button
+        class="btn btn-primary btn-outline-primary btn-md text-center float-left"
+        (click)="fetchInterviews()"
+      >
+        Generate Data
+      </button>
+      <div class="w-100 font-weight-bolder text-align-right">
+        <button
+          class="btn btn-block btn-warning btn-outline-warning mt-2 float-left card-footer"
+          (click)="exportInterviewsToExcel()"
+        >
+          <i class="ft-upload"></i> Export To Excel
+        </button>
+      </div>
+      <h5 class="font-weight-bold text-uppercase text-center text-primary">
+        This Season's Interviews
+      </h5>
+      <div class="row" *ngIf="interviewsList.length">
+        <div class="col-sm-12 col-md-6 mt-2">
+          User Emails
+          <ng-select
+            class="mt-2"
+            [items]="emails"
+            [multiple]="true"
+            [(ngModel)]="selectedEmails"
+          ></ng-select>
+        </div>
+        <div class="col-sm-4 col-md-2 mt-2 ml-auto">
+          <br />
+          <button
+            class="btn btn-block btn-warning btn-outline-warning ml-auto"
+            (click)="filterInterviews()"
+          >
+            Apply Filters
+          </button>
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table
+          class="table table-striped table-hover text-left"
+          id="Interviews-List"
+        >
+          <thead>
+            <tr>
+              <th scope="col">S.No.</th>
+              <th scope="col">Hospital Name</th>
+              <th scope="col">Program Type</th>
+              <th scope="col">Interview Date</th>
+              <th scope="col">City</th>
+              <th scope="col">State</th>
+              <th scope="col">Name</th>
+              <th scope="col">Email</th>
+              <th scope="col">Interview Type</th>
+              <th scope="col">Interview Platform</th>
+              <th scope="col">Number of interview in a day</th>
+              <th scope="col">Average duration of interviews (in min)</th>
+              <th scope="col">Interviewer Designations</th>
+              <th scope="col">Specific questions asked</th>
+              <th scope="col">Pre-interview dinner or equivalent</th>
+              <th scope="col">PD presentation</th>
+              <th scope="col">Approximate time allowed for PD presentation</th>
+              <th scope="col">
+                Things that have been discussed/presented in PD presentation
+              </th>
+              <th scope="col">
+                Unique/different (good or bad) about the interview day/interview
+                questions/ overall experience?
+              </th>
+              <th scope="col">Dicussion/Questions on Telerotations</th>
+              <th>Questions asked on Supplemental ERAS CV?</th>
+              <th>Did you signal this program in supplemental (IM)?</th>
+              <th scope="col">
+                Specific questions asked by PD during interview
+              </th>
+              <th scope="col">
+                The Interview Day environment was relaxed and friendly
+              </th>
+              <th scope="col">The residents looked happy and satisfied</th>
+              <th scope="col">
+                There seems to be hierarchy among senior and junior residents
+              </th>
+              <th scope="col">IMG friendly</th>
+              <th scope="col">
+                I will rank this program highly and will be happy if I match
+                there
+              </th>
+              <th scope="col">Overall experience</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let interview of filteredInterviewsList; index as i">
+              <th scope="row">{{ i + 1 }}</th>
+              <td>{{ interview.hospital.HName }}</td>
+              <td>{{ programObject[interview.PId].PName }}</td>
+              <td>{{ interview.Date }}</td>
+              <td>{{ interview.hospital.City }}</td>
+              <td>{{ interview.hospital.State }}</td>
+              <td>{{ interview.user.displayName }}</td>
+              <td>{{ interview.user.email }}</td>
+              <td>{{ interview.data.InterviewType }}</td>
+              <td>
+                {{
+                  interview.data.interviewPlatform === "Others"
+                    ? interview.data.otherPlatform
+                    : interview.data.interviewPlatform
+                }}
+              </td>
+              <td>{{ interview.data.NumInterviews }}</td>
+              <td>{{ interview.data.Duration }}</td>
+              <td>{{ interview.data.InterviewerDesignations }}</td>
+              <td>{{ interview.data.QuestionsToOther }}</td>
+              <td>{{ interview.data.PreInterview }}</td>
+              <td>{{ interview.data.PDPpt }}</td>
+              <td>{{ interview.data.PDPptDur }}</td>
+              <td>{{ interview.data.PDDiscussion }}</td>
+              <td>{{ interview.data.UniquePoints }}</td>
+              <td>{{ interview.data.teleRotations }}</td>
+              <td>{{ interview.data.suppEras }}</td>
+              <td>{{ interview.data.signalProgram }}</td>
+              <td>{{ interview.data.QuestionsInPD }}</td>
+              <td>{{ interview.data.FriendlyEnv }}</td>
+              <td>{{ interview.data.ResidentstSatisfac }}</td>
+              <td>{{ interview.data.SenJunHierarchy }}</td>
+              <td>{{ interview.data.IMGFriendly }}</td>
+              <td>{{ interview.data.ProgramHighRating }}</td>
+              <td>{{ interview.data.OverallExp }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </ng-template>
+</div>

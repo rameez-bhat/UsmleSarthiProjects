@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>USMLESarthi</title>
+  <base href="/">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link href="https://maxcdn.bootstrapcdn.com/font-awesome/latest/css/font-awesome.min.css" rel="stylesheet">
+  <link href="assets/fonts/feather/style.min.css" rel="stylesheet">
+  <link href="assets/fonts/simple-line-icons/style.css" rel="stylesheet">
+  <link href='https://fonts.googleapis.com/css?family=Rubik:300,400,500,700,900|Montserrat:300,400,500,600,700,800,900'
+    rel='stylesheet' type='text/css'>
+  <link rel="stylesheet" href="assets/vendor/pace/themes/black/pace-theme-flash.css"/>
+  <meta property="og:title" content='USMLESarthi'/>
+  <meta property="og:image:url" content="https://firebasestorage.googleapis.com/v0/b/usmlesarthi-residency-match.appspot.com/o/meta-data%2FTitle.jpg"/>
+  <meta property="og:image:secure_url" content="https://firebasestorage.googleapis.com/v0/b/usmlesarthi-residency-match.appspot.com/o/meta-data%2FTitle.jpg"/>
+  <meta property="og:description" content="USMLEsarthi is Arizona based with physician panelists all over the US. We guide residency applicants from over 32 countries. We conceived USMLESarthi with a simple dream - To guide Foreign Medical Graduates (FMGs) - aka International Medical Graduates (IMGs) and Caribbean applicants - in their quest for matching into their desired Residency program in the US and to help fulfill their professional aspirations."/>
+  <meta property="og:url" content='https://residencymatch.usmlesarthi.com/'/>
+  <meta property="og:type" content='website'/>
+  <meta property="og:image:width" content="250">
+  <meta property="og:image:height" content="250">
+  <meta property="og:image:type" content="image/jpg">
+  <style type="text/css">
+    .pace .pace-activity {
+      top: 19px;
+      right: 19px;
+      display: none;
+    }
+    .page-loading {
+      position: fixed;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      right: 0;
+      overflow: hidden;
+      background: rgba(51, 51, 51, 1.00);
+      opacity: 0;
+      transition: opacity 1s ease-in-out;
+      z-index: -1;
+    }
+    .loading-icon {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 38px;
+      height: 38px;
+      margin-left: -19px;
+      margin-top: -19px;
+    }
+    app-root:empty ~ .page-loading {
+      opacity: 1;
+      z-index: 1;
+    }
+  </style>
+</head>
+<body>
+  <app-root></app-root>
+  <div class="page-loading">
+    <img src="assets/img/oval.svg" class="loading-icon" />
+  </div>
+  <!-- Add the Kommunicate Script -->
+  <script type="text/javascript">
+    (function(d, m) {
+      console.log("window.location.href.---->",window.location.href)
+      if (!window.location.href.includes("/rotations")) {
+        console.log("Adding the Kommunicate Script");
+        var kommunicateSettings = {
+          "appId": "2ee1005a200f679910b696c32d1dd71dd",
+          "popupWidget": true,
+          "automaticChatOpenOnNavigation": true
+        };
+        var s = document.createElement("script"); 
+        s.type = "text/javascript"; 
+        s.async = true;
+        s.src = "https://widget.kommunicate.io/v2/kommunicate.app";
+        var h = document.getElementsByTagName("head")[0]; 
+        h.appendChild(s);
+        window.kommunicate = m; 
+        m._globals = kommunicateSettings;
+      } else {
+        console.log("Chat widget not loaded on /rotations page");
+      }
+    })(document, window.kommunicate || {});
+    </script>
+</body>
+</html>

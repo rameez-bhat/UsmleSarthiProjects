@@ -1,0 +1,61 @@
+<div class="card-body" [ngSwitch]="landing">
+  <div *ngSwitchCase="'list'">
+  <div *ngIf="loading else loaded" class="text-center">
+    Fetching the users
+  </div>
+  <ng-template #loaded>
+  <div>
+  <label> Write the referral code you want to update points for..</label>
+  <input type="text" class="form-control" #referralCode >
+  <br>
+  <div class="row">
+    <div class="col">
+        <button style="margin-right: 10px;" class="btn btn-primary btn-outline-primary btn-md text-center float-left" (click)="fetchSome(referralCode.value)">
+          Search
+        </button>
+    </div>
+    <div class="col">
+      <button class="btn btn-success btn-outline-success float-right" (click)="fetchAll()">
+        See All Referral Codes
+      </button>
+    </div>
+  </div>
+  <div *ngIf="seeAll" class="row">
+    <button class="btn btn-block btn-warning btn-outline-warning mt-2"
+    (click)="exportToExcel()" > <i class='ft-upload'></i> Export To Excel </button>
+  </div>
+  </div>
+  <div *ngIf='usersList.length'>
+    <label class="text-center"> See/Modify the points of users.</label>
+  <div class="table-responsive">
+    <table class="table table-striped table-hover" id="Referral-List">
+      <thead>
+        <tr>
+          <th scope="col">S.No</th>
+          <th scope="col">User Email</th>
+          <th scope="col">Referral Code</th>
+          <th scope="col">Current Points</th>
+          <th *ngIf="!seeAll" scope="col">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let user of usersList; index as i" >
+            <td>{{i+1}}</td>
+            <td>{{user.user.email}}</td>
+            <td>{{user.referral.code}}</td>
+            <td>
+              <input *ngIf="!seeAll" type="number" class="form-control" [(ngModel)]="user.referral.points"  name="referralpoints"
+              onfocus="this.placeholder = ''" >
+              <span *ngIf="seeAll"> {{user.referral.points}} </span>
+            </td>
+            <td *ngIf="!seeAll"><button class="btn btn-primary btn-outline-primary" (click)="updateReferralPoints(user)">
+              Update
+            </button></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+  </ng-template>
+  </div>
+</div>

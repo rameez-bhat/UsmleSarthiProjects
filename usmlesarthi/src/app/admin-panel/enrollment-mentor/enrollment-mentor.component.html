@@ -1,0 +1,280 @@
+<div class="card-body">
+  <div *ngIf="loading; else loaded" class="text-center">
+    Fetching the data...
+  </div>
+  <ng-template #loaded>
+    <div class="row">
+      <button
+        class="btn btn-primary btn-outline-primary btn-md text-center"
+        (click)="fetchPaymentsData()"
+      >
+        Generate Data
+      </button>
+    </div>
+    <div class="row">
+      <button
+        class="btn btn-block btn-warning btn-outline-warning mt-2"
+        (click)="exportInterviewsToExcel()"
+      >
+        <i class="ft-upload"></i> Export To Excel
+      </button>
+    </div>
+    <h5 class="font-weight-bold text-uppercase text-center text-primary">
+      This Season's Enrollments
+    </h5>
+    <div class="row card-body text-center justify-content-center">
+      <ul class="nav nav-pills nav-justified font-weight-bolder">
+        <li class="nav-item" *ngFor="let land of allLandings">
+          <a
+            class="nav-link"
+            data-toggle="tab"
+            ngbNavLink
+            [ngClass]="{ active: land == landing, disabled: loading }"
+            (click)="takeMeTo(land)"
+            >{{ land }} Data</a
+          >
+        </li>
+      </ul>
+    </div>
+    <div class="table-responsive">
+      <br />
+      <div [ngSwitch]="landing">
+        <table
+          *ngSwitchCase="'Enrollment'"
+          class="table table-striped table-hover text-left"
+          id="Enrollment-List"
+        >
+          <thead>
+            <tr>
+              <th scope="col">Student Name</th>
+              <th scope="col">Student Email</th>
+              <th scope="col">Plan</th>
+              <th scope="col">Enrollment Date</th>
+              <th scope="col">Enrollment Installment Type</th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-template
+              ngFor
+              let-payment
+              [ngForOf]="paymentsData"
+              let-i="index"
+            >
+              <tr *ngIf="payment?.matchPayments?.length">
+                <td>{{ payment?.user?.displayName }}</td>
+                <td>{{ payment?.email }}</td>
+                <td>{{ payment?.extraData?.plan }}</td>
+                <td>
+                  {{
+                    convertDateNumberToDateString(payment?.matchEnrollmentDate)
+                  }}
+                </td>
+                <td>{{ payment?.matchPaymentType }}</td>
+              </tr>
+              <ng-template
+                ngFor
+                let-matchPayment
+                [ngForOf]="payment?.matchPayments"
+                let-ind="index"
+              >
+                <tr>
+                  <td scope="row"><b>Installment:</b> {{ ind + 1 }}</td>
+                  <td><b>Amount:</b> {{ matchPayment?.amount }}</td>
+                  <td>
+                    <b>Date:</b>
+                    {{ convertDateNumberToDateString(matchPayment?.date) }}
+                  </td>
+                  <td>
+                    <b>Received:</b> {{ matchPayment?.received }},
+                    {{ matchPayment?.mode }}
+                  </td>
+                  <td><b>Notes:</b> {{ matchPayment?.notes }}</td>
+                </tr>
+              </ng-template>
+            </ng-template>
+          </tbody>
+        </table>
+        <table
+          *ngSwitchCase="'Research'"
+          class="table table-striped table-hover text-left"
+          id="Research-List"
+        >
+          <thead>
+            <tr>
+              <th scope="col">Student Name</th>
+              <th scope="col">Student Email</th>
+              <th scope="col">Plan</th>
+              <th scope="col">Enrollment Date</th>
+              <th scope="col">Enrollment Installment Type</th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-template
+              ngFor
+              let-payment
+              [ngForOf]="paymentsData"
+              let-i="index"
+            >
+              <tr *ngIf="payment?.researchPayments?.length">
+                <td>{{ payment?.user?.displayName }}</td>
+                <td>{{ payment?.email }}</td>
+                <td>{{ payment?.extraData?.plan }}</td>
+                <td>
+                  {{
+                    convertDateNumberToDateString(payment?.matchEnrollmentDate)
+                  }}
+                </td>
+                <td>{{ payment?.matchPaymentType }}</td>
+              </tr>
+              <ng-template
+                ngFor
+                let-matchPayment
+                [ngForOf]="payment?.researchPayments"
+                let-ind="index"
+              >
+                <tr>
+                  <td scope="row"><b>Installment:</b> {{ ind + 1 }}</td>
+                  <td><b>Amount:</b> {{ matchPayment?.amount }}</td>
+                  <td>
+                    <b>Date:</b>
+                    {{ convertDateNumberToDateString(matchPayment?.date) }}
+                  </td>
+                  <td>
+                    <b>Received:</b> {{ matchPayment?.received }},
+                    {{ matchPayment?.mode }}
+                  </td>
+                  <td><b>Notes:</b> {{ matchPayment?.notes }}</td>
+                </tr>
+              </ng-template>
+            </ng-template>
+          </tbody>
+        </table>
+        <table
+          *ngSwitchCase="'Rotations'"
+          class="table table-striped table-hover text-left"
+          id="Rotations-List"
+        >
+          <thead>
+            <tr>
+              <th scope="col">Name</th>
+              <th scope="col">Email</th>
+              <th scope="col">Location</th>
+              <th scope="col">Start Date</th>
+              <th scope="col">Amount</th>
+              <th scope="col">Enrollment Date</th>
+              <th scope="col">Mode of Payment</th>
+              <th scope="col">Payment Received</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-template
+              ngFor
+              let-payment
+              [ngForOf]="paymentsData"
+              let-i="index"
+            >
+              <ng-template
+                ngFor
+                let-matchPayment
+                [ngForOf]="payment?.rotations"
+                let-ind="index"
+              >
+                <tr>
+                  <td>
+                    {{ payment?.name || payment?.user?.displayName || "" }}
+                  </td>
+                  <td>{{ payment?.email }}</td>
+                  <td>{{ matchPayment?.location }}</td>
+                  <td>
+                    {{ convertDateNumberToDateString(matchPayment?.date) }}
+                  </td>
+                  <td>{{ matchPayment?.amount }}</td>
+                  <td>{{ matchPayment?.time }}</td>
+                  <td>
+                    {{ matchPayment?.mode }}
+                  </td>
+                  <td>
+                    {{ matchPayment?.received }}
+                  </td>
+                  <td>{{ matchPayment?.notes }}</td>
+                </tr>
+              </ng-template>
+            </ng-template>
+          </tbody>
+        </table>
+        <table
+          *ngSwitchCase="'Mentor'"
+          class="table table-striped table-hover text-left"
+          id="Mentor-List"
+        >
+          <thead>
+            <tr>
+              <th scope="col">S.No.</th>
+              <th scope="col">Student Name</th>
+              <th scope="col">Student Email</th>
+              <th scope="col">Plan</th>
+              <th scope="col">Student Mentor</th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-template
+              ngFor
+              let-payment
+              [ngForOf]="paymentsData"
+              let-i="index"
+            >
+              <tr>
+                <th scope="row">{{ i + 1 }}</th>
+                <td>{{ payment?.user?.displayName }}</td>
+                <td>{{ payment?.email }}</td>
+                <td>{{ payment?.extraData?.plan }}</td>
+                <td>{{ payment?.extraData?.mentor }}</td>
+              </tr>
+            </ng-template>
+          </tbody>
+        </table>
+        <table
+          *ngSwitchCase="'Match'"
+          class="table table-striped table-hover text-left"
+          id="Match-List"
+        >
+          <thead>
+            <tr>
+              <th scope="col">S.No.</th>
+              <th scope="col">Student Name</th>
+              <th scope="col">Student Email</th>
+              <th scope="col">Plan</th>
+              <th scope="col">Match Program</th>
+              <th scope="col">Specialty</th>
+              <th scope="col">Match Year</th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-template
+              ngFor
+              let-payment
+              [ngForOf]="paymentsData"
+              let-i="index"
+            >
+              <tr>
+                <th scope="row">{{ i + 1 }}</th>
+                <td>{{ payment?.user?.displayName }}</td>
+                <td>{{ payment?.email }}</td>
+                <td>{{ payment?.extraData?.plan }}</td>
+                <td>{{ payment?.match?.hospital?.HName }}</td>
+                <td>
+                  {{
+                    payment?.match?.PId &&
+                      programObject[payment.match.PId].PName
+                  }}
+                </td>
+                <td>{{ payment?.match?.yearMatch }}</td>
+              </tr>
+            </ng-template>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </ng-template>
+</div>

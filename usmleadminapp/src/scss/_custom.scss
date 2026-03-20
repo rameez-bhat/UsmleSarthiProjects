@@ -1,0 +1,93 @@
+// Here you can add other styles
+.DatePicker
+{
+    width: 100%;
+    min-height: 38px;
+}
+.invalid-feedback
+{
+  display:block !important;
+    /*position: absolute;*/
+}
+.overfolowscroll
+{
+	overflow-x: scroll;
+	width: 98%;
+}
+.overfolowscroll td
+{
+	min-width: 100px;
+}
+.ButtonFloat
+{
+	    position: fixed;
+    transform: translate(-50%, -50%);
+    left: 50%;
+}
+.ButtonFloat1
+{
+	    position: fixed;
+    transform: translate(64%, -50%);
+    left: 50%;
+}
+.card-body
+{
+      overflow: scroll;
+    position: relative;
+    width: 100%;
+}
+.PosAbs
+{
+	position: absolute;
+}
+.posRel
+{
+	position: relative;
+	height: 60px;
+	margin-top: 50px;
+}
+.redborder
+{
+    border: 2px solid #ee0c09;
+}
+.greenborder
+{
+    border: 2px solid #0bf632;
+}
+.redbordermodel .modal-content
+{
+    border: 2px solid #ee0c09;
+}
+.greenbordermodel .modal-content
+{
+    border: 2px solid #0bf632;
+}
+.horizontal-sliderCont
+{
+  position: relative;
+}
+.horizontal-slider {
+  width: 80%;
+  margin-top:20px;
+}
+.thumb {
+  height: 20px;
+  width: 20px;
+  margin-top: -6px;
+  background-color: #4CAF50;
+  cursor: pointer;
+  border-radius: 50%;
+}
+.track {
+  background: #ddd;
+  height: 5px;
+}
+.PaddingTop
+{
+  padding-top: 30px;
+}
+.EnquiryBody
+{
+  width:100%;
+      margin-top: 30px;
+}

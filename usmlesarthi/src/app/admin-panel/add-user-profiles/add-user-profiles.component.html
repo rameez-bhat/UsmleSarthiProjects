@@ -1,0 +1,108 @@
+<div class="card-body" >
+  <div>
+    <div *ngIf="loading else loaded" class="text-center">
+      Saving the user's profile...
+    </div>
+    <ng-template #loaded>
+      <div class="row text-center">
+        <div class="col">
+          <h5 class="font-weight-bolder">Add New User with Match Information</h5>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col text-warning">
+          <h6 class="font-weight-bolder">Note: User's email should not be registered with the tool</h6>
+        </div>
+      </div>
+      <form ngNativeValidate >
+        <div class="row">
+          <span class="col-6"><label for="primarySpeciality">Email<span
+                style="color:red">*</span></label></span>
+          <span class="col-6"><label>Full Name?<span style="color:red">*</span></label></span>
+        </div>
+        <br />
+        <div class="row">
+          <span class="col-6"><input type="email" class="form-control"
+              [(ngModel)]="selectedUser.email" name="email" aria-describedby="yogError"
+              placeholder="Enter the email of the user" onfocus="this.placeholder = ''" required></span>
+          <span class="col-6"><input type="text"  class="form-control"
+              name="name" [(ngModel)]="selectedUser.displayName" aria-describedby="step1ScoreError"
+              placeholder="Enter the name of the user" onfocus="this.placeholder = ''" required></span>
+        </div>
+        <br/>
+        <div class="row">
+          <span class="col-6"><label for="primarySpeciality">Year of graduation<span
+                style="color:red">*</span></label></span>
+          <span class="col-6"><label>Step 1 Score?<span style="color:red">*</span></label></span>
+        </div>
+        <br />
+        <div class="row">
+          <span class="col-6"><input type="number" class="form-control"
+              [(ngModel)]="selectedUser.YOG" name="yog" aria-describedby="yogError"
+              placeholder="Enter your year of graduation" onfocus="this.placeholder = ''" required></span>
+          <span class="col-6"><input type="number"  class="form-control"
+              name="step1Score" [(ngModel)]="selectedUser.Step1Score" aria-describedby="step1ScoreError"
+              placeholder="Enter your step 1 score" onfocus="this.placeholder = ''" required></span>
+        </div>
+        <br />
+        <div class="row">
+          <span class="col-6"><label for="step2Score">Step 2 CK Score? <span style="color:red">*</span></label></span>
+          <span class="col-6"><label for="clinicalExperienceMonths">Clinical Experience<span style="color:blue">(in
+                months). Enter 0 if you don't have any experience</span></label></span>
+        </div>
+        <br />
+        <div class="row">
+          <span class="col-6"><input type="number"  class="form-control"
+              [(ngModel)]="selectedUser.Step2Score" name="step2Score" aria-describedby="step2ScoreError"
+              placeholder="Enter your step 2 score" onfocus="this.placeholder = ''" required></span>
+          <span class="col-6"><input type="text"  class="form-control"
+              [(ngModel)]="selectedUser.USCE" name="clinicalExperienceMonths" aria-describedby="clinicalExperienceError"
+              placeholder="Enter clinical experience in months" onfocus="this.placeholder = ''" required></span>
+        </div>
+
+        <br />
+        <div class="row">
+          <span class="col-12"><label for="visareq">VISA Requirement<span style="color:red"> (Hold down the Ctrl
+                (windows) / Command
+                (Mac) button to select multiple options)</span></label>
+            <select class="form-control" id="userVisa[]"  name="userVisa[]" size="4"
+              multiple="multiple" [(ngModel)]="selectedUser.newVisas" required>
+              <option [value]="visa.VId" *ngFor="let visa of customVisa">{{visa.Type}} </option>
+            </select>
+          </span>
+        </div>
+        <br/>
+        <div class="text-primary font-weight-bolder">
+          <h5>User Match Info:</h5>
+        </div>
+            <div class="row">
+              <div class="col-6"><label for="speciality">Choose a speciality</label></div>
+              <div class="col-6"><select class="form-control" id="speciality" name="speciality" 
+                [(ngModel)]="selectedUser.PId" (change)="loadHospitals($event)" required>
+                <option [value]="speciality.PId" *ngFor="let speciality of specialities">{{speciality.PName}} </option>
+              </select></div>
+            </div>
+            <br/>
+            <div class="row">
+              <div class="col-6"><label for="hospital">Choose a hospital</label></div>
+              <div class="col-6"><select class="form-control" id="hospital" name="hospital" 
+                [(ngModel)]="selectedUser.HId" required>
+                <option [value]="hospital.HId" *ngFor="let hospital of hospitals">{{hospital.HName}}({{hospital.State}}) </option>
+              </select></div>
+            </div>
+            <br/>
+            <div class="row">
+              <div class="col-6"><label for="hospital">Choose the year of match</label></div>
+              <div class="col-6"><select class="form-control" id="match" name="match" 
+                [(ngModel)]="selectedUser.yearMatch" required>
+                <option [value]="year" *ngFor="let year of matchYears">{{year}} </option>
+              </select></div>
+            </div>
+            <br/>
+        <button type="submit"
+          class="btn btn-block btn-primary btn-outline-primary card-footer" name="submit" (click) = "updateProfile()">
+          Save profile info</button>
+      </form>
+    </ng-template>
+    </div>
+</div>

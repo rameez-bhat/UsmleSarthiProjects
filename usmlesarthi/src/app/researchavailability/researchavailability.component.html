@@ -1,0 +1,230 @@
+<!-- rotation-details.component.html -->
+<div class="rotation-wrapper" [class.loading]="loading">
+
+  <!-- MAIN VIEW (Details) -->
+  <ng-container *ngIf="Viewtype !== 'testimonal'">
+  <div class="rotation-availability" *ngIf="SelectedMatchPlan">
+    <mat-card class="rotation-card mat-elevation-z4" >
+
+      <mat-card-header class="card-header">
+        <div class="header-left">
+          <h2>Research Plan Name:<b>{{ SelectedMatchPlan?.Name }}</b></h2>
+          <!--<h4>Research Id: <strong>{{ SelectedMatchPlan.Pid }}</strong></h4>-->
+        </div>
+      </mat-card-header>
+
+      <mat-divider></mat-divider>
+
+      <mat-card-content class="card-content">
+        <div *ngFor="let f of SelectedMatchPlan?.Features; let i = index" class="mb-3 FeaturesTable">
+          <section class="section" >
+            <h5>{{ i + 1 }}.</h5>
+            <h3 class="section-title">{{ f.title }}</h3>
+
+            <div class="info-grid info-grid-2">
+              <div class="p-2 border rounded"
+                   [innerHTML]="f.contentHtml | safeHtml"></div>
+            </div>
+          </section>
+
+          <mat-divider></mat-divider>
+        </div>
+      </mat-card-content>
+
+    </mat-card>
+  </div>
+  <button
+  *ngIf="SelectedMatchPlan"
+  class="floating-buy-btn"
+  (click)="startBuying(SelectedMatchPlan)"
+>
+  Buy Now – ${{ SelectedMatchPlan?.fee }}
+</button>
+<div class="floating-payment-box" *ngIf="paymentscreen">
+  <div class="payment-inner">
+
+    <button class="close-btn" (click)="closePaymentBox()">✕</button>
+
+    <h3 class="section-title">Payments Mode Selection</h3>
+
+
+
+    <div class="payment-buttons">
+      <button class="btn primary" 
+              (click)="paymentSelectionType='stripe'">
+        Credit/Debit Card
+      </button>
+
+      <button class="btn warning ml-2"
+              (click)="paymentSelectionType='zelle'">
+        Pay via Zelle
+      </button>
+
+      <button class="btn secondary ml-2"
+              (click)="paymentSelectionType='wire'">
+        Wire Transfer
+      </button>
+    </div>
+
+    <!-- Zelle -->
+    <div class="payment-info" *ngIf="paymentSelectionType === 'zelle'">
+      <h4>Zelle Payment Details</h4>
+      <div class="info-row"><span>Name:</span><span>MedSarthi LLC</span></div>
+      <div class="info-row"><span>Email for Zelle:</span><span>pawankhera@usmlesarthi.com</span></div>
+      <div class="info-row"><span>Instructions:</span><span>Include the student's name in notes and send a screenshot to <b>enroll@usmlesarthi.com</b></span></div>
+       <div class="info-row"><span>Research(Plan) Fee:</span><span>${{ SelectedMatchPlan?.fee }}</span></div>
+      <div class="info-row" *ngIf="PromotorDiscountsAmount"><span>You Earned A Referal Discount:</span><span>${{ PromotorDiscountsAmount }}</span></div>
+      <div class="info-row" *ngIf="getDiscountAmount(SelectedMatchPlan)"><span>Offer Discount Of:</span><span>${{ getDiscountAmount(SelectedMatchPlan) }}</span></div>
+      <div class="info-row"><span>Processing Fee(On Each Transaction):</span><span>$35</span></div>
+      <div class="info-row" style="color:green;font-size:16px"><span style="color:green">Total Payable Amount:</span> <span>${{ SelectedMatchPlan?.fee -PromotorDiscountsAmount-getDiscountAmount(SelectedMatchPlan) }}</span></div>
+
+      <div class="action-row">
+        <button class="btn outline-danger m-2" (click)="openGmail()">Email</button>
+        <button class="btn outline-success m-2" (click)="openWhatsApp()">WhatsApp</button>
+      </div>
+    </div>
+
+    <!-- Stripe -->
+    <div class="payment-info" *ngIf="paymentSelectionType === 'stripe'">
+      <h4>Stripe Payment</h4>
+      <div class="info-row"><span>Name:</span><span>MedSarthi LLC</span></div>
+      <div class="info-row"><span>Research(Plan) Fee:</span><span>${{ SelectedMatchPlan?.fee }}</span></div>
+      <div class="info-row" *ngIf="PromotorDiscountsAmount"><span>You Earned A Referal Discount:</span><span>${{ PromotorDiscountsAmount }}</span></div>
+      <div class="info-row" *ngIf="getDiscountAmount(SelectedMatchPlan)"><span>Offer Discount Of:</span><span>${{ getDiscountAmount(SelectedMatchPlan) }}</span></div>
+      <div class="info-row"><span>Processing Fee(On Each Transaction):</span><span>{{(SelectedMatchPlan?.fee*4/100)+0.30 }}</span></div>
+      <div class="info-row" style="color:green;font-size:16px"><span style="color:green">Total Payable Amount:</span> <span>${{ SelectedMatchPlan?.fee -PromotorDiscountsAmount+(SelectedMatchPlan?.fee*4/100)+0.30-getDiscountAmount(SelectedMatchPlan) | number:'1.2-2' }}</span></div>
+  
+      <div class="mb-2" *ngIf="TotalInstallements>1 && !payOtherAmount">
+                <span> No Of Installements</span>
+                <span ><ng-select
+                  class="form-control"
+                  name="doctorofrotation"
+                  bindLabel="text"
+                  bindValue="value"   
+                  [items]="TotalInstallementDropDown"
+                  [multiple]="false"
+                  [(ngModel)]="TotalInstallementsSelected"
+                  style="padding:0px"
+                ></ng-select></span>
+            </div>
+            <label class="terms-inline" style="display:table">
+          <input type="checkbox" [(ngModel)]="payOtherAmount" />
+          Pay Other Amount
+        </label>
+         <div class="info-row" *ngIf="payOtherAmount">Enter Amount You Want To Pay<input type="text" [(ngModel)]="enterOtherAmount" /></div>
+        <div *ngIf="!UserLoggedIn" class="guest-pay">
+          <label>Enter Your Email If You Want To Pay As Guest</label>
+          <input type="email" [(ngModel)]="enteredEmail" class="guest-email" style="width: 100%;"/>
+          <div class="guest-actions mt-2">
+            <button class="btn warning" (click)="redirectToLogin()">Login / Register</button>
+            <button class="btn primary" (click)="proceedToPayStripe()">Pay As Guest</button>
+          </div>
+        </div>
+        
+       
+      <div *ngIf="UserLoggedIn" class="guest-pay"> <button class="btn primary" (click)="proceedToPayStripe()">Proceed To Pay</button></div>
+     
+    </div>
+
+    <!-- Wire -->
+    <div class="payment-info" *ngIf="paymentSelectionType === 'wire'">
+      <h4>Wire Transfer</h4>
+      <div class="info-row"><span>Wire To</span><span>Medsarthi LLC</span></div>
+                <div class="info-row"><span>Bank Name</span><span>Bank of America</span></div>
+                <div class="info-row"><span>Account Number</span><span>4570-4639-8400</span></div>
+                <div class="info-row"><span>SWIFT Code</span><span>BOFAUS3N</span></div>
+                <div class="info-row"><span>Research(Plan) Fee:</span><span>${{ SelectedMatchPlan?.fee }}</span></div>
+                <div class="info-row" *ngIf="PromotorDiscountsAmount"><span>You Earned A Referal Discount:</span><span>${{ PromotorDiscountsAmount }}</span></div>
+                <div class="info-row" *ngIf="getDiscountAmount(SelectedMatchPlan)"><span>Offer Discount Of:</span><span>${{ getDiscountAmount(SelectedMatchPlan) }}</span></div>
+                <div class="info-row"><span>Processing Fee(On Each Transaction):</span><span>$35</span></div>
+                <div class="info-row" style="color:green;font-size:16px"><span style="color:green">Total Payable Amount:</span> <span>${{ SelectedMatchPlan?.fee -PromotorDiscountsAmount+35-getDiscountAmount(SelectedMatchPlan) }}</span></div>
+
+      <div class="action-row">
+        <button class="btn outline-danger m-2" (click)="openGmail()">Email</button>
+        <button class="btn outline-success m-2" (click)="openWhatsApp()">WhatsApp</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+</ng-container>
+
+<!-- Floating Buy Button -->
+
+  <!-- TESTIMONIAL VIEW -->
+  <ng-container *ngIf="Viewtype === 'testimonal'">
+    <div class="testimonial-section">
+      <mat-card class="testimonial-card mat-elevation-z4">
+        <mat-card-header class="card-header">
+          <div>
+            <h2 class="hospital-title">{{ selectedHospital?.title }}</h2>
+            <h4 class="rotation-code">Rotation Code: <strong>{{ selectedHospital?.location_code }}</strong></h4>
+          </div>
+        </mat-card-header>
+
+        <mat-card-content>
+          <h3 class="section-title">Student Testimonials</h3>
+
+          <div *ngIf="selectedHospital?.reviews?.length; else noTestimonials" class="testimonials-grid">
+            <mat-card class="single-testimonial" *ngFor="let review of selectedHospital.reviews; index as i">
+              <mat-card-header>
+                <div mat-card-avatar class="avatar">{{ i + 1 }}</div>
+                <div class="reviewer-info">
+                  <div class="reviewer-name">{{ review?.student_name }}</div>
+                  <mat-card-subtitle>
+                    <ng-container *ngIf="review?.ratings as ratingStr">
+                      <ng-container *ngIf="getStars(ratingStr) as stars">
+                        <span class="star filled" *ngFor="let s of stars.filled">★</span>
+                        <span class="star empty" *ngFor="let s of stars.empty">☆</span>
+                      </ng-container>
+                    </ng-container>
+                  </mat-card-subtitle>
+                </div>
+              </mat-card-header>
+
+              <mat-card-content>
+                <p class="review-title" *ngIf="review?.title && review.title !== 'nan'"><strong>{{ review.title }}</strong></p>
+                <p class="review-feedback">{{ review.feedback }}</p>
+              </mat-card-content>
+            </mat-card>
+          </div>
+
+          <ng-template #noTestimonials>
+            <mat-card class="no-testimonial-card mat-elevation-z2">
+              <mat-card-content class="no-testimonial-content">
+                <mat-icon color="warn" class="info-icon">info</mat-icon>
+                <div>No testimonials yet for this rotation.</div>
+              </mat-card-content>
+            </mat-card>
+          </ng-template>
+
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </ng-container>
+  <div class="popup-overlay" *ngIf="(!UserLoggedIn && (!enteredEmail ||  !submitEmailPopup))  && BookingSelectedDate" >
+  <div class="popup-box">
+    <h2>Enter Your Email</h2>
+    <p>You are not logged in. Please enter your email to continue payment.</p>
+
+    <input
+      type="email"
+      [(ngModel)]="enteredEmail"
+      placeholder="Enter email"
+      class="popup-input"
+    />
+
+    <div class="popup-buttons">
+      <button class="btn cancel-btn" (click)="closeEmailPopup()">Cancel</button>
+      <button class="btn submit-btn" (click)="submitEmailPopupF()">Continue</button>
+    </div>
+  </div>
+</div>
+
+  <!-- LOADING OVERLAY -->
+  <div *ngIf="loading" class="overlay">
+    <div class="spinner"></div>
+    <p class="loading-text">Please Wait...</p>
+  </div>
+
+</div>

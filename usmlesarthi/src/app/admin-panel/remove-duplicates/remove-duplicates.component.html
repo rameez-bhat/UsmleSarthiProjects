@@ -1,0 +1,40 @@
+<div class="card-body" >
+  <div *ngIf="loading else loaded" class="text-center">
+    Fetching the interviews list...
+  </div>
+  <ng-template #loaded>
+    <div class="text-primary">
+      Note: Please use this carefully.
+    </div>
+    <div>
+      <form ngNativeValidate (ngSubmit)="fillData()" >
+        <div class="row mt-2">
+          <label for="speciality">Choose a speciality</label>
+          <select class="form-control" id="speciality" name="speciality" 
+            [(ngModel)]="dataObject.PId" (change)="loadHospitals($event)" required>
+            <option [value]="speciality.PId" *ngFor="let speciality of specialities">{{speciality.PName}} </option>
+          </select>
+        </div>
+        <div class="row mt-2">
+          <label for="hospital">Choose a duplicate entry</label>
+          <select class="form-control" id="hospital" name="hospital" 
+            [(ngModel)]="dataObject.fromHId" required>
+            <option [value]="hospital.HId" *ngFor="let hospital of hospitals">{{hospital.HName}}({{hospital.City}}, {{hospital.State}}, {{hospital.HId}}) </option>
+          </select>
+        </div>
+        <div class="row mt-2">
+          <label for="hospital">Choose an original entry</label>
+          <select class="form-control" id="hospital" name="hospital" 
+            [(ngModel)]="dataObject.toHId" required>
+            <option [value]="hospital.HId" *ngFor="let hospital of hospitals">{{hospital.HName}}({{hospital.City}}, {{hospital.State}}, {{hospital.HId}}) </option>
+          </select>
+        </div>
+        <div class="row mt-2">
+          <button type="submit" class="btn btn-block btn-primary btn-outline-primary card-footer" name="submit">
+            Make Changes
+          </button>
+        </div>
+      </form>
+    </div>
+  </ng-template>
+</div>

@@ -1,0 +1,195 @@
+<div class="container">
+  <nav class="navbar navbar-expand-md navbar-light fixed-nav-bar">
+    <a class="navbar-brand text-primary font-weight-bold pt-2" routerLink=""
+      >USMLESarthi</a
+    >
+    <button
+      class="navbar-toggler btn btn-outline-primary mt-2"
+      type="button"
+      data-toggle="collapse"
+      data-target="#navbarTogglerDemo02"
+      aria-expanded="false"
+      aria-label="Toggle navigation"
+      (click)="isCollapsed = !isCollapsed"
+      [attr.aria-expanded]="!isCollapsed"
+      aria-controls="navbarTogglerDemo02"
+    >
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div
+      class="collapse navbar-collapse font-weight-bolder justify-content-between"
+      id="navbarTogglerDemo02"
+      [ngbCollapse]="isCollapsed"
+    >
+      <ul class="navbar-nav">
+        <ng-container
+          *ngIf="
+            authService.isLoggedIn &&
+            authService.isEmailVerified &&
+            authService.isUserVerified
+          "
+        >
+          <li class="nav-item px-1">
+            <a
+              class="nav-link"
+              routerLink="crowdsourcing"
+              routerLinkActive="active text-primary font-weight-bolder"
+              (click)="isCollapsed = true"
+            >
+              Update List
+            </a>
+          </li>
+          <li class="nav-item px-1">
+            <a
+              class="nav-link"
+              routerLink="interviews"
+              routerLinkActive="active text-primary font-weight-bolder"
+              (click)="isCollapsed = true"
+            >
+              Interviews
+            </a>
+          </li>
+          <li class="nav-item px-1">
+            <a
+              class="nav-link"
+              routerLink="sarthilist"
+              routerLinkActive="active text-primary font-weight-bolder"
+              (click)="isCollapsed = true"
+            >
+              Sarthi List
+            </a>
+          </li>
+          <li class="nav-item px-1">
+            <a
+              class="nav-link"
+              routerLink="partnerslist"
+              routerLinkActive="active text-primary font-weight-bolder"
+              (click)="isCollapsed = true"
+            >
+              Partners Program List
+            </a>
+          </li>
+          <li class="nav-item px-1">
+            <a
+              class="nav-link"
+              routerLink="rol"
+              routerLinkActive="active text-primary font-weight-bolder"
+              (click)="isCollapsed = true"
+            >
+              Rank Order List
+            </a>
+          </li>
+          <!-- <li class="nav-item px-1">
+          <a class="nav-link" routerLink="usce" routerLinkActive="active text-primary font-weight-bolder"  (click)="isCollapsed = true"> USCE List
+          </a>
+        </li> -->
+          <!--<li class="nav-item px-1">
+            <a
+              class="nav-link"
+              routerLink="faqs"
+              routerLinkActive="active text-primary font-weight-bolder"
+              (click)="isCollapsed = true"
+            >
+              FAQs
+            </a>
+          </li>-->
+        </ng-container>
+        <li class="nav-item px-1">
+          <a
+            class="nav-link"
+            routerLink="rotations"
+            routerLinkActive="active text-primary font-weight-bolder"
+            (click)="isCollapsed = true"
+          >
+            Clinical Rotations
+          </a>
+        </li>
+       <!-- <li class="nav-item px-1">
+          <a
+            class="nav-link"
+            routerLink="/privacy-policy"
+            routerLinkActive="active text-primary font-weight-bolder"
+            (click)="isCollapsed = true"
+          >
+          Privacy Policy
+          </a>
+        </li>-->
+       <!-- <li class="nav-item px-1">
+          <a
+            class="nav-link"
+            routerLink="housing"
+            routerLinkActive="active text-primary font-weight-bolder"
+            (click)="isCollapsed = true"
+          >
+            Housings12
+          </a>
+        </li>-->
+        <li class="nav-item px-1">
+          <a
+            class="nav-link"
+            routerLink="match"
+            routerLinkActive="active text-primary font-weight-bolder"
+            (click)="isCollapsed = true"
+          >
+            Match
+          </a>
+        </li>
+          <li class="nav-item px-1">
+          <a
+            class="nav-link"
+            routerLink="research"
+            routerLinkActive="active text-primary font-weight-bolder"
+            (click)="isCollapsed = true"
+          >
+            Research
+          </a>
+        </li>
+         <li class="nav-item px-1">
+          <a
+            class="nav-link rameez"
+            routerLink="housing"
+            routerLinkActive="active text-primary font-weight-bolder"
+            (click)="isCollapsed = true"
+          >
+            Housing 
+          </a>
+        </li>
+        <li
+          class="nav-item px-1"
+          *ngIf="
+            authService.userData &&
+            (authService.userData.Role == 'Admin' ||
+              authService.userData.Role == 'Mentor')
+          "
+        >
+          <a
+            class="nav-link"
+            routerLink="admin"
+            routerLinkActive="active text-primary font-weight-bolder"
+            (click)="isCollapsed = true"
+          >
+            {{ authService.userData.Role }} Panel
+          </a>
+        </li>
+      </ul>
+      <ul class="navbar-nav text-primary" *ngIf="authService.isLoggedIn">
+        <li class="nav-item px-1">
+          <a
+            class="nav-link text-primary"
+            routerLink="profile"
+            routerLinkActive="active font-weight-bolder"
+            (click)="isCollapsed = true"
+          >
+            <i class="fa fa-user"></i> {{ authService.userData.displayName }}
+          </a>
+        </li>
+        <li class="nav-item px-1">
+          <a class="nav-link text-primary" (click)="authService.SignOut()">
+            <i class="fa fa-sign-out"></i> Log out
+          </a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+</div>

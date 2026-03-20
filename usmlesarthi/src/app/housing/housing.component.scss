@@ -1,0 +1,246 @@
+.calendar-container {
+    background: #fff;
+    border-radius: 8px;
+    padding: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  }
+  
+  .close-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+  }
+  .fontsize
+  {
+    font-size: 20px !important;
+  }
+  .fc-toolbar {
+    background: #3f51b5;
+    color: #fff;
+    padding: 10px;
+    border-radius: 8px 8px 0 0;
+  }
+  
+  .fc-day:hover {
+    background: rgba(63,81,181,0.1);
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  
+  .fc-event {
+    border: none;
+    border-radius: 4px;
+    font-size: 13px;
+    color: #fff;
+    padding: 2px 4px;
+  }
+  .mat-icon
+  {
+    width: 40px !important;
+  }
+  .mat-card-title
+  {
+    width: 97% !important;
+  }
+  .matAvail
+  {
+    width: 13% !important;
+  }
+
+  /* Base styles */
+.grid {
+    display: grid;
+    gap: 2rem;
+    grid-template-columns: 1fr;
+    margin: 20px auto;
+    padding: 10px;
+  }
+  
+  /* Tablet view */
+  @media (min-width: 640px) {
+    .grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  
+  /* Desktop view */
+  @media (min-width: 1024px) {
+    .grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  
+  /* Card styling */
+  .card-rotation {
+    background-color: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+  }
+  
+  .card-rotation:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
+  }
+  
+  /* Image */
+  .card-rotation img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+  }
+  
+  /* Content */
+  .card-rotation .p-6 {
+    padding: 1.5rem;
+  }
+  
+  /* Badge */
+  .badge-featured {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: #f59e0b;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: bold;
+  }
+  
+  /* Pills */
+  .pill {
+    display: inline-block;
+    background: #e5e7eb;
+    color: #374151;
+    padding: 3px 8px;
+    border-radius: 9999px;
+    font-size: 12px;
+  }
+  
+  .pill-primary {
+    background: #2563eb;
+    color: #fff;
+  }
+  
+  /* Responsive text adjustments */
+  h3 {
+    font-size: 1.1rem;
+  }
+  
+  .text-sm {
+    font-size: 0.875rem;
+  }
+  
+  /* Buttons */
+  button {
+    font-size: 0.875rem;
+    padding: 6px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  button:hover {
+    opacity: 0.9;
+  }
+  
+  /* For smaller screens */
+  @media (max-width: 480px) {
+    .p-6 {
+      padding: 1rem;
+    }
+    .smgrid-cols-2
+    {
+        min-width: 260px; 
+    }
+    .hospitaltitle
+    {
+        font-size: 12px !important;
+    }
+    .card-rotation  {
+        min-width: 260px;
+      }
+    .card-rotation img {
+      height: 160px;
+    }
+  
+    h3 {
+      font-size: 1rem;
+    }
+  
+    button {
+      font-size: 0.8rem;
+      padding: 5px 8px;
+    }
+  
+    .flex {
+      flex-direction: column;
+      gap: 6px;
+    }
+  
+    .flex.items-center.justify-between {
+      flex-direction: column;
+      align-items: stretch;
+    }
+  }
+   /* BUTTONS */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  border: none;
+  transition: 0.2s ease-in-out;
+  width: auto;
+
+  &:hover {
+    opacity: 0.9;
+  }
+
+  &.primary {
+    background: #006be6;
+    color: #fff !important;
+  }
+
+  &.warning {
+    background: #f59e0b;
+    color: #fff !important;
+  }
+
+  &.secondary {
+    background: #6b7280;
+    color: #fff;
+  }
+
+  &.outline-success {
+    background: #00bc3e;
+    border: 1px solid #10b981;
+    color: #10b981;
+  }
+
+  &.outline-danger {
+    background: transparent;
+    border: 1px solid #ef4444;
+    color: #ef4444;
+  }
+
+  &.full-width {
+    width: 100%;
+  }
+}
+.fa-whatsapp
+{
+  font-size: 28px;
+  color: white;
+}
+.gmailicon
+{
+  height: 26px;
+}
+

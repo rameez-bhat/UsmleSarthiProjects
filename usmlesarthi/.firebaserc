@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "usmlesarthi-residency-match"
+  },
+  "targets": {
+    "usmlesarthi-residency-match": {
+      "hosting": {
+        "usmlesarthiv2": [
+          "usmlesarthiv2"
+        ]
+      }
+    }
+  }
+}
