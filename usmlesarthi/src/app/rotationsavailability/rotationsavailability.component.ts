@@ -965,6 +965,15 @@ this.BookingSelectedDateEnq = {
       FeetoShowToUser=(ActualfeeToPay*96/100)-0.30;
       FeetoShowToUser=Math.round(FeetoShowToUser*100);
       ActualfeeToPay=Math.round(ActualfeeToPay*100);
+      if(ActualfeeToPay<=0)
+      {
+         this.loading = false;
+          this.toastr.error(
+            "Please enter amount greater than Zero"
+          );
+          return;
+      }
+
     }
     
     let AllowTesting="no";
