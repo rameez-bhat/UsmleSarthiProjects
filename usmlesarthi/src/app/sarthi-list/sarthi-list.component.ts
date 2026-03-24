@@ -1,6 +1,7 @@
 import {
   Component,
-  OnInit
+  OnInit,
+  NgZone
 } from '@angular/core';
 import * as XLSX from 'xlsx'; 
 import {
@@ -119,7 +120,7 @@ export class SarthiListComponent implements OnInit {
   selectedNonUsImg : any;
   selectedDataNotAvailable : any;
 
-  constructor(private dbservice: SarthiListService, private programApi: ProgramService, private hospitalApi: HospitalService, private toastr: ToastrService, private authService: AuthenticationService) {
+  constructor(private dbservice: SarthiListService, private programApi: ProgramService, private hospitalApi: HospitalService, private toastr: ToastrService, private authService: AuthenticationService,private ngZone: NgZone ) {
     this.showTab = "Others";
     this.programList = [];
     this.showAlert = false;
@@ -169,115 +170,109 @@ export class SarthiListComponent implements OnInit {
   }
 
   async takeMeToDashboard(event) {
-    try {
-      this.selectedPId = event;
-      console.log("this.selectedPId--->",this.selectedPId)
-     //this.hospitalsByProgram={};
-      //this.hospitalsDataByProgram={};
-      //this.shownList={};
-      this.loading = true;
-      this.landing = "Dashboard";
+  try {
+    this.selectedPId = event;
+    this.loading = true;
+    this.landing = "Dashboard";
+    this.ListUserHasverified = [];
+    this.ListUserHasUnverified = [];
+    this.ListUserHasverified.push({ id: 1, name: "Test User" });
 
-      //this.ListUserHasUnverified=await this.dbservice.GetStudentHasUnverified(this.userProfile.uid,this.selectedPId);
-      //this.ListUserHasverified=await this.dbservice.GetStudentHasVerified(this.userProfile.uid,this.selectedPId);  
-      this.ListUserHasverified=[];
-      this.ListUserHasUnverified=[];
-      this.ListUserHasverified.push({ id: 1, name: "Test User" });
-      this.hospitalsByProgram[this.selectedPId] = await this.hospitalApi.getHospitalsObjectByProgramRameez(this.selectedPId);//returns hospital list
-      this.hospitalsDataByProgram[this.selectedPId] = await this.dbservice.getHospitalsDataByPId(this.selectedPId);
+    // Step 1 — parallel fetch
+    const [hospitals, hospitalsData] = await Promise.all([
+      this.hospitalApi.getHospitalsObjectByProgramRameez(this.selectedPId),
+      this.dbservice.getHospitalsDataByPId(this.selectedPId)
+    ]);
 
-      if (Object.keys(this.hospitalsDataByProgram[this.selectedPId]).length == 0) {
-        this.toastr.info("Selected speciality doesn't have any hospital data. Choose any other program.");
-        this.selectedPId = undefined;
-        this.landing = "Specialities";
-      } else {
-        this.favorites = await this.dbservice.getFavoritesByUId(this.userProfile.uid.toString());
+    this.hospitalsByProgram[this.selectedPId] = hospitals;
+    this.hospitalsDataByProgram[this.selectedPId] = hospitalsData;
+    if (Object.keys(this.hospitalsDataByProgram[this.selectedPId]).length === 0) {
+      this.toastr.info("Selected speciality doesn't have any hospital data.");
+      this.selectedPId = undefined;
+      this.landing = "Specialities";
+      this.loading = false;
+      return;
+    }
 
-        
-        this.favoritesObject = {};
-        for (let i in this.favorites) {
-          let data = this.favorites[i];
-          let key = data.Frieda + '_' + data.PId;
-          if(typeof this.hospitalsByProgram[this.selectedPId][data.HId]!="undefined")
-          {
-            this.favorites[i]['hospital']=this.hospitalsByProgram[this.selectedPId][data.HId]
-          }
-          if(typeof this.hospitalsByProgram[this.selectedPId][key]!="undefined")
-            {
-              this.favorites[i]['hospital']=this.hospitalsByProgram[this.selectedPId][key]
-            }
-          if(typeof this.hospitalsDataByProgram[this.selectedPId][key]!="undefined")
-            {
-              this.favorites[i]['ProgramInfo']=this.hospitalsDataByProgram[this.selectedPId][key]
-            }
-            if(typeof this.hospitalsByProgram[this.selectedPId][data.HId]=="undefined" || typeof this.hospitalsDataByProgram[this.selectedPId][key]=="undefined")
-            {
-             delete this.favorites[i]
-            }
-          
-          this.favoritesObject[key] = data;
-        }
-        if (!(this.selectedPId in this.bestMatches) || this.updateDashboard) {
-          this.bestMatches[this.selectedPId] = [];
-          this.possibleMatches[this.selectedPId] = [];
-          this.difficultMatches[this.selectedPId] = [];
-          this.others[this.selectedPId] = [];
-          for (let hpinfoid in this.hospitalsDataByProgram[this.selectedPId]) {
-            let hospitalData = this.hospitalsDataByProgram[this.selectedPId][hpinfoid];
-            if(hospitalData.Frieda=="1405100003")
-            {
-              console.log("hospitalData---->",hospitalData)
-            }
-            if (hospitalData.TimeStamp){
-              const timeStamp = new Date(hospitalData.TimeStamp);
-              const day = String(timeStamp.getDate()).padStart(2, '0');
-              const month = String(timeStamp.getMonth() + 1).padStart(2, '0'); // Months are zero-indexed
-              const year = timeStamp.getFullYear();
-              hospitalData.Date = `${day}/${month}/${year}`;
-              //hospitalData.Date = monthNames[timeStamp.getMonth()] + "/" + timeStamp.getFullYear();
-            }
-            let key = hospitalData.HId + '_' + hospitalData.PId;
-            if (key in this.favoritesObject) {
-              hospitalData.favorite = this.favoritesObject[key];
-            } else {
-              delete hospitalData.favorite;
-            }
-            let category = this.bifurcateHospital(hospitalData);
-            switch (category) {
-              case "Best":
-                this.bestMatches[this.selectedPId].push(hospitalData);
-                break;
-              case "Possible":
-                this.possibleMatches[this.selectedPId].push(hospitalData);
-                break;
-              case "Difficult":
-                this.difficultMatches[this.selectedPId].push(hospitalData);
-                break;
-              case "Others":
-                this.others[this.selectedPId].push(hospitalData);
-                break;
-            }
-          }
-          this.updateDashboard = false;
-        }
-        this.totalNo[0] = this.bestMatches[this.selectedPId].length;
-        this.totalNo[1] = this.possibleMatches[this.selectedPId].length;
-        this.totalNo[2] = this.difficultMatches[this.selectedPId].length;
-        this.totalNo[3] = this.others[this.selectedPId].length;
-        this.filterSearch();
-      }
-      console.log("Dashboard1   this.loading--->",this.loading)
+    // Step 2 — favorites needs hospitalsData ready
+    this.favorites = await this.dbservice.getFavoritesByUId(
+      this.userProfile.uid.toString()
+    );
+
+    // Step 3 — process synchronously (fast enough)
+    this.processFavorites();
+    this.processDashboard();
+    this.filterSearch();
+
+    // Step 4 — done
+    this.loading = false;
+    this.landing = "Dashboard";
+    this.ngZone.run(() => {
       this.loading = false;
       this.landing = "Dashboard";
-      this.loading = false;
-      console.log("Dashboard1   this.loading--->",this.loading)
-    } catch (err) {
-     // await this.takeMeToSpeciality();
-      console.log("Error===>",err.message);
-      //this.toastr.error("Error while fetching hospitals data, please try again");
-      this.loading = false;
+    });
+
+  } catch (err) {
+    console.log("Error===>", err.message);
+    this.loading = false;
+    this.landing = "Specialities";
+  }
+}
+private processFavorites() {
+  this.favoritesObject = {};
+  for (let i in this.favorites) {
+    let data = this.favorites[i];
+    let key = data.Frieda + '_' + data.PId;
+    const hospitalByHId = this.hospitalsByProgram[this.selectedPId][data.HId];
+    const hospitalByKey = this.hospitalsByProgram[this.selectedPId][key];
+    const programInfo = this.hospitalsDataByProgram[this.selectedPId][key];
+    if (hospitalByHId) this.favorites[i]['hospital'] = hospitalByHId;
+    if (hospitalByKey) this.favorites[i]['hospital'] = hospitalByKey;
+    if (programInfo) this.favorites[i]['ProgramInfo'] = programInfo;
+    if (!hospitalByHId || !programInfo) {
+      delete this.favorites[i];
+      continue;
+    }
+    this.favoritesObject[key] = data;
+  }
+}
+
+private processDashboard() {
+  if (this.selectedPId in this.bestMatches && !this.updateDashboard) return;
+
+  this.bestMatches[this.selectedPId] = [];
+  this.possibleMatches[this.selectedPId] = [];
+  this.difficultMatches[this.selectedPId] = [];
+  this.others[this.selectedPId] = [];
+
+  for (let hpinfoid in this.hospitalsDataByProgram[this.selectedPId]) {
+    let hospitalData = this.hospitalsDataByProgram[this.selectedPId][hpinfoid];
+
+    if (hospitalData.TimeStamp) {
+      const timeStamp = new Date(hospitalData.TimeStamp);
+      hospitalData.Date = `${String(timeStamp.getDate()).padStart(2,'0')}/${String(timeStamp.getMonth()+1).padStart(2,'0')}/${timeStamp.getFullYear()}`;
+    }
+
+    let key = hospitalData.HId + '_' + hospitalData.PId;
+    hospitalData.favorite = key in this.favoritesObject
+      ? this.favoritesObject[key]
+      : undefined;
+
+    const category = this.bifurcateHospital(hospitalData);
+    switch (category) {
+      case "Best":      this.bestMatches[this.selectedPId].push(hospitalData); break;
+      case "Possible":  this.possibleMatches[this.selectedPId].push(hospitalData); break;
+      case "Difficult": this.difficultMatches[this.selectedPId].push(hospitalData); break;
+      case "Others":    this.others[this.selectedPId].push(hospitalData); break;
     }
   }
+
+  this.updateDashboard = false;
+  this.totalNo[0] = this.bestMatches[this.selectedPId].length;
+  this.totalNo[1] = this.possibleMatches[this.selectedPId].length;
+  this.totalNo[2] = this.difficultMatches[this.selectedPId].length;
+  this.totalNo[3] = this.others[this.selectedPId].length;
+}
 
   sortDataOnFilterRameez(filterName, data) {
     data.sort((a, b) => this.hospitalsByProgram[this.selectedPId][a.HId][filterName] > this.hospitalsByProgram[this.selectedPId][b.HId][filterName] ? 1 : -1);

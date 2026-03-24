@@ -48,7 +48,7 @@
   </div>
   <div class="card-body" *ngSwitchCase="'Dashboard'">
     <div *ngIf="loading; else loaded" class="text-center">
-      Generating the final list...
+      Generating the final list...{{loading}}
     </div>
     <ng-template #loaded>
       <div class="row">
@@ -206,7 +206,8 @@
             </thead>
             <ng-container>
               <tbody *ngIf="shownList.length; else noHospital">
-                <tr *ngFor="let hospitalData of shownList; index as i">
+                <!--<tr *ngFor="let hospitalData of shownList; index as i">-->
+                  <tr *ngFor="let hospitalData of shownList; index as i; trackBy: trackByHospital">
                   <td>{{ i + 1 }}</td>
                   <td>
                     {{
