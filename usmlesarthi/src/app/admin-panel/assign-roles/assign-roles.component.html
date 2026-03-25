@@ -100,7 +100,7 @@
       </div>
       <div>
         <label> Write the user's name or email you are looking for..</label>
-        <input type="text" class="form-control" #userPrefix />
+        <input type="text" name="usernameemail" class="form-control" #userPrefix />
         <br />
         <button
           style="margin-right: 10px"
@@ -352,79 +352,87 @@
           </div>
         </div>
         <form ngNativeValidate #form>
-          <div class="font-weight-bold h4 text-primary m-2 p-2">Education</div>
-          <div class="row mt-2">
-            <span class="col-6"
-              ><label for="yog"
-                >Year of graduation<span style="color: red">*</span></label
-              ></span
-            >
-            <span class="col-6">
-              <label>
-                If you extended graduation by more than 6 months, let us know
-              </label>
-            </span>
-            <span class="col-6"
-              ><input
-                type="number"
-                min="1980"
-                class="form-control"
-                [(ngModel)]="selectedUser.YOG"
-                name="yog"
-                aria-describedby="yogError"
-                placeholder="Enter your year of graduation"
-                onfocus="this.placeholder = ''"
-                required
-            /></span>
-            <span class="col-6">
-              <input
-                type="text"
-                name="extendedGrad"
-                placeholder="Please explain here.."
-                [(ngModel)]="selectedUser.extendedGrad"
-                class="form-control"
-                id="extendedGrad"
-              />
-            </span>
-          </div>
-          <div class="row mt-2">
-            <span class="col-6"
-              ><label for="primarySpeciality"
-                >Name of your Medical School<span style="color: red"
-                  >*</span
-                ></label
-              ></span
-            >
-            <span class="col-6"
-              ><label
-                >Country of your Medical School<span style="color: red"
-                  >*</span
-                ></label
-              ></span
-            >
-            <span class="col-6"
-              ><input
-                type="text"
-                class="form-control"
-                [(ngModel)]="selectedUser.School"
-                name="school"
-                aria-describedby="yogError"
-                placeholder="Enter the name of your medical school"
-                onfocus="this.placeholder = ''"
-                required
-            /></span>
-            <span class="col-6"
-              ><input
-                type="text"
-                class="form-control"
-                name="country"
-                [(ngModel)]="selectedUser.schoolCountry"
-                aria-describedby="step1ScoreError"
-                placeholder="Enter the country of your medical school"
-                onfocus="this.placeholder = ''"
-                required
-            /></span>
-          </div>
+          <div class="card p-3 mb-3">
+  <h5 class="text-primary font-weight-bold mb-3">Education</h5>
+
+  <div class="row">
+
+    <!-- Year -->
+    <div class="col-md-6 mb-3">
+      <label>Year of Graduation *</label>
+     <nz-date-picker
+  nzMode="year"
+  nzFormat="yyyy"
+  [(ngModel)]="selectedUser.GraduationDate"
+  name="GraduationDate"
+  nzPlaceHolder="Select Year"
+  [nzAllowClear]="false"
+  class="w-100"
+></nz-date-picker>
+    </div>
+
+    <!-- Extension -->
+    <div class="col-md-6 mb-3">
+      <label>Extension (if any)</label>
+      <input
+        class="form-control"
+        [(ngModel)]="selectedUser.GraduationExtendedMoreThan6Months"
+        name="GraduationExtendedMoreThan6Months"
+      />
+    </div>
+
+    <!-- Country -->
+    <div class="col-md-6 mb-3">
+      <label>Country of Medical School *</label>
+      <nz-select
+        [(ngModel)]="selectedUser.CountryOfMedicalSchool"
+        name="CountryOfMedicalSchool"
+        nzShowSearch
+        nzPlaceHolder="Select Country"
+        (ngModelChange)="onCountryChange($event)"
+        class="w-100"
+      >
+        <nz-option
+          *ngFor="let c of allCountriesC"
+          [nzValue]="c"
+          [nzLabel]="c.label"
+        ></nz-option>
+      </nz-select>
+    </div>
+
+    <!-- School -->
+    <div class="col-md-6 mb-3">
+      <label>Medical School *</label>
+      <nz-select
+        [(ngModel)]="selectedUser.NameOfMedicalSchool"
+        name="NameOfMedicalSchool"
+        nzShowSearch
+        nzPlaceHolder="Select School"
+        class="w-100"
+      >
+        <nz-option
+          *ngFor="let m of medicalSchoolOptionsList"
+          [nzValue]="m"
+          [nzLabel]="m.label"
+        ></nz-option>
+      </nz-select>
+    </div>
+
+    <!-- Others -->
+    <div
+      class="col-md-6 mb-3"
+      *ngIf="selectedUser?.NameOfMedicalSchool?.value === 'Others'"
+    >
+      <label>Enter School Name</label>
+      <input
+        class="form-control"
+        [(ngModel)]="selectedUser.NameOfMedicalSchoolOthers"
+        name="NameOfMedicalSchoolOthers"
+      />
+    </div>
+
+  </div>
+</div>
           <div class="row mt-2">
             <span class="col-6"
               ><label>
@@ -439,7 +447,7 @@
                 ><input
                   type="radio"
                   name="repeatApplicant"
-                  [(ngModel)]="selectedUser.repeatApplicant"
+                  [(ngModel)]="selectedUser.ProfileRepeating"
                   value="Yes"
                   required
                 />
@@ -451,7 +459,7 @@
                 ><input
                   type="radio"
                   name="repeatApplicant"
-                  [(ngModel)]="selectedUser.repeatApplicant"
+                  [(ngModel)]="selectedUser.ProfileRepeating"
                   value="No"
                 />
                 No</label
@@ -461,8 +469,8 @@
           <div
             class="row mt-2"
             *ngIf="
-              selectedUser.repeatApplicant &&
-              selectedUser.repeatApplicant == 'Yes'
+              selectedUser.ProfileRepeating &&
+              selectedUser.ProfileRepeating != ''
             "
           >
             <span class="col-12">
@@ -476,12 +484,12 @@
                 autosize
                 type="text"
                 placeholder="Please explain here.."
-                [(ngModel)]="selectedUser.repeatApplicantComments"
-                name="repeatComments"
+                [(ngModel)]="selectedUser.ProfileRepeating"
+                name="ProfileRepeating"
                 class="form-control"
                 [required]="
-                  selectedUser.repeatApplicant &&
-                  selectedUser.repeatApplicant == 'Yes'
+                  selectedUser.ProfileRepeating &&
+                  selectedUser.ProfileRepeating != ''
                 "
               >
               </textarea>
@@ -522,272 +530,109 @@
                 placeholder="Please explain here about other.."
             /></span>
           </div>
-          <div class="font-weight-bold h4 text-primary m-2 p-2">
-            USMLE Scores
-          </div>
-          <div class="row mt-2">
-            <span class="col-6"
-              ><label
-                >Step 1 Pass/Fail?<span style="color: red">*</span></label
-              ></span
-            >
-            <span class="col-6"
-              ><label
-                >Any Step 1 Failure?<span style="color: red">*</span></label
-              ></span
-            >
-            <span class="col-6"
-              ><select
-                class="form-control"
-                name="Step1Result"
-                [(ngModel)]="selectedUser.Step1Result"
-                required
-              >
-                <option value="Pass">Pass</option>
-                <option value="Fail">Fail</option>
-                <option value="Score">Score</option>
-                <option value="Not Taken">Not Taken</option>
-              </select></span
-            >
-            <span class="col-6"
-              ><select
-                class="form-control"
-                name="Step1Failure"
-                [(ngModel)]="selectedUser.Step1Failure"
-                required
-              >
-                <option value="0">0</option>
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="More than 2">More than 2</option>
-              </select></span
-            >
-            <span
-              class="col-6 mt-2"
-              *ngIf="
-                (selectedUser.Step1Result &&
-                  selectedUser.Step1Result == 'Score') ||
-                selectedUser.Step1Score
-              "
-              ><input
-                type="number"
-                class="form-control"
-                name="step1Score"
-                [(ngModel)]="selectedUser.Step1Score"
-                aria-describedby="step1ScoreError"
-                placeholder="Enter your step 1 score"
-                onfocus="this.placeholder = ''"
-                required
-            /></span>
-          </div>
-          <div class="row mt-2">
-            <span class="col-6"
-              ><label
-                >Step 2 CK Score/ Not Taken?<span style="color: red"
-                  >*</span
-                ></label
-              ></span
-            >
-            <span class="col-6"
-              ><label
-                >Any Step 2 CK Failure?<span style="color: red">*</span></label
-              ></span
-            >
-            <span class="col-6"
-              ><select
-                class="form-control"
-                name="Step2Result"
-                [(ngModel)]="selectedUser.Step2Result"
-                required
-              >
-                <option value="Score">Score</option>
-                <option value="Not Taken">Not Taken</option>
-              </select></span
-            >
-            <span class="col-6"
-              ><select
-                class="form-control"
-                name="Step2Failure"
-                [(ngModel)]="selectedUser.Step2Failure"
-                required
-              >
-                <option value="0">0</option>
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="More than 2">More than 2</option>
-              </select></span
-            >
-            <span
-              class="col-6 mt-2"
-              *ngIf="
-                (selectedUser.Step2Result &&
-                  selectedUser.Step2Result == 'Score') ||
-                selectedUser.Step2Score
-              "
-              ><input
-                type="number"
-                class="form-control"
-                [(ngModel)]="selectedUser.Step2Score"
-                name="step2Score"
-                aria-describedby="step2ScoreError"
-                placeholder="Enter your step 2 score"
-                onfocus="this.placeholder = ''"
-                required
-            /></span>
-          </div>
-          <div class="row mt-2">
-            <span class="col-6"><label>Step 3 Score/ Not Taken?</label></span>
-            <span class="col-6"
-              ><label
-                >Any Step 3 Failure?<span style="color: red">*</span></label
-              ></span
-            >
-            <span class="col-6"
-              ><select
-                class="form-control"
-                name="Step3Result"
-                [(ngModel)]="selectedUser.Step3Result"
-                required
-              >
-                <option value="Score">Score</option>
-                <option value="Not Taken">Not Taken</option>
-              </select></span
-            >
-            <span class="col-6"
-              ><select
-                class="form-control"
-                name="Step3Failure"
-                [(ngModel)]="selectedUser.Step3Failure"
-                required
-              >
-                <option value="0">0</option>
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="More than 2">More than 2</option>
-              </select></span
-            >
-            <span
-              class="col-6 mt-2"
-              *ngIf="
-                selectedUser.Step3Result && selectedUser.Step3Result == 'Score'
-              "
-              ><input
-                type="number"
-                class="form-control"
-                name="Step3Score"
-                [(ngModel)]="selectedUser.Step3Score"
-                aria-describedby="step1ScoreError"
-                placeholder="Enter your step 3 score"
-                onfocus="this.placeholder = ''"
-            /></span>
-          </div>
-          <div class="row mt-2">
-            <span class="col-6"
-              ><label for="step2Score"
-                >Step 2 CS/OET ? <span style="color: red">*</span></label
-              ></span
-            >
-            <span class="col-6"
-              ><label
-                >Any Step 2 CS/OET Failure?<span style="color: red"
-                  >*</span
-                ></label
-              ></span
-            >
-            <span class="col-2"
-              ><label
-                ><input
-                  type="radio"
-                  name="step2CsScore"
-                  [(ngModel)]="selectedUser.Step2CSScore"
-                  value="Pass"
-                  required
-                />
-                Pass
-              </label></span
-            >
-            <span class="col-2"
-              ><label
-                ><input
-                  type="radio"
-                  name="step2CsScore"
-                  [(ngModel)]="selectedUser.Step2CSScore"
-                  value="Fail"
-                />
-                Fail
-              </label></span
-            >
-            <span class="col-2"
-              ><label
-                ><input
-                  type="radio"
-                  name="step2CsScore"
-                  [(ngModel)]="selectedUser.Step2CSScore"
-                  value="Not Taken"
-                />
-                Not Taken
-              </label></span
-            >
-            <span class="col-6"
-              ><select
-                class="form-control"
-                name="Step2CSFailure"
-                [(ngModel)]="selectedUser.Step2CSFailure"
-                required
-              >
-                <option value="0">0</option>
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="More than 2">More than 2</option>
-              </select></span
-            >
-          </div>
-          <div class="row mt-2">
-            <span class="col-6"><label>ECFMG Certificate?</label></span>
-            <span class="col-3"
-              ><label
-                ><input
-                  type="radio"
-                  name="ecfmgCertificate"
-                  [(ngModel)]="selectedUser.ecfmgCertificate"
-                  value="Yes"
-                  required
-                />
-                Yes</label
-              ></span
-            >
-            <span class="col-3"
-              ><label
-                ><input
-                  type="radio"
-                  name="ecfmgCertificate"
-                  [(ngModel)]="selectedUser.ecfmgCertificate"
-                  value="No"
-                />
-                No</label
-              ></span
-            >
-          </div>
-          <div
-            class="row mt-2"
-            *ngIf="
-              selectedUser.ecfmgCertificate &&
-              selectedUser.ecfmgCertificate == 'Yes'
-            "
-          >
-            <span class="col-6"><label>Date of ECFMG Certificate</label></span>
-            <span class="col-6"
-              ><input
-                type="text"
-                class="form-control"
-                [(ngModel)]="selectedUser.dateOfEcfmg"
-                name="dateOfEcfmg"
-                aria-describedby="yogError"
-                placeholder="Enter the date of your ECFMG Certificate"
-                onfocus="this.placeholder = ''"
-                required
-            /></span>
-          </div>
+          <div class="card p-3 mb-3">
+    <h5 class="text-primary">USMLE Scores</h5>
+
+    <div class="row">
+
+      <!-- STEP 1 -->
+      <div class="col-md-6 mb-3">
+        <label>Step 1</label>
+        <nz-select [(ngModel)]="selectedUser.ScoreData.Step1Score.Selected.Name" [ngModelOptions]="{ standalone: true }">
+          <nz-option *ngFor="let i of Step1ScoreKeys"
+            [nzValue]="i.key"
+            [nzLabel]="i.value"></nz-option>
+        </nz-select>
+      </div>
+
+      <div class="col-md-6 mb-3"
+        *ngIf="selectedUser?.ScoreData?.Step1Score?.Selected?.Name === 'Score'">
+        <label>Step 1 Score</label>
+        <input type="number" class="form-control"
+          name="Step1ScoreMarks"
+          [(ngModel)]="selectedUser.ScoreData.Step1Score.Selected.Value" />
+      </div>
+      <div class="col-md-6 mb-3">
+        <label>Any Step 1 Failure?</label>
+        <nz-select [(ngModel)]="selectedUser.ScoreData.Step1Attempts" [ngModelOptions]="{ standalone: true }">
+          <nz-option [nzValue]="1" [nzLabel]="1"></nz-option>
+          <nz-option [nzValue]="2" [nzLabel]="2"></nz-option>
+          <nz-option [nzValue]="3" [nzLabel]="3"></nz-option>
+        </nz-select>
+      </div>
+
+      <!-- STEP 2 -->
+      <div class="col-md-6 mb-3">
+        <label>Step 2</label>
+        <nz-select [(ngModel)]="selectedUser.ScoreData.Step2Score"  [ngModelOptions]="{ standalone: true }">
+          <nz-option *ngFor="let i of Step2ScoreKeys"
+            [nzValue]="i.key"
+            [nzLabel]="i.value"></nz-option>
+        </nz-select>
+      </div>
+
+      <div class="col-md-6 mb-3"
+        *ngIf="selectedUser?.ScoreData?.Step2Score?.Selected?.Name === 'Score'">
+        <label>Step 2 Score</label>
+        <input type="number" class="form-control" name="Step2ScoreMarks"
+          [(ngModel)]="selectedUser.ScoreData.Step2Score.Selected.Value" />
+      </div>
+      <div class="col-md-6 mb-3">
+        <label>Any Step 2 Failure?</label>
+        <nz-select [(ngModel)]="selectedUser.ScoreData.Step2Attempts" [ngModelOptions]="{ standalone: true }">
+          <nz-option [nzValue]="1" [nzLabel]="1"></nz-option>
+          <nz-option [nzValue]="2" [nzLabel]="2"></nz-option>
+          <nz-option [nzValue]="3" [nzLabel]="3"></nz-option>
+        </nz-select>
+      </div>
+      <!-- STEP 3 -->
+      <div class="col-md-6 mb-3">
+        <label>Step 3</label>
+        <nz-select [(ngModel)]="selectedUser.ScoreData.Step3Score.Selected.Name" [ngModelOptions]="{ standalone: true }">
+          <nz-option *ngFor="let i of Step2ScoreKeys"
+            [nzValue]="i.key"
+            [nzLabel]="i.value"></nz-option>
+        </nz-select>
+      </div>
+
+      <div class="col-md-6 mb-3"
+        *ngIf="selectedUser?.ScoreData?.Step3Score?.Selected?.Name === 'Score'">
+        <label>Step 3 Score</label>
+        <input type="number" class="form-control" name="Step3ScoreMarks"
+          [(ngModel)]="selectedUser.ScoreData.Step3Score.Selected.Value" />
+      </div>
+       <div class="col-md-6 mb-3">
+        <label>Any Step 3 Failure?</label>
+        <nz-select [(ngModel)]="selectedUser.ScoreData.Step3Attempts" [ngModelOptions]="{ standalone: true }">
+          <nz-option [nzValue]="1" [nzLabel]="1"></nz-option>
+          <nz-option [nzValue]="2" [nzLabel]="2"></nz-option>
+          <nz-option [nzValue]="3" [nzLabel]="3"></nz-option>
+        </nz-select>
+      </div>
+    </div>
+  </div>
+          <div class="col-md-6 mb-3">
+        <label>ECFMG Certificate</label>
+        <nz-select [(ngModel)]="selectedUser.ECFMGCertificate" name="ECFMGCertificate">
+          <nz-option [nzValue]="''" nzLabel="==Select=="></nz-option>
+          <nz-option [nzValue]="'yes'" nzLabel="Yes"></nz-option>
+          <nz-option [nzValue]="'no'" nzLabel="No"></nz-option>
+        </nz-select>
+      </div>
+      
+      <div class="col-md-6 mb-3" *ngIf="selectedUser.ECFMGCertificate && selectedUser.ECFMGCertificate == 'yes'">
+      <label>Date of ECFMG Certificate</label>
+     <nz-date-picker
+  nzMode="date"
+  nzFormat="dd-MM-yyyy"
+  [(ngModel)]="selectedUser.ECFMGCertificateDate"
+  name="ECFMGCertificateDate"
+  nzPlaceHolder="Select Year"
+  [nzAllowClear]="false"
+  class="w-100"
+></nz-date-picker>
+    </div>    
+      
           <div class="font-weight-bold h4 text-primary m-2 p-2">
             Additional information
           </div>
@@ -820,9 +665,9 @@
               ><label
                 ><input
                   type="radio"
-                  name="homeResidency"
-                  [(ngModel)]="selectedUser.homeResidency"
-                  value="Yes"
+                  name="HomeCountryResidencyOption"
+                  [(ngModel)]="selectedUser.HomeCountryResidencyOption"
+                  value="yes"
                   required
                 />
                 Yes</label
@@ -832,9 +677,9 @@
               ><label
                 ><input
                   type="radio"
-                  name="homeResidency"
-                  [(ngModel)]="selectedUser.homeResidency"
-                  value="No"
+                  name="HomeCountryResidencyOption"
+                  [(ngModel)]="selectedUser.HomeCountryResidencyOption"
+                  value="no"
                 />
                 No</label
               ></span
@@ -843,7 +688,7 @@
           <div
             class="row mt-2"
             *ngIf="
-              selectedUser.homeResidency && selectedUser.homeResidency == 'Yes'
+              selectedUser.HomeCountryResidencyOption && selectedUser.HomeCountryResidencyOption == 'yes'
             "
           >
             <span class="col-6"
@@ -929,8 +774,8 @@
                 ><input
                   type="radio"
                   name="masters"
-                  [(ngModel)]="selectedUser.MastersDegree"
-                  value="Yes"
+                  [(ngModel)]="selectedUser.DoYouHaveMasters"
+                  value="yes"
                   required
                 />
                 Yes</label
@@ -941,8 +786,8 @@
                 ><input
                   type="radio"
                   name="masters"
-                  [(ngModel)]="selectedUser.MastersDegree"
-                  value="No"
+                  [(ngModel)]="selectedUser.DoYouHaveMasters"
+                  value="no"
                 />
                 No</label
               ></span
@@ -951,7 +796,7 @@
           <div
             class="row mt-2"
             *ngIf="
-              selectedUser.MastersDegree && selectedUser.MastersDegree == 'Yes'
+              selectedUser.MastersDegree && selectedUser.DoYouHaveMasters == 'yes'
             "
           >
             <!-- <span class="col-6"
@@ -976,8 +821,8 @@
                 aria-describedby="step2ScoreError"
                 placeholder="Name of the degree"
                 [required]="
-                  selectedUser.MastersDegree &&
-                  selectedUser.MastersDegree == 'Yes'
+                  selectedUser.DoYouHaveMasters &&
+                  selectedUser.DoYouHaveMasters == 'yes'
                 "
             /></span>
           </div>

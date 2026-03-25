@@ -13,16 +13,41 @@ import * as jspdf from 'jspdf';
 import html2canvas from 'html2canvas';
 import * as XLSX from 'xlsx'; 
 import { ProfileService } from '../../profile/services/profile.service';
+import * as moment from 'moment';
+import { countryData } from "../../../../apis/countryData";
+import { medicalSchoolOptions } from "../../../../apis/MedicalSchools";
+
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+
+export const MY_YEAR_FORMATS = {
+  parse: {
+    dateInput: 'YYYY',
+  },
+  display: {
+    dateInput: 'YYYY',
+    monthYearLabel: 'YYYY',
+    dateA11yLabel: 'YYYY',
+    monthYearA11yLabel: 'YYYY',
+  },
+};
+
+
+
 
 @Component({
   selector: 'app-assign-roles',
   templateUrl: './assign-roles.component.html',
-  styleUrls: ['./assign-roles.component.scss']
+  styleUrls: ['./assign-roles.component.scss'],
+
 })
 export class AssignRolesComponent implements OnInit {
   loading: boolean;
   users: any;
   usersList: any = [];
+  allCountriesC: any[] = [];
+  Step1ScoreKeys: any[] = [];
+  Step2ScoreKeys: any[] = [];
+medicalSchoolOptionsList: any[] = [];
   verifyUsers: any;
   verifyList: any = [];
   allRoles = [{label  : "Default", value : "Default"}, {label : "Student" ,value : "Silver"},{label : "Admin" ,value : "Admin"}, {label : "Mentor" ,value : "Mentor"}];
@@ -57,6 +82,8 @@ export class AssignRolesComponent implements OnInit {
   notesSelectedMonth : string = "";
   years : any = [ '2022', '2023', '2024', '2025', '2026'];
   plans : any = ['USCE', 'Exam', 'Research', 'Job', 'Others'];
+  Step1ScoreDropDown : any = {'Score':'Score','Pass':'Pass','Fail':'Fail','Not taken':'Not taken'};
+Step2ScoreDropDown: any = {'Score':'Score','Not taken':'Not taken'}
   months : any = [
     {
       name : "January",
@@ -116,7 +143,31 @@ export class AssignRolesComponent implements OnInit {
     this.loading = true;
     this.landing = "list";
     this.loading = false;
+    this.allCountriesC = countryData.map(country => ({
+    value: country.value,
+    label: country.label,
+    flag: country.flag,
+    phoneCode: country.phoneCode,
+    FieldName: 'CountryOfMedicalSchool'
+  }));
+
+  this.medicalSchoolOptionsList = [
+    ...medicalSchoolOptions.map(college => ({
+      value: college,
+      label: college
+    })),
+    { value: 'Others', label: 'Others' }
+  ];
+   this.Step1ScoreKeys = Object.entries(this.Step1ScoreDropDown).map(([key, value]) => ({
+  key,
+  value
+}));
+this.Step2ScoreKeys = Object.entries(this.Step2ScoreDropDown).map(([key, value]) => ({
+  key,
+  value
+}));
   }
+ 
   async fetchNA() {
     try {
       this.verifyUsers = await this.dbService.getNAusers();
@@ -202,6 +253,54 @@ export class AssignRolesComponent implements OnInit {
       this.toastr.error("Error while making changes, please try again");
     }
   }
+  initScoreData() {
+    const s = this.selectedUser;
+
+    if (!s.ScoreData) s.ScoreData = {};
+
+    ['Step1Score', 'Step2Score', 'Step3Score'].forEach(step => {
+
+  if (
+    this.selectedUser &&
+    this.selectedUser.ScoreData &&
+    this.selectedUser.ScoreData[step] &&
+    this.selectedUser.ScoreData[step].Selected
+  ) {
+    let s = this.selectedUser.ScoreData[step].Selected;
+
+    if (s.Name) {
+      if (typeof s.Name === 'object') {
+        s.Name = s.Name.key || s.Name.value;
+      }
+
+      s.Name = s.Name.trim();
+    }
+  }
+
+});
+  }
+
+  // =========================
+  // YEAR HANDLING
+  // =========================
+  onYearChange(date: Date) {
+    if (date) {
+      const year = date.getFullYear();
+      this.selectedUser.GraduationDate = new Date(year, 0, 1);
+    }
+  }
+  onCountryChange(value: any) {
+    this.selectedUser.CountryOfMedicalSchool = value;
+
+    const filtered = medicalSchoolOptions.filter(college =>
+      college.includes(', ' + value.label)
+    );
+
+    this.medicalSchoolOptionsList = [
+      ...filtered.map(c => ({ value: c, label: c })),
+      { value: 'Others', label: 'Others' }
+    ];
+  }
   async changeRole(userData) {
     if (userData.newRole == "" || userData.Role == userData.newRole) {
       this.toastr.info("Please select a different role than the current role for the user");
@@ -218,6 +317,76 @@ export class AssignRolesComponent implements OnInit {
       this.toastr.error("Error while changing role, please try again");
     }
   }
+syncDropdownValues() {
+    const country = this.selectedUser.CountryOfMedicalSchool;
+    if (country) {
+      const match = this.allCountriesC.find(c => c.value === country.value);
+      if (match) this.selectedUser.CountryOfMedicalSchool = match;
+    }
+
+    const school = this.selectedUser.NameOfMedicalSchool;
+    if (school) {
+      const match = this.medicalSchoolOptionsList.find(m => m.value === school.value);
+      if (match) this.selectedUser.NameOfMedicalSchool = match;
+    }
+  }
+initScoreKeys() {
+  if (!this.Step1ScoreKeys || this.Step1ScoreKeys.length === 0) {
+    this.Step1ScoreKeys = Object.entries(this.Step1ScoreDropDown)
+      .map(function(entry) {
+        return { key: entry[0], value: entry[1] };
+      });
+  }
+
+  if (!this.Step2ScoreKeys || this.Step2ScoreKeys.length === 0) {
+    this.Step2ScoreKeys = Object.entries(this.Step2ScoreDropDown)
+      .map(function(entry) {
+        return { key: entry[0], value: entry[1] };
+      });
+  }
+}
+fixScoreData() {
+
+  if (!this.selectedUser || !this.selectedUser.ScoreData) return;
+
+  var steps = ['Step1Score', 'Step2Score', 'Step3Score'];
+
+  for (var i = 0; i < steps.length; i++) {
+
+    var stepKey = steps[i];
+
+    if (
+      this.selectedUser.ScoreData[stepKey] &&
+      this.selectedUser.ScoreData[stepKey].Selected
+    ) {
+
+      var selected = this.selectedUser.ScoreData[stepKey].Selected;
+
+      if (selected.Name) {
+
+        // ✅ Convert object → string
+        if (typeof selected.Name === 'object') {
+          selected.Name = selected.Name.key || selected.Name.value;
+        }
+
+        // ✅ Convert to string safely
+        selected.Name = String(selected.Name);
+
+        // ✅ Trim spaces
+        selected.Name = selected.Name.trim();
+
+        // ✅ Normalize case EXACTLY like dropdown
+        if (selected.Name.toLowerCase() === 'score') selected.Name = 'Score';
+        else if (selected.Name.toLowerCase() === 'pass') selected.Name = 'Pass';
+        else if (selected.Name.toLowerCase() === 'fail') selected.Name = 'Fail';
+        else if (selected.Name.toLowerCase() === 'not taken') selected.Name = 'Not taken';
+
+      } else {
+        selected.Name = null;
+      }
+    }
+  }
+}
   async takeMeToUserProfile(user){
     try{
     this.loading = true;
@@ -230,6 +399,60 @@ export class AssignRolesComponent implements OnInit {
     this.selectedUser  = {...this.selectedUser, ...results[2]};
     this.selectedUserMatch = results[3];
     this.selectedUser = {...this.selectedUser, ...results[4]};
+    const val = this.selectedUser && this.selectedUser.GraduationDate;
+
+if (val) {
+  if (typeof val === 'string') {
+    this.selectedUser.GraduationDate = new Date(val);
+  } else if (val && val.seconds) {
+    this.selectedUser.GraduationDate = new Date(val.seconds * 1000);
+  }
+}
+const country = this.selectedUser && this.selectedUser.CountryOfMedicalSchool;
+
+if (country && this.allCountriesC.length) {
+  const matched = this.allCountriesC.find(
+    c => c.value === country.value
+  );
+
+  if (matched) {
+    this.selectedUser.CountryOfMedicalSchool = matched;
+  }
+}
+const school = this.selectedUser && this.selectedUser.NameOfMedicalSchool;
+
+if (school && this.medicalSchoolOptionsList.length) {
+  const matchedSchool = this.medicalSchoolOptionsList.find(
+    m => m.value === school.value
+  );
+
+  if (matchedSchool) {
+    this.selectedUser.NameOfMedicalSchool = matchedSchool;
+  }
+}
+const val1 = this.selectedUser.ECFMGCertificateDate;
+
+if (val1) {
+  let dateObj = null;
+
+  if (val1 instanceof Date) {
+    dateObj = val1;
+  }
+  else if (typeof val1 === 'string') {
+    dateObj = new Date(val1);
+  }
+  else if (val1 && val1.seconds) {
+    dateObj = new Date(val1.seconds * 1000);
+  }
+
+  // ✅ CRITICAL: validate date
+  if (dateObj && !isNaN(dateObj.getTime())) {
+    this.selectedUser.ECFMGCertificateDate = dateObj;
+  } else {
+    this.selectedUser.ECFMGCertificateDate = null;
+  }
+}
+    console.log("this.selectedUser---->",this.selectedUser)
     this.specialities = Object.values(this.programObject);
     this.userPayments = await this.profileService.getUserPaymentByEmail(this.selectedUser.email);
     try{
@@ -239,6 +462,10 @@ export class AssignRolesComponent implements OnInit {
       this.toastr.info("Referral Code is not yet generated by the user.");
     }
     this.convertVisa(this.selectedUser);
+    //this.syncDropdownValues();
+    this.initScoreKeys();
+    this.initScoreData();
+    this.fixScoreData();
     this.loading = false;
     }catch(err){
       console.log(err.message);

@@ -133,6 +133,7 @@ export class LoginComponent implements OnInit {
   {
     this.landing = "Login";
     let  userData = JSON.parse(localStorage.getItem('user'));
+    console.log("userData----->",userData)
     if(userData!= null && userData.emailVerified==false)
     {
       this.landing = "Verify Email";

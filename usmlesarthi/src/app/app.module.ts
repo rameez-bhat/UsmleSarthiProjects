@@ -3,6 +3,7 @@ import { NgModule } from '@angular/core';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { AppRoutingModule, routingComponents } from './app-routing.module';
 import { NgbModule, NgbSlide } from '@ng-bootstrap/ng-bootstrap';
+import { NzDatePickerModule } from 'ng-zorro-antd/date-picker';
 import { FormsModule } from "@angular/forms";
 import { 
     PerfectScrollbarModule, 
@@ -41,6 +42,8 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { SafeHtmlPipe } from './safe-html.pipe';
+import { NZ_I18N, en_US } from 'ng-zorro-antd/i18n';
+import { NzSelectModule } from 'ng-zorro-antd/select';
 
 
 
@@ -55,8 +58,10 @@ const DEFAULT_PERFECT_SCROLLBAR_CONFIG: PerfectScrollbarConfigInterface = {
     imports: [
       BrowserAnimationsModule,
       AppRoutingModule,
+      NzDatePickerModule,
       FormsModule,
       NgSelectModule,
+      NzSelectModule,
       FullCalendarModule,
       BrowserAnimationsModule,
       MatDialogModule,
@@ -91,9 +96,11 @@ const DEFAULT_PERFECT_SCROLLBAR_CONFIG: PerfectScrollbarConfigInterface = {
         provide: PERFECT_SCROLLBAR_CONFIG,
         useValue: DEFAULT_PERFECT_SCROLLBAR_CONFIG
       },
+      { provide: NZ_I18N, useValue: en_US },
       AuthenticationService,
       CookieService,
       AngularFirestore,
+
       { provide: PERFECT_SCROLLBAR_CONFIG, useValue: DEFAULT_PERFECT_SCROLLBAR_CONFIG }
     ],
     bootstrap: [AppComponent]

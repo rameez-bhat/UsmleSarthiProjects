@@ -23,8 +23,9 @@ export class AuthGuardProfileLock implements CanActivate {
       this.router.navigate(['authenticate']);
       return false;
     }
-    if(this.authService.userData && (this.authService.userData.Role!=="Admin") && ((this.authService.userData.Locked!=="1" && typeof this.authService.userData.Locked!=="undefined") || !this.authService.userData.extraUsersData)){
-      this.toastr.info("Complete your profile first");
+    //if(this.authService.userData && (this.authService.userData.Role!=="Admin") && ((this.authService.userData.Locked!=="1" && typeof this.authService.userData.Locked!=="undefined") || !this.authService.userData.extraUsersData)){
+    if(this.authService.userData && (this.authService.userData.Role!=="Admin") && ((this.authService.userData.Locked!=="1" && typeof this.authService.userData.Locked!=="undefined"))){
+    this.toastr.info("Complete your profile first");
       this.router.navigate(["profile"]);
       return false;
     }

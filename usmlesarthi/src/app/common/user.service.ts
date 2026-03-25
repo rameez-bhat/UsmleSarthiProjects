@@ -67,7 +67,7 @@ export class UserService {
     this.naUpdated = false;
     return this.allUsers;
   }
-  async getSomeUsers(val)
+  /*async getSomeUsers(val)
   {
     let limitedUsers =  {};
     let docsRef = await this.firestore.collection<User>("UsersRoles", ref=> ref.orderBy("displayName").startAt(val).endAt(val+'\uf8ff')).get().toPromise();
@@ -83,7 +83,61 @@ export class UserService {
       limitedUsers[doc.id]= doc.data();
     }
     return limitedUsers;
+  }*/
+  async getSomeUsers(val: string) {
+  const limitedUsers: any = {};
+
+  // 🔹 Step 1: Run both queries in parallel
+  const [nameSnap, emailSnap] = await Promise.all([
+    this.firestore.collection<User>("UsersRoles", ref =>
+      ref.orderBy("displayName").startAt(val).endAt(val + '\uf8ff')
+    ).get().toPromise(),
+
+    this.firestore.collection<User>("UsersRoles", ref =>
+      ref.orderBy("email").startAt(val).endAt(val + '\uf8ff')
+    ).get().toPromise()
+  ]);
+
+  // 🔹 Step 2: Merge results (avoid duplicates)
+  const allDocs = [...nameSnap.docs, ...emailSnap.docs];
+
+  const uniqueMap: any = {};
+  allDocs.forEach(doc => {
+    uniqueMap[doc.id] = doc.data();
+  });
+
+  // 🔹 Step 3: Extract UIDs for JOIN
+  const uids = Object.values(uniqueMap).map((u: any) => u.uid);
+
+  // 🔹 Step 4: Batch fetch Users (Firestore limit: 10 per "in")
+  const usersData: any = {};
+
+  const chunkSize = 10;
+  for (let i = 0; i < uids.length; i += chunkSize) {
+    const chunk = uids.slice(i, i + chunkSize);
+
+    const userSnap = await this.firestore.collection("Users", ref =>
+      ref.where("uid", "in", chunk)
+    ).get().toPromise();
+
+    userSnap.docs.forEach(doc => {
+      usersData[doc.id] = doc.data();
+    });
   }
+
+  // 🔹 Step 5: Merge UsersRoles + Users
+  Object.keys(uniqueMap).forEach(id => {
+    const role = uniqueMap[id];
+    const user = usersData[role.uid];
+
+    uniqueMap[id] = {
+      ...role,
+      ...(user || {})
+    };
+  });
+
+  return uniqueMap;
+}
   async getNAusers()
   {
     this.NAusers = {}
