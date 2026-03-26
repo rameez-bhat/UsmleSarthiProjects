@@ -538,7 +538,7 @@
       <!-- STEP 1 -->
       <div class="col-md-6 mb-3">
         <label>Step 1</label>
-        <nz-select [(ngModel)]="selectedUser.ScoreData.Step1Score.Selected.Name" [ngModelOptions]="{ standalone: true }">
+        <nz-select [(ngModel)]="selectedUser?.ScoreData?.Step1Score?.Selected.Name" [ngModelOptions]="{ standalone: true }">
           <nz-option *ngFor="let i of Step1ScoreKeys"
             [nzValue]="i.key"
             [nzLabel]="i.value"></nz-option>
@@ -564,7 +564,7 @@
       <!-- STEP 2 -->
       <div class="col-md-6 mb-3">
         <label>Step 2</label>
-        <nz-select [(ngModel)]="selectedUser.ScoreData.Step2Score"  [ngModelOptions]="{ standalone: true }">
+        <nz-select [(ngModel)]="selectedUser?.ScoreData?.Step2Score?.Selected.Name"  [ngModelOptions]="{ standalone: true }">
           <nz-option *ngFor="let i of Step2ScoreKeys"
             [nzValue]="i.key"
             [nzLabel]="i.value"></nz-option>
@@ -588,7 +588,7 @@
       <!-- STEP 3 -->
       <div class="col-md-6 mb-3">
         <label>Step 3</label>
-        <nz-select [(ngModel)]="selectedUser.ScoreData.Step3Score.Selected.Name" [ngModelOptions]="{ standalone: true }">
+        <nz-select [(ngModel)]="selectedUser?.ScoreData?.Step3Score?.Selected.Name" [ngModelOptions]="{ standalone: true }">
           <nz-option *ngFor="let i of Step2ScoreKeys"
             [nzValue]="i.key"
             [nzLabel]="i.value"></nz-option>

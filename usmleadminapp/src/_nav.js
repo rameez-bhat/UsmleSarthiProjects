@@ -63,7 +63,7 @@ const getNavigation = (user) => {
       },
       {
         component: CNavGroup,
-        name: 'Chat Room2',
+        name: 'Chat Room',
         to: '/base',
         icon: <CIcon icon={cilBellExclamation} customClassName="nav-icon" />,
        items: [

@@ -452,7 +452,6 @@ if (val1) {
     this.selectedUser.ECFMGCertificateDate = null;
   }
 }
-    console.log("this.selectedUser---->",this.selectedUser)
     this.specialities = Object.values(this.programObject);
     this.userPayments = await this.profileService.getUserPaymentByEmail(this.selectedUser.email);
     try{
@@ -539,6 +538,7 @@ if (val1) {
   }
   async loadHospitals(event) {
     try{
+      console.log("event.target---->",event.target)
       let pid      = event.target.value;
       this.loading = true;
       this.hospitals = await this.dbService.getHospitalsByProgram(pid);
