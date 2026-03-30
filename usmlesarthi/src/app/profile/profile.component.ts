@@ -25,6 +25,13 @@ export class ProfileComponent implements OnInit {
   matchPlans: string[];
   loading: boolean = false;
   landing: string;
+  selectedUser: any = {};
+  selectedVisaValues: string[] = [];
+  Step1ScoreKeys: any[] = [];
+  Step2ScoreKeys: any[] = [];
+  medicalSchoolOptionsList: any[] = [];
+  Step1ScoreDropDown : any = {'Score':'Score','Pass':'Pass','Fail':'Fail','Not taken':'Not taken'};
+ Step2ScoreDropDown: any = {'Score':'Score','Not taken':'Not taken'}
   matchSelectedYear : string = "";
   matchSelectedMonth : string = "";
   notesSelectedYear : string = "";
@@ -101,6 +108,7 @@ export class ProfileComponent implements OnInit {
       this.userData = await this.authService.userData;
       this.userPayments = await this.dbService.getUserPaymentByEmail(this.userData.email);
       this.userReferral = await this.dbService.getReferralCode(this.userData.uid);
+      this.selectedUser=this.userData;
       this.convertVisa(this.userData);
       this.landing = "profile";
       this.loading = false;
@@ -112,7 +120,142 @@ export class ProfileComponent implements OnInit {
       console.log(err);
     }
   }
+prepareVisa() 
+ {
+  if (!this.selectedUser || !this.selectedUser.VisaRequirement) 
+  {
+    this.selectedVisaValues = [];
+    return;
+  }
 
+  this.selectedVisaValues = this.selectedUser.VisaRequirement.map(v => v.value);
+}
+initScoreData() {
+    const s = this.selectedUser;
+
+    if (!s.ScoreData) s.ScoreData = {};
+
+    ['Step1Score', 'Step2Score', 'Step3Score'].forEach(step => {
+
+  if (
+    this.selectedUser &&
+    this.selectedUser.ScoreData &&
+    this.selectedUser.ScoreData[step] &&
+    this.selectedUser.ScoreData[step].Selected
+  ) {
+    let s = this.selectedUser.ScoreData[step].Selected;
+
+    if (s.Name) {
+      if (typeof s.Name === 'object') {
+        s.Name = s.Name.key || s.Name.value;
+      }
+
+      s.Name = s.Name.trim();
+    }
+  }
+
+});
+  }
+  initScoreKeys() {
+  if (!this.Step1ScoreKeys || this.Step1ScoreKeys.length === 0) {
+    this.Step1ScoreKeys = Object.entries(this.Step1ScoreDropDown)
+      .map(function(entry) {
+        return { key: entry[0], value: entry[1] };
+      });
+  }
+
+  if (!this.Step2ScoreKeys || this.Step2ScoreKeys.length === 0) {
+    this.Step2ScoreKeys = Object.entries(this.Step2ScoreDropDown)
+      .map(function(entry) {
+        return { key: entry[0], value: entry[1] };
+      });
+  }
+}
+fixScoreData() {
+
+  if (!this.selectedUser || !this.selectedUser.ScoreData) return;
+
+  var steps = ['Step1Score', 'Step2Score', 'Step3Score'];
+
+  for (var i = 0; i < steps.length; i++) {
+
+    var stepKey = steps[i];
+
+    if (
+      this.selectedUser.ScoreData[stepKey] &&
+      this.selectedUser.ScoreData[stepKey].Selected
+    ) {
+
+      var selected = this.selectedUser.ScoreData[stepKey].Selected;
+
+      if (selected.Name) {
+
+        // ✅ Convert object → string
+        if (typeof selected.Name === 'object') {
+          selected.Name = selected.Name.key || selected.Name.value;
+        }
+
+        // ✅ Convert to string safely
+        selected.Name = String(selected.Name);
+
+        // ✅ Trim spaces
+        selected.Name = selected.Name.trim();
+
+        // ✅ Normalize case EXACTLY like dropdown
+        if (selected.Name.toLowerCase() === 'score') selected.Name = 'Score';
+        else if (selected.Name.toLowerCase() === 'pass') selected.Name = 'Pass';
+        else if (selected.Name.toLowerCase() === 'fail') selected.Name = 'Fail';
+        else if (selected.Name.toLowerCase() === 'not taken') selected.Name = 'Not taken';
+
+      } else {
+        selected.Name = null;
+      }
+    }
+  }
+}
+formatDate(val: any) {
+  if (!val) return '';
+
+  if (val.seconds) {
+    return new Date(val.seconds * 1000).toLocaleDateString();
+  }
+
+  return val;
+}
+getWorkExperiences() {
+  if (!this.selectedUser || !this.selectedUser.WorkExperienceData) return [];
+
+  return Object.keys(this.selectedUser.WorkExperienceData).map(key => {
+    return {
+      key,
+      ...this.selectedUser.WorkExperienceData[key]
+    };
+  });
+}
+getResearch() {
+  if (!this.selectedUser || !this.selectedUser.ResearchData) return [];
+
+  return Object.keys(this.selectedUser.ResearchData).map(key => {
+    return {
+      key,
+      ...this.selectedUser.ResearchData[key]
+    };
+  });
+}
+getUsceData() {
+  if (!this.selectedUser || !this.selectedUser.USCEDATA) return [];
+
+  return Object.keys(this.selectedUser.USCEDATA).map(key => {
+    return {
+      key,
+      ...this.selectedUser.USCEDATA[key]
+    };
+  });
+}
+numberToString(value)
+{
+  return Number(value);
+}
   convertVisa(userData){
     let customVisas= {};
     if("Visas" in userData){

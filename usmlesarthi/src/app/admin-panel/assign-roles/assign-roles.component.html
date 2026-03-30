@@ -1,3 +1,183 @@
+<style>
+  .section-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1976d2;
+  margin-bottom: 15px;
+  border-bottom: 2px solid #f0f0f0;
+  padding-bottom: 8px;
+}
+
+.label {
+  font-size: 12px;
+  color: #888;
+}
+
+.value {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+.row-gap {
+  margin-bottom: 12px;
+}
+/* ===== GLOBAL ===== */
+body {
+  background: #f5f7fb;
+  font-family: "Inter", sans-serif;
+}
+
+/* ===== CARD ===== */
+.card {
+  border: none !important;
+  border-radius: 14px !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05) !important;
+  transition: all 0.2s ease;
+}
+
+.card:hover {
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* ===== SECTION HEADINGS ===== */
+h5.text-primary,
+.font-weight-bold.h4 {
+  font-weight: 600 !important;
+  font-size: 18px;
+  position: relative;
+  padding-left: 10px;
+}
+
+h5.text-primary::before,
+.font-weight-bold.h4::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 3px;
+  width: 4px;
+  height: 18px;
+  background: #1976d2;
+  border-radius: 2px;
+}
+
+/* ===== LABEL ===== */
+label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #555;
+  margin-bottom: 4px;
+}
+
+/* ===== INPUTS ===== */
+.form-control,
+nz-select,
+nz-date-picker {
+  border-radius: 10px !important;
+  border: 1px solid #e0e6ed !important;
+  height: 42px;
+  font-size: 14px;
+  transition: 0.2s;
+}
+
+/* textarea */
+textarea.form-control {
+  height: auto !important;
+}
+
+/* focus */
+.form-control:focus {
+  border-color: #1976d2 !important;
+  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.1) !important;
+}
+
+/* ===== SELECT FIX ===== */
+nz-select {
+  width: 100%;
+}
+
+/* ===== RADIO ===== */
+input[type="radio"] {
+  margin-right: 5px;
+  transform: scale(1.1);
+}
+
+/* ===== ROW SPACING ===== */
+.row {
+  margin-bottom: 10px;
+}
+
+.col-md-6,
+.col-md-4,
+.col-6,
+.col-12 {
+  margin-bottom: 10px;
+}
+
+/* ===== MULTI SELECT ===== */
+select[multiple] {
+  border-radius: 10px;
+  padding: 6px;
+  min-height: 120px;
+}
+
+/* ===== EXPERIENCE / RESEARCH CARDS ===== */
+.border.rounded {
+  border-radius: 12px !important;
+  background: #f9fbff;
+  border: 1px solid #e6edf5 !important;
+  transition: 0.2s;
+}
+
+.border.rounded:hover {
+  background: #f1f6ff;
+}
+
+/* ===== BADGE STYLE ===== */
+.badge-modern {
+  background: #1976d2;
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+/* ===== BUTTON ===== */
+
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(25, 118, 210, 0.3);
+}
+
+/* ===== PAYMENT BOX ===== */
+.bg-secondary {
+  background: #f3f6fa !important;
+  border-radius: 10px;
+}
+
+/* ===== TEXT ===== */
+b {
+  color: #333;
+}
+
+.text-primary {
+  color: #1976d2 !important;
+}
+
+/* ===== SCROLL IMPROVEMENT ===== */
+form {
+  padding-bottom: 40px;
+}
+</style>
 <div class="card-body" [ngSwitch]="landing">
   <div *ngSwitchCase="'list'">
     <div *ngIf="loading; else loaded" class="text-center">
@@ -296,7 +476,7 @@
                   class="form-control"
                   id="speciality"
                   name="speciality"
-                  [(ngModel)]="selectedUserMatch.newPId"
+                  [(ngModel)]="selectedUserMatch.PId"
                   (change)="loadHospitals($event)"
                   required
                 >
@@ -314,7 +494,7 @@
                   class="form-control"
                   id="hospital"
                   name="hospital"
-                  [(ngModel)]="selectedUserMatch.newHId"
+                  [(ngModel)]="selectedUserMatch.HId"
                   required
                 >
                   <option
@@ -331,7 +511,7 @@
                   class="form-control"
                   id="match"
                   name="match"
-                  [(ngModel)]="selectedUserMatch.newYearMatch"
+                  [(ngModel)]="selectedUserMatch.yearMatch"
                   required
                 >
                   <option [value]="year" *ngFor="let year of matchYears">
@@ -509,10 +689,10 @@
                 name="userVisa[]"
                 size="4"
                 multiple="multiple"
-                [(ngModel)]="selectedUser.newVisas"
+                [(ngModel)]="selectedVisaValues"
                 required
               >
-                <option [value]="visa.VId" *ngFor="let visa of customVisa">
+                <option [value]="visa.Type" *ngFor="let visa of customVisa">
                   {{ visa.Type === "Data not available" ? "Other" : visa.Type }}
                 </option>
               </select>
@@ -520,12 +700,12 @@
             <span
               class="col-12 mt-2"
               *ngIf="
-                selectedUser.newVisas && selectedUser.newVisas.includes('4')
+                selectedVisaValues && selectedVisaValues.includes('Others')
               "
               ><input
                 type="text"
                 name="visaOther"
-                [(ngModel)]="selectedUser.visaOther"
+                [(ngModel)]="selectedUser.VisaRequirementOthers"
                 class="form-control"
                 placeholder="Please explain here about other.."
             /></span>
@@ -548,17 +728,21 @@
       <div class="col-md-6 mb-3"
         *ngIf="selectedUser?.ScoreData?.Step1Score?.Selected?.Name === 'Score'">
         <label>Step 1 Score</label>
-        <input type="number" class="form-control"
+        <input type="text" class="form-control"
           name="Step1ScoreMarks"
+          [attr.actualvalue]="selectedUser?.ScoreData?.Step1Score?.Selected?.Value"
           [(ngModel)]="selectedUser.ScoreData.Step1Score.Selected.Value" />
       </div>
       <div class="col-md-6 mb-3">
         <label>Any Step 1 Failure?</label>
-        <nz-select [(ngModel)]="selectedUser.ScoreData.Step1Attempts" [ngModelOptions]="{ standalone: true }">
-          <nz-option [nzValue]="1" [nzLabel]="1"></nz-option>
-          <nz-option [nzValue]="2" [nzLabel]="2"></nz-option>
-          <nz-option [nzValue]="3" [nzLabel]="3"></nz-option>
-        </nz-select>
+        <nz-select
+  [(ngModel)]="selectedUser.ScoreData.Step1Attempts"
+  [ngModelOptions]="{ standalone: true }"
+>
+  <nz-option nzValue="1" nzLabel="1"></nz-option>
+  <nz-option nzValue="2" nzLabel="2"></nz-option>
+  <nz-option nzValue="3" nzLabel="3"></nz-option>
+</nz-select>
       </div>
 
       <!-- STEP 2 -->
@@ -579,11 +763,14 @@
       </div>
       <div class="col-md-6 mb-3">
         <label>Any Step 2 Failure?</label>
-        <nz-select [(ngModel)]="selectedUser.ScoreData.Step2Attempts" [ngModelOptions]="{ standalone: true }">
-          <nz-option [nzValue]="1" [nzLabel]="1"></nz-option>
-          <nz-option [nzValue]="2" [nzLabel]="2"></nz-option>
-          <nz-option [nzValue]="3" [nzLabel]="3"></nz-option>
-        </nz-select>
+         <nz-select
+  [(ngModel)]="selectedUser.ScoreData.Step2Attempts"
+  [ngModelOptions]="{ standalone: true }"
+>
+  <nz-option nzValue="1" nzLabel="1"></nz-option>
+  <nz-option nzValue="2" nzLabel="2"></nz-option>
+  <nz-option nzValue="3" nzLabel="3"></nz-option>
+</nz-select>
       </div>
       <!-- STEP 3 -->
       <div class="col-md-6 mb-3">
@@ -604,9 +791,9 @@
        <div class="col-md-6 mb-3">
         <label>Any Step 3 Failure?</label>
         <nz-select [(ngModel)]="selectedUser.ScoreData.Step3Attempts" [ngModelOptions]="{ standalone: true }">
-          <nz-option [nzValue]="1" [nzLabel]="1"></nz-option>
-          <nz-option [nzValue]="2" [nzLabel]="2"></nz-option>
-          <nz-option [nzValue]="3" [nzLabel]="3"></nz-option>
+          <nz-option nzValue="1" nzLabel="1"></nz-option>
+          <nz-option nzValue="2" nzLabel="2"></nz-option>
+          <nz-option nzValue="3" nzLabel="3"></nz-option>
         </nz-select>
       </div>
     </div>
@@ -667,6 +854,7 @@
                   type="radio"
                   name="HomeCountryResidencyOption"
                   [(ngModel)]="selectedUser.HomeCountryResidencyOption"
+                  
                   value="yes"
                   required
                 />
@@ -720,13 +908,13 @@
               ><input
                 type="text"
                 class="form-control"
-                [(ngModel)]="selectedUser.homeSpeciality"
-                name="homeSpeciality"
+                [(ngModel)]="selectedUser.HomeCountrySpecility"
+                name="HomeCountrySpecility"
                 aria-describedby="step2ScoreError"
                 placeholder="Enter the home country speciality"
                 [required]="
-                  selectedUser.homeResidency &&
-                  selectedUser.homeResidency == 'Yes'
+                  selectedUser.HomeCountryResidencyOption &&
+                  selectedUser.HomeCountryResidencyOption == 'yes'
                 "
             /></span>
             <span class="col-12 mt-2">
@@ -736,9 +924,9 @@
               <textarea
                 autosize
                 type="text"
-                name="homeComments"
+                name="HomeCountrySpecilityAdditionalDetails"
                 class="form-control"
-                [(ngModel)]="selectedUser.homeComments"
+                [(ngModel)]="selectedUser.HomeCountrySpecilityAdditionalDetails"
                 placeholder="Please explain here.."
               >
               </textarea>
@@ -826,280 +1014,190 @@
                 "
             /></span>
           </div>
-          <div class="font-weight-bold h4 text-primary m-2 p-2">Experience</div>
-          <div class="font-weight-bold h5 m-2 p-2">Total</div>
-          <div class="row mt-2">
-            <span class="col-6"
-              ><label for="clinicalExperienceMonths">
-                All work experience US and non-US<span style="color: red"
-                  >* (in months) </span
-                ><span style="color: blue"
-                  >Enter 0 if you don't have any experience</span
-                ></label
-              ></span
-            >
-            <span class="col-6"
-              ><input
-                type="text"
-                class="form-control"
-                [(ngModel)]="selectedUser.USCE"
-                name="clinicalExperienceMonths"
-                aria-describedby="clinicalExperienceError"
-                placeholder="Enter clinical experience in months"
-                onfocus="this.placeholder = ''"
-                required
-            /></span>
-          </div>
-          <div class="row mt-2">
-            <span class="col-6"
-              ><label for="clinicalExperienceMonths">
-                Number of work experiences US and Non-US (For example: Working
-                for two years & one month of USCE equals 2 work experiences. On
-                the other hand, 5 months of different USCE is equal to 5
-                experiences)
-              </label></span
-            >
-            <span class="col-6"
-              ><input
-                type="number"
-                class="form-control"
-                [(ngModel)]="selectedUser.noUSCE"
-                name="clinicalExperienceNumbers"
-                aria-describedby="clinicalExperienceError"
-                placeholder="Enter number of experiences"
-                onfocus="this.placeholder = ''"
-                required
-            /></span>
-          </div>
-          <div class="font-weight-bold h5 m-2 p-2">USCE</div>
-          <div class="row mt-2">
-            <span class="col-6"
-              ><label for="primarySpeciality"
-                >How many of total months of US rotations will you have at the
-                time of application (Including all Tele, Observerships, and
-                hands-on)? <span style="color: red">*</span></label
-              ></span
-            >
-            <span class="col-6"
-              ><input
-                type="number"
-                class="form-control"
-                [(ngModel)]="selectedUser.totalRotations"
-                name="totalRotations"
-                aria-describedby="yogError"
-                placeholder="Enter your months"
-                onfocus="this.placeholder = ''"
-                required
-            /></span>
-          </div>
-          <div class="row mt-2">
-            <span class="col-6"
-              ><label
-                >How many months of US hands-on USCE will you have at the time
-                of application?
-              </label></span
-            >
-            <span class="col-6"
-              ><input
-                type="number"
-                class="form-control"
-                [(ngModel)]="selectedUser.handsOn"
-                name="handsOn"
-                aria-describedby="yogError"
-                placeholder="Enter your months"
-                onfocus="this.placeholder = ''"
-                required
-            /></span>
-            <span class="col-6"
-              ><label
-                >How many months of US observership will you have at the time of
-                application?</label
-              ></span
-            >
-            <span class="col-6"
-              ><input
-                type="number"
-                class="form-control"
-                [(ngModel)]="selectedUser.observership"
-                name="observership"
-                aria-describedby="yogError"
-                placeholder="Enter your months"
-                onfocus="this.placeholder = ''"
-                required
-            /></span>
-            <span class="col-6"
-              ><label
-                >How many months of US telerotations will you have at the time
-                of application?</label
-              ></span
-            >
-            <span class="col-6"
-              ><input
-                type="number"
-                class="form-control"
-                [(ngModel)]="selectedUser.teleRotations"
-                name="teleRotations"
-                aria-describedby="yogError"
-                placeholder="Enter your months of tele rotations only"
-                onfocus="this.placeholder = ''"
-                required
-            /></span>
-          </div>
-          <!-- <div class="row mt-2">
-            <span class="col-12">
-              <label>
-                Of all of your rotations, mention how many months are in a
-                private clinic and months in hospital?
-                <span style="color: red">*</span>
-              </label>
-            </span>
-            <span class="col-12">
-              <textarea
-                autosize
-                type="text"
-                name="privateRotations"
-                [(ngModel)]="selectedUser.privateRotations"
-                class="form-control"
-                placeholder="Please explain here.."
-                required
-              >
-              </textarea>
-            </span>
-          </div>
-          <div class="row mt-2">
-            <span class="col-12">
-              <label> Comments on your rotations if any </label>
-            </span>
-            <span class="col-12">
-              <textarea
-                autosize
-                type="text"
-                name="commmentsRotations"
-                [(ngModel)]="selectedUser.commentsRotations"
-                class="form-control"
-                placeholder="Please explain here.."
-              >
-              </textarea>
-            </span>
-          </div> -->
-          <div class="font-weight-bold h5 m-2 p-2">Research</div>
-          <div class="row mt-2">
-            <!-- <span class="col-6"
-              ><label
-                >How many months of US Research experience will you have at
-                the time of application?
-                <span style="color: red">*</span></label
-              ></span
-            > -->
-            <span class="col-6"
-              ><label for="step2Score"
-                >What is the total number of research publications you will have
-                by application submission (Sept 15)?
-              </label></span
-            >
-            <span class="col-6"
-              ><label for="step2Score"
-                >What is the total number of different research experiences you
-                will have by application submission (Sept 15)? - Each project
-                can count as a separate experience, each job can count as a
-                separate experience
-              </label></span
-            >
-            <!-- <span class="col-6"
-              ><input
-                type="number"
-                class="form-control"
-                name="USResearch"
-                [(ngModel)]="selectedUser.USResearch"
-                aria-describedby="step1ScoreError"
-                placeholder="Enter the research experience in US (months)"
-                onfocus="this.placeholder = ''"
-                required
-            /></span> -->
-            <span class="col-6"
-              ><input
-                type="number"
-                class="form-control"
-                [(ngModel)]="selectedUser.publications"
-                name="publications"
-                aria-describedby="step2ScoreError"
-                placeholder="Enter the number of publications"
-                onfocus="this.placeholder = ''"
-                required
-            /></span>
-            <span class="col-6"
-              ><input
-                type="number"
-                class="form-control"
-                [(ngModel)]="selectedUser.noResearch"
-                name="noResearch"
-                aria-describedby="step2ScoreError"
-                placeholder="Enter the number of experiences"
-                onfocus="this.placeholder = ''"
-                required
-            /></span>
-          </div>
-          <!-- <div class="row mt-2">
-            <span class="col-12">
-              <label> Comments on your research experience if any </label>
-            </span>
-            <span class="col-12">
-              <textarea
-                autosize
-                type="text"
-                name="commentsResearch"
-                [(ngModel)]="selectedUser.commentsResearch"
-                class="form-control"
-                placeholder="Please explain here.."
-              >
-              </textarea>
-            </span>
-          </div> -->
-          <div class="font-weight-bold h5 m-2 p-2">Volunteering</div>
-          <div class="row mt-2">
-            <span class="col-6"
-              ><label for="step2Score"
-                >How many different volunteering experiences will you have by
-                application submission? Examples of volunteering include
-                activities like health camp, working for Red Cross and others
-                where you give back to the community (for example if you
-                volunteer for 3 different organizations, then the answer is 3
-                and NOT the total months/years/duration of the experiences)
-              </label></span
-            >
-            <span class="col-6"
-              ><input
-                type="number"
-                class="form-control"
-                [(ngModel)]="selectedUser.noVolunteering"
-                name="noVolunteering"
-                aria-describedby="step2ScoreError"
-                placeholder="Enter the number of volunteering experiences"
-                onfocus="this.placeholder = ''"
-                required
-            /></span>
-          </div>
-          <div class="font-weight-bold h4 text-primary m-2 p-2">Other</div>
-          <div class="row mt-2">
-            <span class="col-12">
-              <label>
-                If you have a unique hobby, about which you can talk like an
-                expert for 15 min, mention it below (examples: photography,
-                mountaineering etc.)
-              </label>
-            </span>
-            <span class="col-12">
-              <textarea
-                autosize
-                type="text"
-                name="hobbies"
-                class="form-control"
-                [(ngModel)]="selectedUser.hobbies"
-                placeholder="Enter your hobbies here"
-              >
-              </textarea>
-            </span>
-          </div>
+          <div class="card p-3 mb-3">
+  <div class="font-weight-bold h4 text-primary m-2 p-2">Experience</div>
+
+  <div *ngIf="getWorkExperiences().length === 0">
+    No Work Experience Found
+  </div>
+
+  <div *ngFor="let exp of getWorkExperiences(); let i = index"
+       class="border rounded p-3 mb-2">
+
+    <div class="mb-2">
+      <b>Experience {{ i + 1 }}</b>
+    </div>
+
+    <div class="row">
+
+      <div class="col-md-6">
+        <b>Speciality:</b>
+        {{ exp.WorkexperienSpecility || 'N/A' }}
+      </div>
+
+      <div class="col-md-6">
+        <b>Hospital:</b>
+        {{ exp.Workexperienclinicname || 'N/A' }}
+      </div>
+
+      <div class="col-md-6 mt-2">
+        <b>City:</b>
+        {{ exp.Workexperiencecity || 'N/A' }}
+      </div>
+
+      <div class="col-md-6 mt-2">
+        <b>State:</b>
+        {{ exp.WorkexperienceState || 'N/A' }}
+      </div>
+
+      <div class="col-md-12 mt-2">
+        <b>Date Range:</b>
+        {{ formatDate(exp.WorkexperienceDateRange?.from) }}
+        -
+        {{ formatDate(exp.WorkexperienceDateRange?.to) }}
+      </div>
+
+    </div>
+
+  </div>
+</div>
+<div class="card p-3 mb-3">
+  <div class="font-weight-bold h4 text-primary m-2 p-2">Research</div>
+
+  <div *ngIf="getResearch().length === 0">
+    No Research Found
+  </div>
+
+  <div *ngFor="let res of getResearch(); let i = index"
+       class="border rounded p-3 mb-2">
+
+    <div class="mb-2">
+      <b>Research {{ i + 1 }}</b>
+    </div>
+
+    <div class="row">
+
+      <div class="col-md-6">
+        <b>Speciality:</b>
+        {{ res.ResearchSpecility || 'N/A' }}
+      </div>
+
+      <div class="col-md-6">
+        <b>Mentor:</b>
+        {{ res.ResearchMentorsname || 'N/A' }}
+      </div>
+
+      <div class="col-md-6 mt-2">
+        <b>Hospital:</b>
+        {{ res.Researchclinicname || 'N/A' }}
+      </div>
+
+      <div class="col-md-6 mt-2">
+        <b>City:</b>
+        {{ res.Researchcity || 'N/A' }}
+      </div>
+
+      <div class="col-md-6 mt-2">
+        <b>State:</b>
+        {{ res.ResearchState || 'N/A' }}
+      </div>
+
+      <div class="col-md-6 mt-2">
+        <b>Country:</b>
+        {{ res.ResearchCountry?.label || 'N/A' }}
+      </div>
+
+      <div class="col-md-12 mt-2">
+        <b>Publication Status:</b>
+        {{ res.ResearchPublicationStatus || 'N/A' }}
+      </div>
+
+      <div class="col-md-12 mt-2">
+        <b>Date Range:</b>
+        {{ formatDate(res.ResearchDateRange?.from) }}
+        -
+        {{ formatDate(res.ResearchDateRange?.to) }}
+      </div>
+
+    </div>
+
+  </div>
+</div>
+<div class="card p-3 mb-3">
+  <div class="font-weight-bold h4 text-primary m-2 p-2">Research</div>
+
+  <div *ngIf="getUsceData().length === 0">
+    No USCE Found
+  </div>
+
+  <div *ngFor="let usce of getUsceData(); let i = index"
+       class="border rounded p-3 mb-2">
+
+    <div class="mb-2">
+      <b>USCE {{ i + 1 }}</b>
+    </div>
+
+    <div class="row">
+
+      <div class="col-md-6">
+        <b>Speciality:</b>
+        {{ usce.ResearchSpecility || 'N/A' }}
+      </div>
+
+      <div class="col-md-6">
+        <b>Preceptor:</b>
+        {{ usce.NameOfPreceptor || 'N/A' }}
+      </div>
+
+      <div class="col-md-6 mt-2">
+        <b>Clinic:</b>
+        {{ usce.USCEclinicname || 'N/A' }}
+      </div>
+
+      <div class="col-md-6 mt-2">
+        <b>City:</b>
+        {{ usce.USCEcity || 'N/A' }}
+      </div>
+
+      <div class="col-md-6 mt-2">
+        <b>State:</b>
+        {{ usce.USCEState || 'N/A' }}
+      </div>
+
+      <div class="col-md-6 mt-2">
+        <b>Type:</b>
+        {{ usce.HandsOn || 'N/A' }}
+      </div>
+
+      <div class="col-md-6 mt-2">
+        <b>Status:</b>
+        {{ usce.Status || 'N/A' }}
+      </div>
+
+      <div class="col-md-6 mt-2">
+        <b>Category:</b>
+        {{ usce.uscenotesdrop || 'N/A' }}
+      </div>
+
+      <div class="col-md-12 mt-2">
+        <b>Date Range:</b>
+        {{ formatDate(usce.USCEDateRange?.from) }}
+        -
+        {{ formatDate(usce.USCEDateRange?.to) }}
+      </div>
+
+      <div class="col-md-12 mt-2">
+        <b>Notes:</b>
+        {{ usce.FreeFlowNote || 'N/A' }}
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+
+          
           <div class="row mt-2">
             <span class="col-12">
               <label>
@@ -1112,7 +1210,7 @@
                 type="text"
                 name="redFlags"
                 class="form-control"
-                [(ngModel)]="selectedUser.redFlags"
+                [(ngModel)]="selectedUser.redflag"
                 placeholder="Please explain here.."
               >
               </textarea>
@@ -1130,7 +1228,7 @@
               ><select
                 class="form-control"
                 name="hearAbout"
-                [(ngModel)]="selectedUser.hearAbout"
+                [(ngModel)]="selectedUser?.HDUGAU[0].label"
                 required
               >
                 <option value="Facebook">Facebook</option>
@@ -1166,14 +1264,14 @@
                 "
             /></span>
           </div>
-          <button
+          <!--<button
             type="submit"
             class="btn btn-block btn-primary btn-outline-primary card-footer mt-3"
             name="submit"
             (click)="form.checkValidity() ? updateProfile() : null"
           >
             Save profile info
-          </button>
+          </button>-->
           <div *ngIf="userPayments?.email" class="bg-secondary p-2">
             <div class="font-weight-bold h5 mb-1">Payments History</div>
             <div *ngIf="userPayments?.matchPayments?.length > 0" class="mb-1">

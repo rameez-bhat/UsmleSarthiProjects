@@ -1,6 +1,7 @@
 import {
   Component,
-  OnInit
+  OnInit,
+  NgZone
 } from '@angular/core';
 import {
   AdminServicesService
@@ -45,6 +46,7 @@ export class AssignRolesComponent implements OnInit {
   users: any;
   usersList: any = [];
   allCountriesC: any[] = [];
+  selectedVisaValues: string[] = [];
   Step1ScoreKeys: any[] = [];
   Step2ScoreKeys: any[] = [];
 medicalSchoolOptionsList: any[] = [];
@@ -59,7 +61,7 @@ medicalSchoolOptionsList: any[] = [];
   //matchYears = [2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025];
   landing: any;
   selectedUser: any = {};
-  customVisa: any =  [{Type: "GC/US citizen/H4 EAD", VId:"1"},{Type:"Need H1", VId:"2"},{Type:"Need J1", VId:"3"}, {Type:"Other", VId:"4"}];
+  customVisa: any =  [{Type: "GC/US citizen H4 EAD", VId:"1"},{Type:"Need H1", VId:"2"},{Type:"Need J1", VId:"3"}, {Type:"Others", VId:"4"}];
   visaList: Visa[];
   hospitals: any = [];
   selectedUserMatch :  any= {};
@@ -135,7 +137,7 @@ Step2ScoreDropDown: any = {'Score':'Score','Not taken':'Not taken'}
     },
   ]
 
-  constructor(private dbService: AdminServicesService, private toastr: ToastrService, private profileService : ProfileService) {
+  constructor(private dbService: AdminServicesService, private toastr: ToastrService, private profileService : ProfileService,private ngZone: NgZone ) {
     this.loading = false;
   }
 
@@ -167,7 +169,17 @@ this.Step2ScoreKeys = Object.entries(this.Step2ScoreDropDown).map(([key, value])
   value
 }));
   }
- 
+ prepareVisa() 
+ {
+  if (!this.selectedUser || !this.selectedUser.VisaRequirement) 
+  {
+    this.selectedVisaValues = [];
+    return;
+  }
+
+  this.selectedVisaValues = this.selectedUser.VisaRequirement.map(v => v.value);
+  console.log("this.selectedVisaValues---->",this.selectedVisaValues)
+}
   async fetchNA() {
     try {
       this.verifyUsers = await this.dbService.getNAusers();
@@ -195,6 +207,9 @@ this.Step2ScoreKeys = Object.entries(this.Step2ScoreDropDown).map(([key, value])
         this.usersList[i].newRole = "";
       }
       this.loading = false;
+      this.ngZone.run(() => {
+      this.loading = false;
+    });
     } catch (err) {
       console.log(err);
       this.toastr.error("Error while fetching users list, please try again");
@@ -387,6 +402,49 @@ fixScoreData() {
     }
   }
 }
+formatDate(val: any) {
+  if (!val) return '';
+
+  if (val.seconds) {
+    return new Date(val.seconds * 1000).toLocaleDateString();
+  }
+
+  return val;
+}
+getWorkExperiences() {
+  if (!this.selectedUser || !this.selectedUser.WorkExperienceData) return [];
+
+  return Object.keys(this.selectedUser.WorkExperienceData).map(key => {
+    return {
+      key,
+      ...this.selectedUser.WorkExperienceData[key]
+    };
+  });
+}
+getResearch() {
+  if (!this.selectedUser || !this.selectedUser.ResearchData) return [];
+
+  return Object.keys(this.selectedUser.ResearchData).map(key => {
+    return {
+      key,
+      ...this.selectedUser.ResearchData[key]
+    };
+  });
+}
+getUsceData() {
+  if (!this.selectedUser || !this.selectedUser.USCEDATA) return [];
+
+  return Object.keys(this.selectedUser.USCEDATA).map(key => {
+    return {
+      key,
+      ...this.selectedUser.USCEDATA[key]
+    };
+  });
+}
+numberToString(value)
+{
+  return Number(value);
+}
   async takeMeToUserProfile(user){
     try{
     this.loading = true;
@@ -394,11 +452,18 @@ fixScoreData() {
     console.log("this.selectedUser---->",this.selectedUser)
     this.landing = "profile";
     let results = await Promise.all([this.dbService.getProgramObject(), this.dbService.getVisaList(), this.dbService.getUserProfile(this.selectedUser), this.dbService.getUserMatch(this.selectedUser), this.dbService.getExtraUserInfo(this.selectedUser)]);
+    console.log("results---->",results)
     this.programObject = results[0];
     this.visaList      = results[1];
-    this.selectedUser  = {...this.selectedUser, ...results[2]};
+    //this.selectedUser  = {...this.selectedUser, ...results[2]};
     this.selectedUserMatch = results[3];
-    this.selectedUser = {...this.selectedUser, ...results[4]};
+    if(this.selectedUserMatch.PId )
+    {
+      this.hospitals = await this.dbService.getHospitalsByProgram(this.selectedUserMatch.PId);
+    }
+    
+    console.log("this.selectedUserMatch---->",this.selectedUserMatch)
+    //this.selectedUser = {...this.selectedUser, ...results[4]};
     const val = this.selectedUser && this.selectedUser.GraduationDate;
 
 if (val) {
@@ -462,10 +527,15 @@ if (val1) {
     }
     this.convertVisa(this.selectedUser);
     //this.syncDropdownValues();
-    this.initScoreKeys();
-    this.initScoreData();
-    this.fixScoreData();
+    //this.initScoreKeys();
+    //this.initScoreData();
+    //this.fixScoreData();
+    this.prepareVisa();
+    console.log("this.selectedUser---->",this.selectedUser)
     this.loading = false;
+     this.ngZone.run(() => {
+      this.loading = false;
+    });
     }catch(err){
       console.log(err.message);
       this.toastr.error("Error while fetching user's profile, please try again");
@@ -543,6 +613,9 @@ if (val1) {
       this.loading = true;
       this.hospitals = await this.dbService.getHospitalsByProgram(pid);
       this.loading = false;
+       this.ngZone.run(() => {
+      this.loading = false;
+    });
     }
     catch(err){
       console.log(err.message);
