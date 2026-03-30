@@ -1,5 +1,5 @@
 import React, { useState,useRef,useEffect } from 'react';
-import * as XLSX from 'xlsx';
+import * as XLSX from 'xlsx-js-style';
 
 //import CryptoJS from 'crypto-js';
 import { useLoading } from '../../layout/LoadingContext';
@@ -30,6 +30,50 @@ function convertEmailToDocumentId(email) {
  let PId=0;
  const nowDate = new Date();
 let HId=0;
+const REQUIRED_FIELDS = [
+  "Program Name",
+  "Program City",
+  "Program State",
+  "FREIDA ID",
+  "Primary Teaching Site",
+  "Participates in ERAS®"
+];
+
+const ALL_FIELDS = [
+  "Program Name",
+  "Program City",
+  "Program State",
+  "FREIDA ID",
+  "Primary Teaching Site",
+  "Program best described as",
+  "Information Program best described as",
+  "YOG",
+  "Participates in ERAS®",
+  "j1VisaNew",
+  "h1VisaNew",
+  "f1VisaNew",
+  "Participating in NRMP",
+  "NRMP Number (Advance)",
+  "step1_Minimum score",
+  "step1_Applicants must have passed Step 1 to be considered",
+  "step1_Step 1 required",
+  "step2_Minimum score",
+  "step2_Applicants must have passed Step 2 to be considered",
+  "step2_Step 2 required",
+  "AppInfo_Latest date for applications for 2026-2027",
+  "AppInfo_Interviews conducted last year for first year positions",
+  "AppInfo_Required letters of recommendation",
+  "noneEnglish",
+  "nonaccredited",
+  "Person to Contact",
+  "Program Director",
+  "Prgaddress",
+  "Web Address",
+  "Program Link",
+  "NRMP Number (Primary Care Categorial)",
+  "NRMP Number (Categorial)",
+  "NRMP Number (Preliminary)"
+];
 let ProgramNameList="Internal Medicine"
 const hospitalCache = new Map(); // HName → HId
     	const hpCache = new Set(); // "HId_PId"
@@ -479,6 +523,156 @@ if (row?.['NRMP Number (Preliminary)']) {
           return HospitalProgramInfo;
         
   }
+  const downloadExcelFormat = () => {
+  
+
+const SAMPLE_ROWS = [
+  [
+    "https://freida.ama-assn.org/program/9991200026",
+    "9991200026",
+    "Emory University School of Medicine Program",
+    "Atlanta",
+    "GA",
+    "University-based",
+    "Grady Health System",
+    "Yes",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "https://med.emory.edu/departments/medicine/education/residency-program/transitional-year/index.html",
+    "",
+    "Atlanta, GA",
+    "Manpreet Singh Malik MD",
+    "Kymberly McMillan"
+  ],
+  [
+    "https://freida.ama-assn.org/program/9993500241",
+    "9993500241",
+    "Memorial Sloan Kettering Cancer Center Program",
+    "New York",
+    "NY",
+    "University-based",
+    "Memorial Sloan Kettering Cancer Center",
+    "Yes",
+    "Yes",
+    "1466999P0",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "Yes",
+    "Yes",
+    "Yes",
+    "",
+    "",
+    "200",
+    "Yes",
+    "200",
+    "Yes",
+    "Yes",
+    "11/15/2025",
+    "150",
+    "3",
+    "http://www.mskcc.org/medtransitionalyearinternship",
+    "",
+    "New York, NY",
+    "Cori Salvit MD",
+    "Rachelle Sanchez"
+  ]
+];
+
+  const wsData = [ALL_FIELDS, ...SAMPLE_ROWS];
+
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+  // Column Width Auto Adjust
+  ws["!cols"] = ALL_FIELDS.map((col) => ({
+    wch: Math.max(col.length + 5, 20)
+  }));
+
+  ALL_FIELDS.forEach((field, colIndex) => {
+    const cellRef = XLSX.utils.encode_cell({ r: 0, c: colIndex });
+
+    if (!ws[cellRef]) return;
+
+    const isRequired = REQUIRED_FIELDS.includes(field);
+
+    ws[cellRef].s = {
+      font: {
+        bold: true,
+        color: { rgb: isRequired ? "FFFFFF" : "000000" }
+      },
+      fill: {
+        fgColor: { rgb: isRequired ? "FF0000" : "D9D9D9" }
+      },
+      alignment: {
+        horizontal: "center",
+        vertical: "center"
+      }
+    };
+
+    // Add header comment (tooltip)
+    ws[cellRef].c = [
+      {
+        t: isRequired
+          ? "Required Field - Do not leave empty"
+          : "Optional Field"
+      }
+    ];
+  });
+
+  // Add dropdown validation (Yes/No fields)
+  const yesNoFields = [
+    "Participates in ERAS®",
+    "j1VisaNew",
+    "h1VisaNew",
+    "f1VisaNew",
+    "Participating in NRMP"
+  ];
+
+  yesNoFields.forEach((field) => {
+    const colIndex = ALL_FIELDS.indexOf(field);
+    if (colIndex === -1) return;
+
+    for (let row = 1; row <= 200; row++) {
+      const cellRef = XLSX.utils.encode_cell({ r: row, c: colIndex });
+
+      if (!ws[cellRef]) ws[cellRef] = {};
+
+      ws[cellRef].t = "s";
+
+      ws[cellRef].dv = {
+        type: "list",
+        allowBlank: true,
+        formula1: '"Yes,No"'
+      };
+    }
+  });
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Template");
+
+  XLSX.writeFile(wb, "Advanced_Program_Template.xlsx");
+};
   const getFormattedDateTime = () => {
   const now = new Date();
   const pad = (n) => n.toString().padStart(2, "0");
@@ -646,6 +840,15 @@ TooltipsPopovers("success", messageFull, "Status");
               
     </div>
      </CCol>
+     <CCol md={4}>
+  <CButton
+    color="success"
+    style={{ marginTop: "30px" }}
+    onClick={downloadExcelFormat}
+  >
+    Download Format
+  </CButton>
+</CCol>
               {/*<CCol xs={12}>
                 <CButton color="primary" type="button">
                   Submit

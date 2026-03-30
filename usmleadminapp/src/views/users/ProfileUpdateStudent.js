@@ -252,7 +252,7 @@ const navigate = useNavigate();
         	  })
         	  setServices(ServicesList);
         	}
-     	if(typeof userDataSelected[0].Step1Score!="undefined" && typeof userDataSelected[0].Step1Score==="object")
+     	if(typeof userDataSelected?.[0]?.Step1Score!="undefined" && typeof userDataSelected?.[0]?.Step1Score==="object")
         	{
         		if(typeof userDataSelected[0].ScoreData==="undefined")
         		{
@@ -266,8 +266,12 @@ const navigate = useNavigate();
         	}
 
          if (userDataSelectedAgent.length > 0) {
-        	if (userDataSelectedAgent[0].AsignedToAgentId != null)
+        	if (userDataSelectedAgent?.[0]?.AsignedToAgentId != null)
         	{
+        		if(userDataSelected.length<=0)
+        		{
+        			userDataSelected.push({})
+        		}
         		userDataSelected[0].AsignedToAgentId = userDataSelectedAgent[0].AsignedToAgentId;
           		userDataSelected[0].AsignedToAgentName = userDataSelectedAgent[0].AsignedToAgentName;
         	}
