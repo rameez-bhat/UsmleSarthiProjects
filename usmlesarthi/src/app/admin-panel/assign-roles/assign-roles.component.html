@@ -736,7 +736,7 @@ form {
       <div class="col-md-6 mb-3">
         <label>Any Step 1 Failure?</label>
         <nz-select
-  [(ngModel)]="selectedUser.ScoreData.Step1Attempts"
+  [(ngModel)]="selectedUser?.ScoreData.Step1Attempts"
   [ngModelOptions]="{ standalone: true }"
 >
   <nz-option nzValue="1" nzLabel="1"></nz-option>
@@ -764,7 +764,7 @@ form {
       <div class="col-md-6 mb-3">
         <label>Any Step 2 Failure?</label>
          <nz-select
-  [(ngModel)]="selectedUser.ScoreData.Step2Attempts"
+  [(ngModel)]="selectedUser?.ScoreData.Step2Attempts"
   [ngModelOptions]="{ standalone: true }"
 >
   <nz-option nzValue="1" nzLabel="1"></nz-option>

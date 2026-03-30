@@ -49,7 +49,7 @@ export class AssignRolesComponent implements OnInit {
   selectedVisaValues: string[] = [];
   Step1ScoreKeys: any[] = [];
   Step2ScoreKeys: any[] = [];
-medicalSchoolOptionsList: any[] = [];
+  medicalSchoolOptionsList: any[] = [];
   verifyUsers: any;
   verifyList: any = [];
   allRoles = [{label  : "Default", value : "Default"}, {label : "Student" ,value : "Silver"},{label : "Admin" ,value : "Admin"}, {label : "Mentor" ,value : "Mentor"}];
@@ -178,7 +178,6 @@ this.Step2ScoreKeys = Object.entries(this.Step2ScoreDropDown).map(([key, value])
   }
 
   this.selectedVisaValues = this.selectedUser.VisaRequirement.map(v => v.value);
-  console.log("this.selectedVisaValues---->",this.selectedVisaValues)
 }
   async fetchNA() {
     try {
@@ -485,7 +484,25 @@ if (country && this.allCountriesC.length) {
   }
 }
 const school = this.selectedUser && this.selectedUser.NameOfMedicalSchool;
-
+console.log("this.selectedUser--->",this.selectedUser)
+console.log("this.selectedUser.Step1Attempts--->",this.selectedUser.Step1Attempts)
+if(typeof this.selectedUser.ScoreData=="undefined")
+{
+  this.selectedUser.ScoreData={};
+}
+if(typeof this.selectedUser.HDUGAU=="undefined")
+{
+  this.selectedUser.HDUGAU=[{"label":"",value:""}];
+}
+if (typeof this.selectedUser.ScoreData.Step1Attempts=="undefined") {
+  this.selectedUser.ScoreData.Step1Attempts=""
+}
+if (typeof this.selectedUser.ScoreData.Step2Attempts=="undefined") {
+  this.selectedUser.ScoreData.Step2Attempts=""
+}
+if (typeof this.selectedUser.ScoreData.Step3Attempts=="undefined") {
+  this.selectedUser.ScoreData.Step3Attempts=""
+}
 if (school && this.medicalSchoolOptionsList.length) {
   const matchedSchool = this.medicalSchoolOptionsList.find(
     m => m.value === school.value
