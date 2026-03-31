@@ -222,6 +222,12 @@ const getNavigation = (user) => {
             icon: <CIcon icon={cilBabyCarriage} customClassName="nav-icon" />,
             name: 'Import Program Map Name',
             to: '/admin/importprogramlistname',
+          },
+          {
+            component: CNavItem,
+            icon: <CIcon icon={cilBabyCarriage} customClassName="nav-icon" />,
+            name: 'Add Single Program',
+            to: '/admin/addsinglelist',
           }
           ,
           {

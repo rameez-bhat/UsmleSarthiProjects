@@ -66,6 +66,7 @@ const IssueTracker = React.lazy(() => import('./views/admin/IssueTracker'))
 const IssueResolved = React.lazy(() => import('./views/admin/IssueResolved'))
 const ListOfPanelist = React.lazy(() => import('./views/admin/ListOfPanelist'))
 const EditPanelist = React.lazy(() => import('./views/admin/EditPanelist'))
+const AddSingleList = React.lazy(() => import('./views/admin/AddSingleList'))
 
 
 const ProfileUpdateStudent = React.lazy(() => import('./views/users/ProfileUpdateStudent'))
@@ -159,6 +160,7 @@ const routes = {"public":[
     { path: '/admin/issueresolved/:id?', name: 'Issue Resolved',exact: true, element: IssueResolved },
     { path: '/admin/listofpanelist', name: 'Mentor List',exact: true, element: ListOfPanelist },
     { path: '/admin/editpanelist/:match_id?', name: 'Edit Panelist',exact: true, element: EditPanelist },
+    { path: '/admin/addsinglelist', name: 'Add Programe',exact: true, element: AddSingleList },
 ],
 "users":[
 	{ path: '/users/register', name: 'RegisterUser',exact: true, element: RegisterUser },
