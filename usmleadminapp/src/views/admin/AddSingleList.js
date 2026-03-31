@@ -154,6 +154,7 @@ const [isOther, setIsOther] = useState(false);
         PId,
         HPId,
         Frieda: form.frieda,
+        friedaLink:	"https://freida.ama-assn.org/program/"+form.frieda,
         Verified: "Yes",
         TimeStamp: Date.now(),
       });
