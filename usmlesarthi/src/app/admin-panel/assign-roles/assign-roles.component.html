@@ -455,9 +455,9 @@ form {
                   Specialty : {{ programObject[selectedUserMatch.PId].PName }}
                 </div>
                 <div class="col-12 text-left">
-                  Hospital : {{ selectedUserMatch.hospital.HName }} (
-                  {{ selectedUserMatch.hospital.City }},
-                  {{ selectedUserMatch.hospital.State }})
+                  Hospital : {{ selectedUserMatch?.hospital?.HName }} (
+                  {{ selectedUserMatch?.hospital?.City }},
+                  {{ selectedUserMatch?.hospital?.State }})
                 </div>
                 <div class="col-12 text-left">
                   Match Year :

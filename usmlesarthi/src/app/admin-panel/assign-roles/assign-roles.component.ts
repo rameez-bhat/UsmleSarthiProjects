@@ -629,6 +629,7 @@ if (val1) {
       let pid      = event.target.value;
       this.loading = true;
       this.hospitals = await this.dbService.getHospitalsByProgram(pid);
+      console.log("this.hospitals---->",this.hospitals)
       this.loading = false;
        this.ngZone.run(() => {
       this.loading = false;

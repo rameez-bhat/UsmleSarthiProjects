@@ -100,7 +100,8 @@ const [isOther, setIsOther] = useState(false);
         form.speciality,
         0
       );
-
+		console.log("programRes---->",programRes)
+		
       let PId;
 
       if (programRes.length) {
@@ -113,7 +114,7 @@ const [isOther, setIsOther] = useState(false);
           PName: form.speciality,
         });
       }
-
+	console.log("PId---->",PId)
       // 2. HOSPITAL
       let hospitalRes = await FetchDataFromCollection(
         "Hospital",
@@ -123,7 +124,8 @@ const [isOther, setIsOther] = useState(false);
         form.programName,
         0
       );
-
+      console.log("form.programName---->",form.programName)
+	console.log("hospitalRes---->",hospitalRes)
       let HId;
 
       if (hospitalRes.length) {
@@ -135,8 +137,10 @@ const [isOther, setIsOther] = useState(false);
           State: form.state,
           PIds: [PId],
           createdAt: Timestamp.fromDate(new Date()),
+          updatedAt: Timestamp.fromDate(new Date()),
         });
         HId = res[0].id;
+        console.log("res---->",res)
       }
 
       const HPId = `${HId}_${PId}`;

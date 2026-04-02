@@ -59,6 +59,7 @@ export class HospitalService {
   async getHospitalsByProgram(id: any): Promise < Hospital[] > {
     let feridaList=[];
     let programId = id.toString();
+    console.log("programId====>",programId)
     if (!Object.keys(this.hospitalsByProgram[programId] || {}).length){
       this.hospitalsByProgram[programId] = [];
       let hids = [];
