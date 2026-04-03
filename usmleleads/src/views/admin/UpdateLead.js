@@ -156,16 +156,12 @@ fetchData();
     })
     AdminOptionsList=[];
     const adminlist=await firestoreQueries.FetchDataFromCollection(DatabaseName, "users", 100, "role",  "in", ["Customer Support","SuperAdmin"]);
-    console.log("adminlist--->",adminlist)
     let conditionsArray=[[{name:'id',condition:'==',value:leadid}]];
     let JoinFullArray=[
   { collection: "services", leftField: "leadid", rightField: "leadid", conditions: [],sortBy:"",sortDir:"asc" },
   { collection: "followups", leftField: "leadid", rightField: "leadid", conditions: [],sortBy:"followupdate",sortDir:"asc" }
 ];
-  console.log("conditionsArray===>",conditionsArray)
-  console.log("JoinFullArray===>",JoinFullArray)
     let LeadsList =await firestoreQueries.SelectSuperComplexConditionsForViewbk(DatabaseName,"leads",conditionsArray,JoinFullArray,"createTime","desc",null,null);
-  console.log("LeadsList===>",LeadsList)
     if(LeadsList.TotalRecords)
     {
       if(LeadsList.TotalRecords?.['finalresult'])

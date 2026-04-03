@@ -130,6 +130,10 @@ const [isOther, setIsOther] = useState(false);
 
       if (hospitalRes.length) {
         HId = hospitalRes[0].id;
+         let res = await handleUpdate("Hospital",HId, {
+          PIds: Array.from(new Set([...(hospitalRes[0].PIds || []), PId])),
+          updatedAt: Timestamp.fromDate(new Date()),
+        });
       } else {
         let res = await handleAdd("Hospital", {
           HName: form.programName,

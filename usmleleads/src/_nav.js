@@ -43,7 +43,7 @@ const getNavigation = (user) => {
       },
       {
         component: CNavGroup,
-        name: 'Leads2',
+        name: 'Leads',
         to: '/base',
         icon: <CIcon icon={cibCassandra} customClassName="nav-icon" />,
        items: [
@@ -55,7 +55,7 @@ const getNavigation = (user) => {
           {
             component: CNavItem,
             icon: <CIcon icon={cibAddthis} customClassName="nav-icon" />,
-            name: 'Add Lead1',
+            name: 'Add Lead',
             to: '/admin/leads/addlead',
           },
           {

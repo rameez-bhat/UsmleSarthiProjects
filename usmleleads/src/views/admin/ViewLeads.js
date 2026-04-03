@@ -183,29 +183,6 @@ const handleFormChange = async (event,name) =>
 const handleExport = async (type) => {
 showLoading();
     DownloadReport();
-    /*let endpoint ="https://us-central1-usmleleadtracker.cloudfunctions.net/exportFirestoreToExcel";
-    //endpoint = "http://127.0.0.1:5001/usmleleadtracker/us-central1/exportFirestoreToExcel";
-    try {
-    showLoading();
-      const response = await axios.post(
-      endpoint,
-      { CollectionName: "leads" },
-      { responseType: "blob",headers: {
-          "Content-Type": "application/json",
-        } }
-    );
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `Database.xlsx`); // CSV or Excel based on type
-      document.body.appendChild(link);
-      link.click();
-      link.parentNode.removeChild(link);
-      hideLoading();
-    } catch (error) {
-      console.error('Error exporting data:', error);
-       hideLoading();
-    }*/
   };
   const getContactSource = (serviceData) => {
   let ContactSourceDynamic = "";
@@ -577,7 +554,6 @@ showLoading();
     				//{ name: "RotationData.Rotations.Rotation0.RotationPayment.Payment0.PaymentDate", condition: ">=", value: DateTimestampStart }
   				]
   			];
-  			console.log("======conditionsArray========",ActualLoggedInUser)
       LeadsList =await firestoreQueries.SelectWithComplexConditions(DatabaseName,"leads",conditionsArray,"","","","createTime","desc",docsPerPage,LastDocumentConst);
     }
 
