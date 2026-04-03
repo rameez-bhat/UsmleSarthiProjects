@@ -643,7 +643,7 @@ if (val1) {
   
   async updateMatch(){
     try{
-      await this.dbService.updateUserMatch(this.selectedUserMatch, this.selectedUser);
+      await this.dbService.updateUserMatchNew(this.selectedUserMatch, this.selectedUser);
       this.toastr.success("Match Details are updated");
       await this.takeMeToUserProfile(this.selectedUser);
     }

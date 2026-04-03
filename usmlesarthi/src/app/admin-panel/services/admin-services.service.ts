@@ -398,11 +398,26 @@ export class AdminServicesService {
   }
 
   async updateUserMatch(dataObject, user) {
+    console.log("dataObject--->",dataObject)
+    console.log("user--->",user)
     let data = {
       UId: user.uid,
       HId: dataObject.newHId,
       PId: dataObject.newPId,
       yearMatch: dataObject.newYearMatch,
+    };
+    await this.firestore
+      .doc(`UsersMatch/${user.uid}`)
+      .set(data, { merge: true });
+  }
+  async updateUserMatchNew(dataObject, user) {
+    console.log("dataObject--->",dataObject)
+    console.log("user--->",user)
+    let data = {
+      UId: user.uid,
+      HId: dataObject.HId,
+      PId: dataObject.PId,
+      yearMatch: dataObject.yearMatch,
     };
     await this.firestore
       .doc(`UsersMatch/${user.uid}`)
