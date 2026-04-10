@@ -227,13 +227,14 @@ openAvailabilityModal(content: any, rotation: any, openinSameTab: any) {
     //this.router.navigate(['/rotationsavailability', rotation.location_code,'description']);
     console.log("openinSameTab---->",openinSameTab)
     console.log("rotation---->",rotation)
+     console.log("rotation---->",'/housingavailability/' + (rotation.housingId || rotation.id) + '/description')
     if(openinSameTab)
     {
-      window.open('/housingavailability/' + rotation.housingId + '/description','_self');
+      window.open('/housingavailability/' + (rotation.housingId || rotation.id) + '/description','_self');
     }
     else
     {
-      window.open('/housingavailability/' + rotation.housingId + '/description', '_blank');
+      window.open('/housingavailability/' + (rotation.housingId || rotation.id) + '/description', '_blank');
     }
     
     /*this.selectedRotationForAvailability = rotation;

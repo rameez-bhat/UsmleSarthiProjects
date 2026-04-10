@@ -127,10 +127,10 @@
 
   <div class="info-item"
        *ngFor="let feature of selectedHospital.FeaturesArray">
-
+<div *ngIf="feature.title!='Address'">
     <strong>{{ feature.title }}: </strong>
      <label [innerHTML]="feature.contentHtml"></label>
-
+</div>
   </div>
 
 </div>
