@@ -6,11 +6,23 @@ import Select1 from 'react-select';
 
 const PlatinumMentorShip = ({ ListOfPanelists, MatchValues, HandlePlatinumChange, HandlePlatinumMeetingsChange, errors, plan, DeleteMeetings, AddMeetings }) => {
   let lastRotationIndex = 0;
-const panelistOptions = Object.entries(ListOfPanelists).map(([email, objec]) => ({
+/*const panelistOptions = Object.entries(ListOfPanelists).map(([email, objec]) => ({
   value: objec.email,
   label: objec.displayName+"("+objec.email+")"
 
+}));*/
+const mappedPanelists = Object.entries(ListOfPanelists).map(([email, objec]) => ({
+  value: objec.email,
+  label: objec.displayName + " (" + objec.email + ")"
 }));
+
+const panelistOptionsOriginal = mappedPanelists;
+
+const panelistOptions = [
+  { value: "", label: "No Mentor" },
+  ...mappedPanelists,
+  { value: "changed", label: "Mentor Changed" }
+];
   const renderMeetings = () => {
     return MatchValues?.Platinum?.Meetings.map((MeetingsObj, Paymentindex) => {
       lastRotationIndex = Paymentindex;
@@ -201,6 +213,64 @@ const panelistOptions = Object.entries(ListOfPanelists).map(([email, objec]) => 
       	 {errors.EmailWhatsAppInstructionsCustom && <span className="validationerror">{errors.EmailWhatsAppInstructionsCustom}</span>}
                  </FormControl>
                </Grid>
+               {MatchValues['Platinum']?.['AssignedMentor']?.value==="changed" &&(
+               <>
+               <Grid item xs={6}>
+              <FormControl fullWidth>
+                <Select1
+                styles={{
+    control: (base) => ({
+      ...base,
+      backgroundColor: 'none', // Example inline background
+      borderColor: '#ccc',
+      boxShadow: 'none',
+    }),
+    menu: (base) => ({
+      ...base,
+      zIndex: 9999 // To avoid dropdown clipping
+    })
+  }}
+           
+                value={MatchValues['Platinum']?.['ChangedFromAssignedMentor']}
+
+        options={panelistOptionsOriginal}
+        placeholder="Changed From Mentor"
+        onChange={(event) => HandlePlatinumChange(event, 'ChangedFromAssignedMentor')}
+        isSearchable
+        //isMulti
+      />
+      	 {errors.EmailWhatsAppInstructionsCustom && <span className="validationerror">{errors.EmailWhatsAppInstructionsCustom}</span>}
+                 </FormControl>
+               </Grid>
+               <Grid item xs={6}>
+              <FormControl fullWidth>
+                <Select1
+                styles={{
+    control: (base) => ({
+      ...base,
+      backgroundColor: 'none', // Example inline background
+      borderColor: '#ccc',
+      boxShadow: 'none',
+    }),
+    menu: (base) => ({
+      ...base,
+      zIndex: 9999 // To avoid dropdown clipping
+    })
+  }}
+           
+                value={MatchValues['Platinum']?.['ChangedFromAssignedMentor']}
+
+        options={panelistOptionsOriginal}
+        placeholder="Changed From Mentor"
+        onChange={(event) => HandlePlatinumChange(event, 'ChangedFromAssignedMentor')}
+        isSearchable
+        //isMulti
+      />
+      	 {errors.EmailWhatsAppInstructionsCustom && <span className="validationerror">{errors.EmailWhatsAppInstructionsCustom}</span>}
+                 </FormControl>
+               </Grid>
+               </>
+               )}
               <Grid item xs={6}>
                 <Box sx={{ display: 'flex', p: 0, borderRadius: 1, border: 1 }}>
                   <Typography variant="subtitle1" color="textSecondary" sx={{ flexGrow: 1, p: 1, borderRadius: 1 }}>Date Of Mentor Assigned:</Typography>
