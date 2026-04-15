@@ -205,7 +205,7 @@ selectedEndDate:any;
     );
     this.TotalInstallements = (this.selectedHospital && this.selectedHospital.TotalInstallements) || 1;
     this.getEventsForTheMonth(currentMonth,currentYear);
-    if(typeof this.auth.userData!="undefined")
+    if(typeof this.auth.userData!="undefined" && typeof this.auth.userData!=null)
     {
       this.UserLoggedIn=true;
       if (this.auth && this.auth.userData && this.auth.userData.ReferralObject && this.auth.userData.ReferralObject.ReferredBy) 

@@ -570,6 +570,17 @@ else
         />
          {errors.fee  && <span className="validationerror">{errors.fee }</span>}
       </Box>
+       <Box mt={3}>
+        <TextField
+          label="Processing Fee Percentage"
+          type="number"
+          id="fee"
+          fullWidth
+          value={formdata.processingFeePercentage}
+          onChange={(event) => onchangeForm(event, "processingFeePercentage" )}
+        />
+         {errors.fee  && <span className="validationerror">{errors.fee }</span>}
+      </Box>
       <Grid item xs={12} sm={6}>
             <InputLabel>Maximum Number Of Installements</InputLabel>
             <Select

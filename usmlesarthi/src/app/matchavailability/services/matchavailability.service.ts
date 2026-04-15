@@ -29,7 +29,8 @@ export class MatchAvailabilityService {
     for (let doc of docsRef.docs){
       let data = doc.data();
       data.id = doc.id;
-      sessiondata[data.id] = data;
+      //sessiondata[data.id] = data;
+      await doc.ref.delete();
     }
     return sessiondata;
   }

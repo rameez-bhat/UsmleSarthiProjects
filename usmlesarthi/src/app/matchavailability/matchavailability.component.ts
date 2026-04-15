@@ -1,4 +1,4 @@
-import { Component, OnInit, TemplateRef, ViewChild,AfterViewInit } from "@angular/core";
+import { Component, OnInit, TemplateRef, ViewChild,AfterViewInit,NgZone } from "@angular/core";
 import { NgbCalendar, NgbModal } from "@ng-bootstrap/ng-bootstrap";
 import { ObservershipService } from "../observership/services/observership.service";
 import { ToastrService } from "ngx-toastr";
@@ -37,6 +37,7 @@ export class MatchAvailabilityComponent implements OnInit {
   enteredEmail="";
   paymentscreen: boolean =false;
   UserLoggedIn: boolean =false;
+  processingFeePercentage=4;
   paymentSelectionType="";
   enterOtherAmount=0;
   grouprequired='';
@@ -73,7 +74,8 @@ export class MatchAvailabilityComponent implements OnInit {
     private afn: AngularFireFunctions,
     public auth: AuthenticationService,
     public router: Router,
-    public route: ActivatedRoute
+    public route: ActivatedRoute,
+    private ngZone: NgZone
   ) {}
 
   async ngOnInit() {
@@ -98,6 +100,10 @@ export class MatchAvailabilityComponent implements OnInit {
      const res= await this.dbService.getSelectedMatch(this.matchId);
      this.SelectedMatchPlan = Object.values(res)[0];
      console.log("this.SelectedMatchPlan----->",this.SelectedMatchPlan)
+     if(this.SelectedMatchPlan.processingFeePercentage)
+     {
+      this.processingFeePercentage=Number(this.SelectedMatchPlan.processingFeePercentage);
+     }
     this.TotalInstallements = (this.SelectedMatchPlan && this.SelectedMatchPlan.TotalInstallements) || 1;
     for (let i = 1; i <= this.TotalInstallements; i++) {
       if(i==1)
@@ -112,7 +118,7 @@ export class MatchAvailabilityComponent implements OnInit {
     }
     await this.sleep(2000);
     console.log('this.auth:', this.auth.userData);
-    if(typeof this.auth.userData!="undefined")
+    if(this.auth.isLoggedIn)
     {
       this.UserLoggedIn=true;
       console.log('this.auth.userData:', this.auth.userData);
@@ -182,7 +188,9 @@ export class MatchAvailabilityComponent implements OnInit {
       console.log(err.message);
       this.toastr.error("Error while fetching the data, please try again");
     }
-  
+     this.ngZone.run(() => {
+      this.loading = false;
+    });
     this.loading = false;
   }
   private sleep(ms: number): Promise<void> {
@@ -246,7 +254,7 @@ closePaymentBox() {
     this.paymentSelectionType="stripe";
     let ActualfeeToPay=0;
     let FeetoShowToUser=0;
-    let perc=((this.SelectedMatchPlan.fee*104/100)+0.30)
+    let perc=((this.SelectedMatchPlan.fee*(100+this.processingFeePercentage)/100)+0.30)
     perc=perc-this.PromotorDiscountsAmount-this.getDiscountAmount(this.SelectedMatchPlan);
     let totalFee=Math.round(perc*100);
     FeetoShowToUser=totalFee;
@@ -255,7 +263,7 @@ closePaymentBox() {
     {
       ActualfeeToPay=this.enterOtherAmount;
       //totalFee=ActualfeeToPay;
-      FeetoShowToUser=(ActualfeeToPay*96/100)-0.30;
+      FeetoShowToUser=(ActualfeeToPay*(100-this.processingFeePercentage)/100)-0.30;
       FeetoShowToUser=Math.round(FeetoShowToUser*100);
       ActualfeeToPay=Math.round(ActualfeeToPay*100);
     }
@@ -266,7 +274,7 @@ closePaymentBox() {
     let stripe;
     try {
       //
-      if(typeof this.auth.userData=="undefined")
+      if(!this.auth.isLoggedIn)
       {
         if (this.enteredEmail.trim()=="") {
           this.loading = false;
@@ -281,15 +289,7 @@ closePaymentBox() {
           this.toastr.error("Please enter a valid email address.");
           return;
         }
-        if(typeof this.auth.userData!="undefined" && (this.auth.userData as any).Role === "Admin")
-        {
-            AllowTesting="yes";
-            stripe= await loadStripe(environment.firebaseConfig.STRIPE_PUBLIC_KEY_TESTING);
-        }
-        else
-        {
-            stripe= await loadStripe(environment.firebaseConfig.STRIPE_PUBLIC_KEY_LIVE);
-        }
+        stripe= await loadStripe(environment.firebaseConfig.STRIPE_PUBLIC_KEY_LIVE);
         const response = await fetch('https://stripesession-5rztgyg64q-uc.a.run.app', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -312,7 +312,7 @@ closePaymentBox() {
             PassAllow:AllowTesting,
             TotalInstallements:TotalInstallementsSelected,
             InstallementNo:1,
-            successUrl: 'http://localhost:4200/payment-success-error',
+            successUrl: 'https://residencymatch.usmlesarthi.com/payment-success-error',
             cancelUrl: 'https://residencymatch.usmlesarthi.com/payment-success-error'
           })
         });
@@ -337,8 +337,6 @@ closePaymentBox() {
           }
           else
           {
-            
-            
             if(this.auth.userData.Role=="Admin")
             {
               AllowTesting="yes";
@@ -373,7 +371,7 @@ closePaymentBox() {
               PassAllow:AllowTesting,
               TotalInstallements:TotalInstallementsSelected,
               InstallementNo:1,
-              successUrl: 'http://localhost:4200/payment-success-error',
+              successUrl: 'https://residencymatch.usmlesarthi.com/payment-success-error',
               cancelUrl: 'https://residencymatch.usmlesarthi.com/payment-success-error'
             })
           });

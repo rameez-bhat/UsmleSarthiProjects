@@ -91,8 +91,8 @@
       <div class="info-row"><span>Match(Plan) Fee:</span><span>${{ SelectedMatchPlan?.fee }}</span></div>
       <div class="info-row" *ngIf="PromotorDiscountsAmount"><span>You Earned A Referal Discount:</span><span>${{ PromotorDiscountsAmount }}</span></div>
       <div class="info-row" *ngIf="getDiscountAmount(SelectedMatchPlan)"><span>Offer Discount Of:</span><span>${{ getDiscountAmount(SelectedMatchPlan) }}</span></div>
-      <div class="info-row"><span>Processing Fee(On Each Transaction):</span><span>{{ ((SelectedMatchPlan?.fee * 4 / 100) + 0.30).toFixed(2) }}</span></div>
-      <div class="info-row" style="color:green;font-size:16px"><span style="color:green">Total Payable Amount:</span> <span>${{ SelectedMatchPlan?.fee -PromotorDiscountsAmount+(SelectedMatchPlan?.fee*4/100)+0.30-getDiscountAmount(SelectedMatchPlan) | number:'1.2-2' }}</span></div>
+      <div class="info-row"><span>Processing Fee(On Transaction):</span><span>{{ ((SelectedMatchPlan?.fee * processingFeePercentage / 100) + 0.30).toFixed(2) }}</span></div>
+      <div class="info-row" style="color:green;font-size:16px"><span style="color:green">Total Payable Amount:</span> <span>${{ SelectedMatchPlan?.fee -PromotorDiscountsAmount+(SelectedMatchPlan?.fee*this.processingFeePercentage/100)+0.30-getDiscountAmount(SelectedMatchPlan) | number:'1.2-2' }}</span></div>
   
       <div class="mb-2" *ngIf="TotalInstallements>1 && !payOtherAmount">
                 <span> No Of Installements</span>
