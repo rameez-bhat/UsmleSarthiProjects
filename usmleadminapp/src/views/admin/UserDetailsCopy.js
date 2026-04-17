@@ -18,6 +18,7 @@ import {
   Select,
   Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle,IconButton
 } from '@mui/material';
+import Divider from '@mui/material/Divider';
 let ActualUser;
 import { useLoading } from '../../layout/LoadingContext';
 import { ColoredTabs, ColoredTab, CenteredBox, CenteredBoxInfo } from '../../components/css/CustomStyles';
@@ -752,7 +753,9 @@ ActualUser=LoginInUserMain.ActualUser;
 					userDataSelected[0]["Services"]['Match']['Platinum']={'Meetings':[]};
 
 				}
-				setMatchValues(userDataSelected[0]["Services"]['Match']);
+				//setMatchValues(userDataSelected[0]["Services"]['Match']);
+				console.log('convertMatchObjectToArray(userDataSelected->',convertMatchObjectToArray(userDataSelected[0]["Services"]['Match']))
+				setMatchValues(convertMatchObjectToArray(userDataSelected[0]["Services"]['Match']));
 			}
 
 			if(userDataSelected[0]["Services"]?.Match?.Plan?.Name==="Custom")
@@ -1026,48 +1029,6 @@ const convertResearchArrayToObject = (rotationData) => {
   return rotationData;
 };
 const convertMatchObjectToArray = (matchData) => {
-  // Check if matchData contains the Match field and if it's an object
-  if (matchData && matchData.Match && typeof matchData.Match === 'object') {
-    // Convert the Payments object to an array
-    if (matchData.Match.Payments && typeof matchData.Match.Payments === 'object') {
-      matchData.Match.Payments = Object.keys(matchData.Match.Payments).map(paymentKey => matchData.Match.Payments[paymentKey]);
-      AlreadySavedPaymentMatch = matchData.Match.Payments.map((payment) => ({
-          ...payment,
-          Plan: matchData.Match['Plan']?.Name,
-        }));
-
-      //AlreadySavedPaymentMatch=JSON.parse(JSON.stringify(matchData.Match.Payments));
-
-    }
-
-    // Return the updated matchData
-    return {
-      ...matchData,
-      Match: {
-        ...matchData.Match, // Ensure we keep other properties of Match intact
-      },
-    };
-  }
-
-  // If Match is not an object, return matchData as is
-  return matchData;
-};
-const convertMatchArrayToObject = (matchData) => {
-  // Check if matchData exists and if Payments is an array
-  const matchDatain=matchData;
-  console.log("matchData====>",matchData)
-  if (matchDatain && Array.isArray(matchDatain.Payments)) {
-    // Convert Payments array back to an object
-    matchDatain.Payments = matchDatain.Payments.reduce((acc, payment, index) => {
-      const paymentKey = `Payment${index}`;
-      acc[paymentKey] = payment;
-      return acc;
-    }, {});
-  }
-console.log("matchDatain====>",matchDatain)
-  return matchDatain;
-};
-/*const convertMatchObjectToArray = (matchData) => {
   if (matchData && matchData.Match && typeof matchData.Match === 'object') {
     
     const matchArray = Object.entries(matchData.Match)
@@ -1122,7 +1083,7 @@ const convertMatchArrayToObject = (matchData) => {
   }
 
   return matchData;
-};*/
+};
 
 
   const OnBoardingPopupOpen = ()=>{
@@ -3834,310 +3795,34 @@ if(typeof MatchValues['Platinum']=="undefined")
         'Platinum': newval,
       }));
 }
-const HandleMatchChange = (event,name,PayInd) =>{
-let value;
-  if(typeof event.target!="undefined")
-  {
-  	value=event.target.value;
-  }
-  else if(typeof event.$d!="undefined")
-  {
-  	value=event;
-  }
-  else if(typeof event.label!="undefined")
-  {
-  	value=event;
-  }
-  else if(typeof event[0]!="undefined")
-  {
-  	value=event;
-  }
-  else
-  {
-  	 value=event.label;
-  }
-  	if(typeof MatchValues['Payments']==="undefined")
-    {
-    		MatchValues['Payments']=[];
-    }
-    if(name==='PaymentPlan')
-    {
-    	setMatchValues((prevValues) => ({
-        ...prevValues,
-        'PaymentPlan': value,
-      }));
+const HandleMatchChange = (event, field, matchIndex, paymentIndex = -1) => {
+  let value;
 
-    }
-    else if(name==='ModeOfPayment')
-    {
+  if (event.target) value = event.target.value;
+  else if (event.$d) value = Timestamp.fromDate(event.toDate());
+  else value = event;
 
-    	let newval=MatchValues['Payments'];
-		newval[PayInd]['ModeOfPayment']=value;
-    	setMatchValues((prevValues) => ({
-        ...prevValues,
-        'Payments': newval,
-      }));
-    }
-    else if(name==='MatchPaymentAmount')
-    {
+  setMatchValues(prev => {
+    const updated = [...prev];
 
-    	let newval=MatchValues['Payments'];
-		newval[PayInd]['Amount']=value;
-    	setMatchValues((prevValues) => ({
-        ...prevValues,
-        'Payments': newval,
-      }));
-    }
-    else if(name==='PaymentDate')
-    {
-
-    	let newval=MatchValues['Payments'];
-		newval[PayInd]['PaymentDate']=value.toLocaleString('en-GB', { timeZone: 'GMT' });
-		newval[PayInd]['PaymentDate'] = Timestamp.fromDate(new Date(newval[PayInd]['PaymentDate']));
-    	setMatchValues((prevValues) => ({
-        ...prevValues,
-        'Payments': newval,
-      }));
-    }
-    else if(name==='PaymentNotify')
-    {
-
-    	let newval=MatchValues['Payments'];
-		newval[PayInd]['PaymentNotify']=value;
-    	setMatchValues((prevValues) => ({
-        ...prevValues,
-        'Payments': newval,
-      }));
-    }
-    else if(name==='NotifyDate')
-    {
-
-    	let newval=MatchValues['Payments'];
-		newval[PayInd]['NotifyDate']=value.toLocaleString('en-GB', { timeZone: 'GMT' });
-		newval[PayInd]['NotifyDate'] = Timestamp.fromDate(new Date(newval[PayInd]['NotifyDate']));
-    	setMatchValues((prevValues) => ({
-        ...prevValues,
-        'Payments': newval,
-      }));
-    }
-    else if(name==='EnrollmentDate')
-    {
-    	let tmp=value.toLocaleString('en-GB', { timeZone: 'GMT' });
-    	tmp = Timestamp.fromDate(new Date(tmp));
-    	setMatchValues((prevValues) => ({
-        ...prevValues,
-        EnrollmentDate: tmp,
-      }));
-    }
-    else  if(name==='DiscountValue' )
-	{
-		let newval=MatchValues['Payments'];
-		newval[PayInd]['Discount']['Value']=value;
-    	setMatchValues((prevValues) => ({
-        ...prevValues,
-        'Payments': newval,
-      }));
-
-    }
-    else  if(name==='DiscountCode' )
-	{
-      let newval=MatchValues['Payments'];
-		newval[PayInd]['Discount']['Code']=value;
-    	setMatchValues((prevValues) => ({
-        ...prevValues,
-        'Payments': newval,
-      }));
-
-    }
-   	else  if(name==='DiscountAmount' )
-	{
-
-		let newval=MatchValues['Payments'];
-		newval[PayInd]['Discount']['Amount']=value;
-
-    	setMatchValues((prevValues) => ({
-        ...prevValues,
-        'Payments': newval,
-      }));
-    }
-  else  if(name==='DiscountNotes' )
-	{
-      let newval=MatchValues['Payments'];
-		newval[PayInd]['Discount']['Notes']=value;
-    	setMatchValues((prevValues) => ({
-        ...prevValues,
-        'Payments': newval,
-      }));
-  }
-  else  if(name==='GeneralNotes' )
-	{
-      let newval=MatchValues['Payments'];
-		newval[PayInd]['GeneralNotes']=value;
-    	setMatchValues((prevValues) => ({
-        ...prevValues,
-        'Payments': newval,
-      }));
-  }
-  else  if(name==='TeamMemberInTouchForRefund' )
-	{
-    	let newval=MatchValues['RefundData'];
-    	if(typeof newval==="undefined")
-    	{
-			newval={};
-    	}
-		newval['TeamMemberInTouchForRefund']=value;
-		setMatchValues((prevValues) => ({
-        ...prevValues,
-        'RefundData': newval,
-      }));
-    }
-    else  if(name==='RefundRequestDate' )
-	{
-    	let newval=MatchValues['RefundData'];
-    	if(typeof newval==="undefined")
-    	{
-			newval={};
-    	}
-    	newval['RefundRequestDate']=value.toLocaleString('en-GB', { timeZone: 'GMT' });
-		newval['RefundRequestDate'] = Timestamp.fromDate(new Date(newval['RefundRequestDate']));
-		setMatchValues((prevValues) => ({
-        ...prevValues,
-        'RefundData': newval,
-      }));
-    }
-  else  if(name==='RefundStatus' )
-	{
-    	let newval=MatchValues['RefundData'];
-    	if(typeof newval==="undefined")
-    	{
-			newval={};
-    	}
-		newval['RefundStatus']=value;
-		setMatchValues((prevValues) => ({
-        ...prevValues,
-        'RefundData': newval,
-      }));
-    }
-  else  if(name==='RefundType' )
-	{
-    	let newval=MatchValues['RefundData'];
-    	if(typeof newval==="undefined")
-    	{
-			newval={};
-    	}
-		newval['RefundType']=value;
-		setMatchValues((prevValues) => ({
-        ...prevValues,
-        'RefundData': newval,
-      }));
-    }
-    else  if(name==='ModeOfRefund' )
-	{
-    	let newval=MatchValues['RefundData'];
-    	if(typeof newval==="undefined")
-    	{
-			newval={};
-    	}
-		newval['ModeOfRefund']=value;
-		setMatchValues((prevValues) => ({
-        ...prevValues,
-        'RefundData': newval,
-      }));
-    }
-  else  if(name==='RefundAmount' )
-	{
-    	let newval=MatchValues['RefundData'];
-    	if(typeof newval==="undefined")
-    	{
-			newval={};
-    	}
-		newval['RefundAmount']=value;
-		setMatchValues((prevValues) => ({
-        ...prevValues,
-        'RefundData': newval,
-      }));
-    }
-    else  if(name==='RefundDate' )
-	{
-    	let newval=MatchValues['RefundData'];
-    	if(typeof newval==="undefined")
-    	{
-			newval={};
-    	}
-    	newval['RefundDate']=value.toLocaleString('en-GB', { timeZone: 'GMT' });
-		newval['RefundDate'] = Timestamp.fromDate(new Date(newval['RefundDate']));
-		setMatchValues((prevValues) => ({
-        ...prevValues,
-        'RefundData': newval,
-      }));
-    }
-    else  if(name==='RefundNote')
-	{
-    	let newval=MatchValues['RefundData'];
-    	if(typeof newval==="undefined")
-    	{
-			newval={};
-    	}
-		newval['RefundNote']=value;
-		setMatchValues((prevValues) => ({
-        ...prevValues,
-        'RefundData': newval,
-      }));
-    }
-    else  if(name==='RefundValue' )
-	{
-    	let newval=MatchValues['Refund'];
-    	if(typeof newval==="undefined")
-    	{
-			newval={};
-    	}
-		newval['Value']=value;
-		setMatchValues((prevValues) => ({
-        ...prevValues,
-        'Refund': newval,
-      }));
+    if (paymentIndex !== -1) {
+      updated[matchIndex].Payments[paymentIndex][field] = value;
+    } else {
+      updated[matchIndex][field] = value;
     }
 
-    else  if(name==='RefundRequestedDate' )
-	{
-    	let newval=MatchValues['Refund'];
-    	if(typeof newval==="undefined")
-    	{
-			newval={};
-    	}
-		newval['RequestedDate']=value.toLocaleString('en-GB', { timeZone: 'GMT' });
-		newval['RequestedDate'] = Timestamp.fromDate(new Date(newval['RequestedDate']));
-		setMatchValues((prevValues) => ({
-        ...prevValues,
-        'Refund': newval,
-      }));
-    }
-    else  if(name==='RefundReason' )
-	{
-    	let newval=MatchValues['Refund'];
-		newval['Reason']=value;
-		setMatchValues((prevValues) => ({
-        ...prevValues,
-        'Refund': newval,
-      }));
-    }
-  else  if(name==='RefundChannel' )
-	{
-    	let newval=MatchValues['Refund'];
-		newval['Channel']=value;
-		setMatchValues((prevValues) => ({
-        ...prevValues,
-        'Refund': newval,
-      }));
-  }
-  else
-  {
-		setMatchValues((prevValues) => ({
-        ...prevValues,
-        [name]: value,
-      }));
-  }
-}
+    return updated;
+  });
+};
+const AddMatch = () => {
+  setMatchValues(prev => [
+    ...prev,
+    { Payments: [], RefundData: {} }
+  ]);
+};
+const DeleteMatch = (index) => {
+  setMatchValues(prev => prev.filter((_, i) => i !== index));
+};
 const handleMatchSeasonChange = (event) => {
     setMatchSeason(event.target.value);
   };
@@ -4901,768 +4586,172 @@ let lastRotationIndex =0;
             </div>
 
           <TabPanel value={value} index={0}>
-				{/*<div className="RotationAddedPayment MatchPayment" >
-       			<div className="TitleDiv">
-                  <Typography  sx={{ flexGrow: 1, backgroundColor: '#b2ebf2', p: 1, borderRadius: 2 }}><b>Notes Section:</b>  </Typography>
-                </div>
-       		{NoteSectionData?.map((NotesObject, NotesIndex) => {
-       		NotesIndexMain=NotesIndex;
-       		const NotesDate = NotesObject?.NotesDate
-      ? dayjs(new Date(NotesObject.NotesDate.seconds * 1000))
-      : dayjs();
-       		return (
-       				<div className="RotationAddedPaymentBody" key={NotesIndex}>
-                	<Grid container spacing={2} sx={{ p: 1 }}>
+  <Grid container spacing={2}>
 
+    {MatchValues?.map((matchItem, matchIndex) => (
 
-                	<Grid item xs={6}>
-                      <Box sx={{ display: 'flex', p: 0, borderRadius: 1 }}>
-                  		<Typography variant="subtitle1" color="textSecondary" sx={{ flexGrow: 1, backgroundColor: '#b2ebf2', p: 1, borderRadius: 1 }}><b>Notes No:</b>  <font color="blue"><b>{NotesIndex+1}  By:{NotesObject?.AddedBy?.displayName || "N/A"}({NotesObject?.AddedBy?.UserType || "N/A"})</b></font></Typography>
-                	</Box>
-            	</Grid>
-            	<Grid item xs={6} >
-                <Box sx={{ display: 'flex', p: 0, borderRadius: 1 }}>
-                  <Button
-              variant="contained"
-              color="primary"
-              onClick={() => DeleteNotesSec(NotesIndex)}
-            >
-              Delete Notes {NotesIndex+1}
-            </Button>
-                </Box>
-                </Grid>
-                 <Grid item xs={6} >
-                 <div className="InputLabel"></div>
-                <Box sx={{ display: 'flex', p: 0, borderRadius: 1 ,border:1}}>
+      <Grid item xs={12} key={matchIndex} className="MatchContainer">
 
-                  <Typography variant="subtitle1" color="textSecondary" sx={{ flexGrow: 1,  p: 1, borderRadius: 1 }}>Notes Date:</Typography>
-                  <Typography variant="body1" sx={{  p: 1, borderRadius: 1 }}><DatePicker
-        value={NotesDate}
-        onChange={(event) => HandleNotesSectionChange(event,'NotesDate',NotesIndex )}
-        dateFormat="dd/mm/yyyy" // Customize date format as needed
-        scrollableYearDropdown  // Make year dropdown scrollable
-         yearDropdownItemNumber={50}
-         picker="date"
-          label="Payment Date"
-  		variant="outlined"
-      /></Typography>
-                </Box>
-                {errors.NotesObject?.NotesDate?.[NotesIndex] && <span className="validationerror">{errors.NotesObject?.NotesDate?.[NotesIndex]}</span>}
-              </Grid>
+        {/* 🔹 HEADER */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+          <Typography variant="h6">Match #{matchIndex + 1}</Typography>
+
+          <Button
+            variant="contained"
+            color="error"
+            onClick={() => DeleteMatch(matchIndex)}
+          >
+            Delete Match
+          </Button>
+        </Box>
+
+        {/* 🔹 PLAN */}
+        <Grid container spacing={2}>
+
+          <Grid item xs={6}>
+            <FormControl fullWidth>
+              <InputLabel>Plan</InputLabel>
+              <Select
+                value={matchItem.plan || ''}
+                onChange={(e) => HandleMatchChange(e, 'plan', matchIndex)}
+              >
+                {Object.entries(MatchPlanListObject).map(([key, value]) => (
+                  <MenuItem key={key} value={key}>{value.Name}</MenuItem>
+                ))}
+                <MenuItem value="Custom">Custom</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+
+          {/* 🔹 MATCH SEASON */}
+          <Grid item xs={6}>
+            <FormControl fullWidth>
+              <InputLabel>Match Season</InputLabel>
+              <Select
+                value={matchItem.matchSeason || ''}
+                onChange={(e) => HandleMatchChange(e, 'matchSeason', matchIndex)}
+              >
+                {MatchSessionList.map((item) => (
+                  <MenuItem key={item} value={item}>
+                    {`Match Season ${item} (Sept ${item - 1})`}
+                  </MenuItem>
+                ))}
+                <MenuItem value="Undecided/Later">Undecided/Later</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+
+        </Grid>
+
+        {/* 🔹 PAYMENTS */}
+        <Box sx={{ mt: 3 }}>
+          <Typography variant="subtitle1"><b>Payments</b></Typography>
+
+          {matchItem?.Payments?.map((payment, pIndex) => (
+            <Grid container spacing={2} key={pIndex} sx={{ mt: 1 }}>
+
               <Grid item xs={6}>
-              <div className="">
-                <div className="InputLabel">Team Member</div>
-                <Select1
-                value={NotesObject?.TeamMember}
-        variant="outlined"
-        options={AdminOptionsList}
-        placeholder="Admin In Touch"
-        onChange={(event) => HandleNotesSectionChange(event,'TeamMember',NotesIndex)}
-        isSearchable
-        isMulti
-      />
-      	{errors.NotesObject?.TeamMember?.[NotesIndex]  && <span className="validationerror">{errors.NotesObject?.TeamMember?.[NotesIndex] }</span>}
-                </div>
-               </Grid>
-
-                <Grid item xs={6}>
-                    <FormControl fullWidth>
-                      <InputLabel id={`label-${plan}`}>Type </InputLabel>
-                      <Select
-
-                        required
-                        value={NotesObject['NoteType'] || ''}
-                        label='Type'
-                        onChange={(event) => HandleNotesSectionChange(event,'NoteType' ,NotesIndex)}
-                      >
-                        <MenuItem value='Meeting'>Meeting</MenuItem>
-                        <MenuItem value='Touch Point'>Touch Point</MenuItem>
-                        <MenuItem value='Team Update'>Team Update</MenuItem>
-                      </Select>
-                      {errors.NotesObject?.NoteType?.[NotesIndex]  && <span className="validationerror">{errors.NotesObject?.NoteType?.[NotesIndex]}</span>}
-                    </FormControl>
-                  </Grid>
-
-                <Grid item xs={6}>
                 <TextField
-  					label="Notes"
-  					multiline
-  					rows={4}
-  					variant="outlined"
-  					fullWidth
-  					value={NotesObject?.Notes}
-  					onChange={(event) => HandleNotesSectionChange(event,'Notes' ,NotesIndex)}
-  					sx={{ my: 2 }}
-				/>
-                  {errors.NotesObject?.Notes[NotesIndex]  && <span className="validationerror">{errors.NotesObject?.Notes[NotesIndex] }</span>}
-                </Grid>
-				<Grid item xs={6}>
-                    <FormControl fullWidth>
-                      <InputLabel >Action Items </InputLabel>
-                      <Select
-                        required
-                        value={NotesObject['ActionItem'] || ''}
-                        label='Action Items'
-                        onChange={(event) => HandleNotesSectionChange(event,'ActionItem' ,NotesIndex)}
-                      >
-                        <MenuItem value='For The Team'>For The Team</MenuItem>
-                        <MenuItem value='For Student'>For Student</MenuItem>
-                        <MenuItem value='For Both'>For Both</MenuItem>
-                      </Select>
-                      {errors.NotesObject?.['ActionItem']?.[NotesIndex]  && <span className="validationerror">{errors.NotesObject?.['ActionItem']?.[NotesIndex]}</span>}
-                    </FormControl>
-                  </Grid>
-
-          </Grid>
-        </div>
-      )}
-
-            )}
-            <div className="AddPaymentButton">
-           <Grid item xs={6} >
-                <Box sx={{ display: 'flex', p: 0, borderRadius: 1 }}>
-                  <Button
-              variant="contained"
-              color="primary"
-              onClick={() => AddNotesSection(NotesIndexMain+1,)}
-            >
-              Add Notes
-            </Button>
-                </Box>
-                </Grid>
-            </div>
-            </div>*/}
-
-
-            <Grid container spacing={2}>
-              <Grid item xs={6}>
-                <FormControl fullWidth>
-                  <InputLabel id="plan-label">Plan</InputLabel>
-                  <Select
-                    labelId="plan-label"
-                    id="plan-select"
-                    value={plan}
-                    label="Plan"
-                    required
-                    onChange={handlePlanChange}
-                  >
-                    {Object.entries(MatchPlanListObject).map(([key, value]) => (
-                      <MenuItem key={key} value={key}>{value.Name}</MenuItem>
-                    ))}
-                    <MenuItem value={'Custom'}>Custom</MenuItem>
-                  </Select>
-                  {errors.plan && <span className="validationerror">{errors.plan}</span>}
-                </FormControl>
+                  label={`Amount #${pIndex + 1}`}
+                  fullWidth
+                  value={payment.Amount || ''}
+                  onChange={(e) =>
+                    HandleMatchChange(e, 'Amount', matchIndex, pIndex)
+                  }
+                />
               </Grid>
-              <PlatinumMentorShip
-            MatchValues={MatchValues}
-            plan={plan}
-            ListOfPanelists={ListOfPanelists}
-            HandlePlatinumChange={HandlePlatinumChange}
-            errors={errors}
-            DeleteMeetings={DeleteMeetings}
-            AddMeetings={AddMeetings}
-            HandlePlatinumMeetingsChange={HandlePlatinumMeetingsChange}
-          />
-              {plan === 'Custom' && (
-                <Grid item xs={6}>
-                  <TextField
-                    label="Custom Plan"
-                    variant="outlined"
-                    fullWidth
-                    value={customPlan}
-                    required
-                    onChange={handleCustomPlanChange}
-                    sx={{ my: 0, "margin-bottom": "4px" }}
-                  />
-                  {errors.customPlan  && <span className="validationerror">{errors.customPlan }</span>}
-                </Grid>
-              )}
-              {plan !== 'Custom' && plan && MatchPlanListObject[plan]?.Relation?.length > 0 && (
-                MatchPlanListObject[plan].Relation.map((item,indexT) => (
-                  <Grid item xs={6} key={indexT}>
-                    <FormControl fullWidth>
-                      <InputLabel id={`label-${plan}`}>{item.Title}</InputLabel>
-                      <Select
-                        labelId={`label-${plan}`}
-                        id={`select-${plan}`}
-                        required
-                        checkwhat={`handle${plan}MocksChange`}
-                        checkwhate="4"
-                        value={GetDynamicValue(plan)}
-                        label={item.Title}
-                        onChange={(event) => handleDynamicChange(event, plan)}
-                      >
-                        {Object.entries(item.Values).map(([subKey, subValue]) => (
-                          <MenuItem key={subKey} value={subKey}>
-                            {subValue}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                      {errors[`${plan}Mocks`]  && <span className="validationerror">{errors[`${plan}Mocks`] }</span>}
-                    </FormControl>
-                  </Grid>
-                ))
-              )}
-            </Grid>
-            <Grid container spacing={2} sx={{ "margin-top": '8px' }}>
-
-
 
               <Grid item xs={6}>
                 <FormControl fullWidth>
-                  <InputLabel id="match-season-label">Match Season</InputLabel>
+                  <InputLabel>Mode</InputLabel>
                   <Select
-                    labelId="match-season-label"
-                    id="match-season-select"
-                    value={matchSeason}
-                    label="Match Season"
-                    required
-                    onChange={handleMatchSeasonChange}
+                    value={payment.ModeOfPayment || ''}
+                    onChange={(e) =>
+                      HandleMatchChange(e, 'ModeOfPayment', matchIndex, pIndex)
+                    }
                   >
-                  {!MatchSessionList.includes(matchSeason) && matchSeason && (
-      <MenuItem key={`stored-${matchSeason}`} value={matchSeason}>
-        {`Match Season ` + matchSeason + ` (Sept ` + (matchSeason - 1) + `)`}
-      </MenuItem>
-    )}
-                    {MatchSessionList.map((item) => (
-                      <MenuItem key={item} value={item}>
-                        {`Match Season `+item+` (Sept `+(item-1)+`)`}
-                      </MenuItem>
-
-                    ))}
-                    <MenuItem  value='Undecided/Later'>
-                        Undecided/Later
-                      </MenuItem>
-                  </Select>
-                  {errors.matchSeason && <span className="validationerror">{errors.matchSeason}</span>}
-                </FormControl>
-              </Grid>
-              <Grid item xs={6}>
-                <FormControl fullWidth>
-                  <InputLabel id="status-label">Status</InputLabel>
-                  <Select
-                    labelId="status-label"
-                    id="status-select"
-                    value={status}
-                    label="Status"
-                    required
-                    onChange={handleStatusChange}
-                  >
-                    {Object.entries(MatchPlanStatus).map(([subKey, subValue]) => (
-                      <MenuItem key={subKey} value={subKey}>
-                        {subValue}
-                      </MenuItem>
+                    {Object.entries(PaymentOptionsList).map(([k, v]) => (
+                      <MenuItem key={k} value={v.label}>{v.label}</MenuItem>
                     ))}
                   </Select>
-                  {errors.status && <span className="validationerror">{errors.status}</span>}
-                </FormControl>
-              </Grid>
-              {status === 'NotApplying' && status && (
-                <Grid item xs={6} key="Choose">
-                  <FormControl fullWidth>
-                    <InputLabel id={`label-Choose`}>Future Application Season</InputLabel>
-                    <Select
-                      labelId={`label-Choose`}
-                      id={`select-Choose`}
-                      value={MatchStatusNotApplyingSelected}
-                      label='Future Application Season'
-                      required
-                      onChange={handleChangeMultiple}
-                      //renderValue={(selected) => selected.join(', ')}
-                    >
-                      {MatchStatusNotApplyingList.map((item) => (
-                        <MenuItem key={item} value={item}>
-                          {item}
-                        </MenuItem>
-                      ))}
-                       <MenuItem key="Other" value="Other">
-                          Other
-                        </MenuItem>
-                    </Select>
-                    {errors.MatchStatusNotApplyingSelected && <span className="validationerror">{errors.MatchStatusNotApplyingSelected}</span>}
-                  </FormControl>
-                </Grid>
-                 )}
-                 {MatchStatusNotApplyingSelected==='Other' && (
-                <Grid item xs={6}>
-                  <TextField
-                    label="Custom Note"
-                    variant="outlined"
-                    fullWidth
-                    value={FutureApplicationSeasonCustomNote}
-                    required
-                    onChange={handleFutureApplicationSeasonCustomNoteChange}
-                    sx={{ my: 0, "margin-bottom": "4px" }}
-                  />
-                  {errors.FutureApplicationSeasonCustomNote  && <span className="validationerror">{errors.FutureApplicationSeasonCustomNote }</span>}
-                </Grid>
-
-              )}
-              <Grid item xs={6}>
-                <FormControl fullWidth>
-                  <InputLabel id="plan-label">Payment Plan</InputLabel>
-                  <Select
-                    labelId="plan-label"
-                    id="plan-select"
-                    value={MatchValues['PaymentPlan']}
-                    label="Payment Plan"
-                    required
-                    onChange={(event) => HandleMatchChange(event,'PaymentPlan' )}
-                  >
-                    {Object.entries(MatchPaymentPlans).map(([key, value]) => (
-                      <MenuItem key={key} value={key}>{value}</MenuItem>
-                    ))}
-                  </Select>
-                  {errors.MatchPaymentPlan && <span className="validationerror">{errors.MatchPaymentPlan}</span>}
                 </FormControl>
               </Grid>
 
-      	<Grid item xs={6}>
-                <Box sx={{ display: 'flex', p: 0, borderRadius: 1 ,border:1}}>
-                  <Typography variant="subtitle1" color="textSecondary" sx={{ flexGrow: 1,  p: 1, borderRadius: 1 }}>Enrollment Date:</Typography>
-                  <Typography variant="body1" sx={{  p: 1, borderRadius: 1 }}><DatePicker
-        defaultValue={MatchValues['EnrollmentDate']?dayjs(MatchValues['EnrollmentDate'].toDate().toISOString()):null}
-        onChange={(event) => HandleMatchChange(event,'EnrollmentDate' )}
-        dateFormat="dd/mm/yyyy" // Customize date format as needed
-        showYearDropdown  // Enable year dropdown
-        scrollableYearDropdown  // Make year dropdown scrollable
-         yearDropdownItemNumber={50}
-         picker="date"
-          label="Enrollment Date"
-  		variant="outlined"
-  		name={`EnrollmentDate`}
-      /></Typography>
-                </Box>
-                {errors.EnrollmentDate && <span className="validationerror">{errors.EnrollmentDate}</span>}
-              </Grid>
-
-
-
-
-              <div className="RotationAddedPayment MatchPayment" >
-       			<div className="TitleDiv">
-                  <Typography  sx={{ flexGrow: 1, backgroundColor: '#b2ebf2', p: 1, borderRadius: 2 }}><b>Payment Details:</b>  </Typography>
-                </div>
-       		{MatchValues?.['Payments']?.map((MpaymentObject, MPaymentindex) => {
-       		return (
-       				<div className="RotationAddedPaymentBody" key={MPaymentindex}>
-                	<Grid container spacing={2} sx={{ p: 1 }}>
-
-
-                	<Grid item xs={6}>
-                      <Box sx={{ display: 'flex', p: 0, borderRadius: 1 }}>
-                  		<Typography variant="subtitle1" color="textSecondary" sx={{ flexGrow: 1, backgroundColor: '#b2ebf2', p: 1, borderRadius: 1 }}><b>Payment No:</b>  <font color="blue"><b>{MPaymentindex+1}</b></font></Typography>
-                	</Box>
-            	</Grid>
-            	<Grid item xs={6} >
-                <Box sx={{ display: 'flex', p: 0, borderRadius: 1 }}>
-                  <Button
-              variant="contained"
-              color="primary"
-              onClick={() => DeletePayment(MPaymentindex,0,"Match")}
-            >
-              Delete Payment {MPaymentindex+1}
-            </Button>
-                </Box>
-                </Grid>
-                <Grid item xs={6} key={plan}>
-                    <FormControl fullWidth>
-                      <InputLabel id={`label-${plan}`}>Mode Of Payment</InputLabel>
-                      <Select
-                        labelId={`label-${plan}`}
-                        id={`select-${plan}`}
-                        required
-                        value={MpaymentObject['ModeOfPayment'] || ''}
-                        label='Mode Of Payment'
-                        onChange={(event) => HandleMatchChange(event,'ModeOfPayment' ,MPaymentindex)}
-                      >
-                        {Object.entries(PaymentOptionsList).map(([subKey, subValue]) => (
-                          <MenuItem key={subValue.label} value={subValue.label}>
-                            {subValue.label}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                      {errors.MatchModeOfPayment?.[MPaymentindex]  && <span className="validationerror">{errors.MatchModeOfPayment?.[MPaymentindex]}</span>}
-                    </FormControl>
-                  </Grid>
-                <Grid item xs={6}>
-                  <TextField
-                    label="Payment Amount"
-                    variant="outlined"
-                    fullWidth
-                    value={MpaymentObject['Amount']}
-                    required
-                    onChange={(event) => HandleMatchChange(event,'MatchPaymentAmount',MPaymentindex)}
-                    sx={{ my: 0, "margin-bottom": "4px" }}
-                  />
-                  {errors.MatchAmount?.[MPaymentindex]  && <span className="validationerror">{errors.MatchAmount?.[MPaymentindex] }</span>}
-                </Grid>
-                <Grid item xs={6} >
-                <Box sx={{ display: 'flex', p: 0, borderRadius: 1 ,border:1}}>
-                  <Typography variant="subtitle1" color="textSecondary" sx={{ flexGrow: 1,  p: 1, borderRadius: 1 }}>Payment Date:</Typography>
-                  <Typography variant="body1" sx={{  p: 1, borderRadius: 1 }}><DatePicker
-        defaultValue={MpaymentObject.PaymentDate?dayjs(MpaymentObject.PaymentDate.toDate().toISOString()):null}
-        onChange={(event) => HandleMatchChange(event,'PaymentDate',MPaymentindex )}
-        dateFormat="dd/mm/yyyy" // Customize date format as needed
-        scrollableYearDropdown  // Make year dropdown scrollable
-         yearDropdownItemNumber={50}
-         picker="date"
-          label="Payment Date"
-  		variant="outlined"
-      /></Typography>
-                </Box>
-                {errors.MatchPaymentDate?.[MPaymentindex] && <span className="validationerror">{errors.MatchPaymentDate?.[MPaymentindex]}</span>}
-              </Grid>
               <Grid item xs={6}>
-                <FormControl fullWidth>
-                  <InputLabel >Discount</InputLabel>
-                  <Select
-                    labelId="Discount-Value"
-                    id="Discount-Value"
-                    defaultValue={MpaymentObject['Discount']['Value']}
-                    label="Discount"
-                    onChange={(event) => HandleMatchChange(event,'DiscountValue',MPaymentindex )}
-                  >
-                      <MenuItem key="Yes" value="Yes">Yes</MenuItem>
-                      <MenuItem key="No" value="No">No</MenuItem>
-                  </Select>
-                  {errors.plan && <span className="validationerror">{errors.plan}</span>}
-                </FormControl>
+                <DatePicker
+                  value={payment.PaymentDate || null}
+                  onChange={(e) =>
+                    HandleMatchChange(e, 'PaymentDate', matchIndex, pIndex)
+                  }
+                />
               </Grid>
-             {MpaymentObject.Discount.Value === 'Yes' && (
-        <div className="VisaLetter">
-          <Grid container spacing={2} sx={{ p: 1 }}>
-            <Grid item xs={4}>
-              <TextField
-                label="Discount Code"
-                variant="outlined"
-                name="MatchDiscountCode"
-                fullWidth
-                value={MpaymentObject['Discount']['Code']}
-                required
-                onChange={(event) => HandleMatchChange(event, 'DiscountCode',MPaymentindex)}
-                sx={{ my: 0, "margin-bottom": "4px" }}
-              />
-              {errors.HousingApplicationAmount && <span className="validationerror">{errors.HousingApplicationAmount}</span>}
+
+              <Grid item xs={6}>
+                <Button
+                  color="error"
+                  onClick={() => DeletePayment(pIndex, matchIndex)}
+                >
+                  Delete Payment
+                </Button>
+              </Grid>
+
             </Grid>
-            <Grid item xs={4}>
+          ))}
+
+          <Button
+            variant="contained"
+            onClick={() => AddPayment(matchIndex)}
+            sx={{ mt: 2 }}
+          >
+            Add Payment
+          </Button>
+        </Box>
+
+        {/* 🔹 REFUND */}
+        <Box sx={{ mt: 3 }}>
+          <Typography variant="subtitle1"><b>Refund</b></Typography>
+
+          <Grid container spacing={2}>
+            <Grid item xs={6}>
               <TextField
-                label="Discount Amount"
-                variant="outlined"
-                name="DiscountAmount"
+                label="Refund Amount"
                 fullWidth
-               value={MpaymentObject['Discount']['Amount']}
-                required
-                onChange={(event) => HandleMatchChange(event, 'DiscountAmount',MPaymentindex)}
-                sx={{ my: 0, "margin-bottom": "4px" }}
+                value={matchItem?.RefundData?.RefundAmount || ''}
+                onChange={(e) =>
+                  HandleMatchChange(e, 'RefundAmount', matchIndex)
+                }
               />
-              {errors.MatchDiscountAmount?.[MPaymentindex] && <span className="validationerror">{errors.MatchDiscountAmount?.[MPaymentindex]}</span>}
             </Grid>
-            <Grid item xs={4}>
-              <TextField
-                label="Notes"
-                variant="outlined"
-                name="DiscountNote"
+
+            <Grid item xs={6}>
+              <Select
                 fullWidth
-                value={MpaymentObject.Discount.Notes || ''} // Provide default value
-                required
-                onChange={(event) => HandleMatchChange(event, 'DiscountNotes',MPaymentindex)}
-                sx={{ my: 0, "margin-bottom": "4px" }}
-              />
-              {errors.HousingAmount && <span className="validationerror">{errors.HousingAmount}</span>}
+                value={matchItem?.RefundData?.RefundStatus || ''}
+                onChange={(e) =>
+                  HandleMatchChange(e, 'RefundStatus', matchIndex)
+                }
+              >
+                <MenuItem value="Pending">Pending</MenuItem>
+                <MenuItem value="Refunded">Refunded</MenuItem>
+              </Select>
             </Grid>
           </Grid>
-        </div>
-      )}
-       <Grid item xs={6} >
-                <div className="InputLabel" ></div>
-                <Box sx={{ display: 'flex', p: 0, borderRadius: 1 ,border:1}}>
-                  <Typography variant="subtitle1" color="textSecondary" sx={{ flexGrow: 1,  p: 1, borderRadius: 1 }}>Payment Added On:</Typography>
-                  <Typography variant="body1" sx={{  p: 1, borderRadius: 1 }}><DatePicker
-  defaultValue={
-    MpaymentObject['PaymentActualAddedDate']
-      ? dayjs(MpaymentObject['PaymentActualAddedDate'].toDate().toISOString())
-      : dayjs() // Default to today
-  }
-  onChange={(event) => HandleMatchChange(event, 'PaymentActualAddedDate', MPaymentindex)}
-  dateFormat="dd/mm/yyyy"
-  scrollableYearDropdown
-  disabled
-  yearDropdownItemNumber={50}
-  picker="date"
-  label="Payment Added On"
-  variant="outlined"
-/></Typography>
-                </Box>
-                {errors.PaymentDate?.[MPaymentindex] && <span className="validationerror">{errors.PaymentDate?.[MPaymentindex]}</span>}
-              </Grid>
-              <Grid item xs={6}>
-                <div className="InputLabel">Need Notify</div>
-     <FormControl fullWidth>
-     <Select
+        </Box>
 
-                    id="PaymentNotify"
-                    name="FeeType"
-                    value={MpaymentObject['PaymentNotify'] || 'no'}
-                    label="Need Notify"
-                    required
-                    onChange={(event) => HandleMatchChange(event,'PaymentNotify',MPaymentindex)}
-                  >
-                       <MenuItem value="no">
-                        No
-                      </MenuItem>
-                      <MenuItem value="yes">
-                        Yes
-                      </MenuItem>
-                      </Select>
-                      {errors.PaymentNotify?.[MPaymentindex]  && <span className="validationerror">{errors.PaymentNotify?.[MPaymentindex] }</span>}
-                    </FormControl>
+        <Divider sx={{ mt: 3 }} />
 
-       </Grid>
-        {MpaymentObject?.['PaymentNotify'] === 'yes' && (
-        <Grid item xs={6} >
-                <div className="InputLabel" ></div>
-                <Box sx={{ display: 'flex', p: 0, borderRadius: 1 ,border:1}}>
-                  <Typography variant="subtitle1" color="textSecondary" sx={{ flexGrow: 1,  p: 1, borderRadius: 1 }}>Notify On Date:</Typography>
-                  <Typography variant="body1" sx={{  p: 1, borderRadius: 1 }}><DatePicker
-        defaultValue={MpaymentObject['NotifyDate']?dayjs(MpaymentObject['NotifyDate'].toDate().toISOString()):null}
-        onChange={(event) => HandleMatchChange(event,'NotifyDate',MPaymentindex )}
-        dateFormat="dd/mm/yyyy" // Customize date format as needed
-        scrollableYearDropdown  // Make year dropdown scrollable
-         yearDropdownItemNumber={50}
-         picker="date"
-          label="Notify On Date"
-  		variant="outlined"
-      /></Typography>
-                </Box>
-                {errors.PaymentDate?.[MPaymentindex] && <span className="validationerror">{errors.PaymentDate?.[MPaymentindex]}</span>}
-              </Grid>
-        )}
-<Grid item xs={6}>
-              <TextField
-                label="General Notes"
-                variant="outlined"
-                multiline
-                rows={4}
-                name="DiscountNote"
-                fullWidth
-                value={MpaymentObject.GeneralNotes || ''} // Provide default value
-                required
-                onChange={(event) => HandleMatchChange(event, 'GeneralNotes',MPaymentindex)}
-                sx={{ my: 0, "margin-bottom": "4px" }}
-              />
-            	 </Grid>
+      </Grid>
+    ))}
 
-            	 </Grid>
-            	 </div>
-            )})}
-            <div className="AddPaymentButton">
-           <Grid item xs={6} >
-                <Box sx={{ display: 'flex', p: 0, borderRadius: 1 }}>
-                  <Button
-              variant="contained"
-              color="primary"
-              onClick={() => AddRotationPayment(lastPaymentIndex+1,0,"Match")}
-            >
-              Add Payment
-            </Button>
-                </Box>
-                </Grid>
-            </div>
-            </div>
+    {/* 🔥 ADD MATCH BUTTON */}
+    <Grid item xs={12}>
+      <Button variant="contained" onClick={AddMatch}>
+        Add Match
+      </Button>
+    </Grid>
 
-
-
-
-
-
- <div className="RotationAddedPayment MatchPayment" >
-       			<div className="TitleDiv">
-                  <Typography  sx={{ flexGrow: 1, backgroundColor: '#b2ebf2', p: 1, borderRadius: 2 }}><b>Refund:</b>  </Typography>
-                </div>
-       <div className="VisaLetter">
-       <Grid container spacing={2} sx={{ p: 1 }}>
-       <Grid item xs={6}>
-                <div className="InputLabel">Team Member in touch</div>
-                <Select1
-        value={MatchValues?.RefundData?.['TeamMemberInTouchForRefund'] || ''}
-        variant="outlined"
-        options={AdminOptionsList}
-        placeholder="Team Member in touch"
-        onChange={(event) => HandleMatchChange(event,'TeamMemberInTouchForRefund')}
-        isSearchable
-      />
-      	{errors.TeamMemberInTouchForRefund  && <span className="validationerror">{errors.TeamMemberInTouchForRefund }</span>}
-               </Grid>
-               <Grid item xs={6} >
-                <div className="InputLabel" >Refund Date</div>
-                <Box sx={{ display: 'flex', p: 0, borderRadius: 1 ,border:1}}>
-                  <Typography variant="subtitle1" color="textSecondary" sx={{ flexGrow: 1,  p: 1, borderRadius: 1 }}>Refund Request Date:</Typography>
-                  <Typography variant="body1" sx={{  p: 1, borderRadius: 1 }}><DatePicker
-        defaultValue={MatchValues?.['RefundData']?.['RefundRequestDate']?dayjs(MatchValues?.RefundData?.['RefundRequestDate'].toDate().toISOString()):null}
-        onChange={(event) => HandleMatchChange(event,'RefundRequestDate' )}
-        dateFormat="dd/mm/yyyy" // Customize date format as needed
-        scrollableYearDropdown  // Make year dropdown scrollable
-         yearDropdownItemNumber={50}
-         picker="date"
-          label="Refund Request Date"
-  		variant="outlined"
-      /></Typography>
-                </Box>
-                {errors?.RefundData?.RefundRequestDate && <span className="validationerror">{errors?.RefundData?.RefundRequestDate}</span>}
-              </Grid>
-              <Grid item xs={6}>
-     <div className="InputLabel" >Refund Status</div>
-     <FormControl fullWidth>
-     <Select
-                    labelId="status-label"
-                    id="FeeType"
-                    name="FeeType"
-                    value={MatchValues?.RefundData?.['RefundStatus'] || ''}
-                    label="Refund Status"
-                    required
-                    onChange={(event) => HandleMatchChange(event,'RefundStatus')}
-                  >
-                      <MenuItem value="">
-                        -Select-
-                      </MenuItem>
-                      <MenuItem value="Refunded">
-                        Refunded
-                      </MenuItem>
-                      <MenuItem value="Pending">
-                        Pending
-                      </MenuItem>
-                       <MenuItem value="Unclear">
-                        Unclear
-                      </MenuItem>
-                      <MenuItem value="Refund denied">
-                        Refund denied
-                      </MenuItem>
-                      </Select>
-                      {errors.RefundStatus?.[index]  && <span className="validationerror">{errors.RefundStatus?.[index] }</span>}
-                    </FormControl>
-
-       </Grid>
-    	<Grid item xs={6}>
-
-    	<div className="InputLabel" >Refund Type?</div>
-                <Select1
-        value={MatchValues?.RefundData?.['RefundType']}
-        onChange={(event) => HandleMatchChange(event,'RefundType' )}
-        variant="outlined"
-        placeholder="Refund Type?"
-        label="Refund Type"
-        options={RotationRefundMatch}
-        isSearchable
-      	/>
-      	 {errors?.RefundData?.RefundType && <span className="validationerror">{errors?.RefundData?.RefundType }</span>}
-       </Grid>
-       {MatchValues?.RefundData?.['RefundType']?.value==="Match Plan" &&(
-			 <Grid item xs={6}>
-            	<div className="InputLabel" >{MatchValues?.RefundData?.['RefundType']?.value} Name</div>
-                  <TextField
-                    label="Match Plan Name"
-                    variant="outlined"
-                    fullWidth
-                    value={MatchValues?.['RefundData']?.['RefundMatchPlanName']}
-                    onChange={(event) => HandleMatchChange(event,'RefundMatchPlanName')}
-                    sx={{ my: 0, "margin-bottom": "4px" }}
-                  />
-                  {errors?.RefundData?.RefundMatchPlanName  && <span className="validationerror">{errors?.RefundData?.RefundMatchPlanName  }</span>}
-            </Grid>
-       )}
-       <Grid item xs={6}>
-                <div className="InputLabel" >Mode Of Refund</div>
-                <Select1
-        value={MatchValues?.RefundData?.['ModeOfRefund']}
-        onChange={(event) => HandleMatchChange(event,'ModeOfRefund')}
-        variant="outlined"
-        placeholder="Mode Of Refund"
-        label="Mode Of Refund"
-        options={PaymentOptionsList}
-        isSearchable
-      	/>
-      	 {errors?.RefundData?.ModeOfRefund  && <span className="validationerror">{errors?.RefundData?.ModeOfRefund }</span>}
-       </Grid>
-       <Grid item xs={6}>
-                <div className="InputLabel" >Refund Amount</div>
-                  <TextField
-                    label="Refund Amount"
-                    variant="outlined"
-                    fullWidth
-                    value={MatchValues?.['RefundData']?.['RefundAmount']}
-                    required
-                    onChange={(event) => HandleMatchChange(event,'RefundAmount')}
-                    sx={{ my: 0, "margin-bottom": "4px" }}
-                  />
-                  {errors?.RefundData?.RefundAmount  && <span className="validationerror">{errors?.RefundData?.RefundAmount  }</span>}
-                </Grid>
-                <Grid item xs={6} >
-                <div className="InputLabel" >Date Refunded</div>
-                <Box sx={{ display: 'flex', p: 0, borderRadius: 1 ,border:1}}>
-                  <Typography variant="subtitle1" color="textSecondary" sx={{ flexGrow: 1,  p: 1, borderRadius: 1 }}>Date Refunded:</Typography>
-                  <Typography variant="body1" sx={{  p: 1, borderRadius: 1 }}><DatePicker
-        defaultValue={MatchValues?.RefundData?.['RefundDate']?dayjs(MatchValues?.RefundData?.['RefundDate'].toDate().toISOString()):null}
-        onChange={(event) => HandleMatchChange(event,'RefundDate' )}
-        dateFormat="dd/mm/yyyy" // Customize date format as needed
-        scrollableYearDropdown  // Make year dropdown scrollable
-         yearDropdownItemNumber={50}
-         picker="date"
-          label="Date Refunded"
-  		variant="outlined"
-      /></Typography>
-                </Box>
-                {errors.RefundDate?.RefundDate && <span className="validationerror">{errors.RefundDate?.RefundDate }</span>}
-              </Grid>
-       <Grid item xs={6}>
-       <div className="InputLabel" >Refund Note</div>
-                 <TextField
-                    label="Refund Note"
-                    variant="outlined"
-                    multiline
-  					rows={4}
-                    fullWidth
-                    value={MatchValues?.RefundData?.['RefundNote']}
-                    required
-                    onChange={(event) => HandleMatchChange(event,'RefundNote')}
-                    sx={{ my: 0, "margin-bottom": "4px" }}
-                  />
-      	 {errors.RefundData?.RefundNote && <span className="validationerror">{errors.RefundData?.RefundNote }</span>}
-       </Grid>
-       </Grid>
-       </div>
-       </div>
-
-
-
-
-
-            </Grid>
-            <Grid className="submitbutton" item xs={12} style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-            <Button
-              variant="contained"
-              color="secondary"
-              onClick={handleUpdateForm}
-            >
-              Update
-            </Button>
-          </Grid>
-
-
-
-
-          <Grid container  spacing={1}  sx={{ width: '100%', p: 3 }} >
-            <Button
-              variant="contained"
-              color="error"
-              onClick={OnBoardingPopupOpen}
-              sx={{ width: '100%' }}
-            >
-               ONBOARDING & ACCESS
-            </Button>
-          </Grid>
-          </TabPanel>
+  </Grid>
+</TabPanel>
 
 
 

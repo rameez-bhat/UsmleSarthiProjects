@@ -269,6 +269,25 @@ const panelistOptions = [
       	 {errors.EmailWhatsAppInstructionsCustom && <span className="validationerror">{errors.EmailWhatsAppInstructionsCustom}</span>}
                  </FormControl>
                </Grid>
+               <Grid item xs={6}>
+                <Box sx={{ display: 'flex', p: 0, borderRadius: 1, border: 1 }}>
+                  <Typography variant="subtitle1" color="textSecondary" sx={{ flexGrow: 1, p: 1, borderRadius: 1 }}>Date Of Mentor Changed:</Typography>
+                  <Typography variant="body1" sx={{ p: 1, borderRadius: 1 }}>
+                    <DatePicker
+                      defaultValue={MatchValues['Platinum']?.['DateOfMentorChanged'] ? dayjs(MatchValues['Platinum']?.['DateOfMentorChanged']) : null}
+                      onChange={(event) => HandlePlatinumChange(event, 'DateOfMentorChanged')}
+                      dateFormat="dd/mm/yyyy"
+                      showYearDropdown
+                      scrollableYearDropdown
+                      yearDropdownItemNumber={50}
+                      picker="date"
+                      label="Date Of Mentor Changed"
+                      variant="outlined"
+                    />
+                  </Typography>
+                </Box>
+                {errors.EnrollmentDate && <span className="validationerror">{errors.EnrollmentDate}</span>}
+              </Grid>
                </>
                )}
               <Grid item xs={6}>
@@ -290,70 +309,6 @@ const panelistOptions = [
                 </Box>
                 {errors.EnrollmentDate && <span className="validationerror">{errors.EnrollmentDate}</span>}
               </Grid>
-              <Grid item xs={6}>
-                <FormControl fullWidth>
-                  <InputLabel id="plan-label">Mentor Changed</InputLabel>
-                  <Select
-                    value={MatchValues['Platinum']?.['MentorChanged']?.['Value']}
-                    label="Mentor Changed"
-                    required
-                    onChange={(event) => HandlePlatinumChange(event, 'MentorChanged', true)}
-                  >
-                    <MenuItem value="Yes">Yes</MenuItem>
-                    <MenuItem value="No">No</MenuItem>
-                  </Select>
-                  {errors.MentorChanged && <span className="validationerror">{errors.MentorChanged}</span>}
-                </FormControl>
-              </Grid>
-              {MatchValues['Platinum']?.['MentorChanged']?.['Value'] === 'Yes' && (
-                <>
-                  <Grid item xs={6}>
-                    
-                  <TextField
-                  label="Previous Mentor Name"
-                  variant="outlined"
-                  fullWidth
-                  multiline
-                  minRows={2}
-                  value={MatchValues['Platinum']?.['MentorChanged']?.['Relation']?.['PreviousMentorName']}
-                  required
-                  onChange={(event) => HandlePlatinumChange(event, 'MentorChanged', true, 'PreviousMentorName')}
-                  sx={{ my: 0, mb: '4px'}}
-                  />
-                    
-                    {errors.MentorChangedPreviousMentorName && <span className="validationerror">{errors.MentorChangedPreviousMentorName}</span>}
-                  </Grid>
-                  <Grid item xs={6}>
-                    
-                    <TextField
-                    label="Previous Mentor Name"
-                    variant="outlined"
-                    fullWidth
-                    multiline
-                    minRows={2}
-                    value={MatchValues['Platinum']?.['MentorChanged']?.['Relation']?.['Reason']}
-                    required
-                    onChange={(event) => HandlePlatinumChange(event, 'MentorChanged', true, 'Reason')}
-                    sx={{ my: 0, mb: '4px'}}
-                    />
-                    {errors.MentorChangedReason && <span className="validationerror">{errors.MentorChangedReason}</span>}
-                  </Grid>
-                  <Grid item xs={6}>
-                    <TextField
-                    label="Notes"
-                    variant="outlined"
-                    fullWidth
-                    multiline
-                    minRows={2}
-                    value={MatchValues['Platinum']?.['MentorChanged']?.['Relation']?.['Notes']}
-                    required
-                    onChange={(event) => HandlePlatinumChange(event, 'MentorChanged', true, 'Notes')}
-                    sx={{ my: 0, mb: '4px'}}
-                    />
-                    {errors.MentorChangedNotes && <span className="validationerror">{errors.MentorChangedNotes}</span>}
-                  </Grid>
-                </>
-              )}
               <Grid item xs={6}>
                 <TextField
                     label="Match Plan Document"

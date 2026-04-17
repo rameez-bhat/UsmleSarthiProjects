@@ -297,12 +297,12 @@ console.log("updateData--->",updateData)
       //this.setProfileData(this.userData);
     } else {
       this.userData = {
-        ...docRef.data(),
+        ...userRoleDocRef.data(),
         ...{
           uid: user.uid,
           emailVerified: user.emailVerified
         },
-        ...userRoleDocRef.data()
+        ...docRef.data()
       };
     }
     let extraDocRef = results[2];

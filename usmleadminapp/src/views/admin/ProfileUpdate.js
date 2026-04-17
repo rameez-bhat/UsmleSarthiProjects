@@ -9,6 +9,7 @@ import Select1 from 'react-select';
 import { CFormCheck } from '@coreui/react'
 import { medicalSchoolOptions } from "../../apis/MedicalSchools";
 import { USA_States } from "../../apis/usa_states";
+import { toast } from 'react-toastify';
 //const admin = require('firebase-admin');
 const dateFormat="MM/DD/YYYY";
 import {
@@ -696,6 +697,7 @@ setStudentData((prevValues) => ({
 		 const validationErrors = validate();
     setErrors(validationErrors);
     console.log("result--->",StudentData)
+     console.log("validationErrors--->",validationErrors)
     var dataTobesend={};
     if (Object.keys(validationErrors).length === 0) {
     	 showLoading()
@@ -731,6 +733,7 @@ setStudentData((prevValues) => ({
       		console.log("result--->",StudentData)
       		await deleteFieldFromDocument("Users",id,"WorkExperienceData");
       		await deleteFieldFromDocument("Users",id,"USCEDATA");
+      		await handleUpdate("UsersRoles",id,{displayName:StudentData?.displayName})
 			handleUpdate("Users",id,StudentData).then((result) => {
      		hideLoading();
      		deleteUser(id,"Users",StudentData.email)
@@ -753,6 +756,24 @@ setStudentData((prevValues) => ({
       setOpen(true);
       hideLoading();
     }
+    }
+    else
+    {
+    	const errorList = Object.values(validationErrors);
+
+  toast.error(
+    <div>
+      <strong>Please fix the following:</strong>
+      <ol style={{ marginTop: '8px', paddingLeft: '18px' }}>
+        {errorList.map((err, index) => (
+          <li key={index}>{err}</li>
+        ))}
+      </ol>
+    </div>,
+    {
+      autoClose: 5000,
+    }
+  );
     }
 	}
 	const DeleteMoreWork = async (DeleteKey) => {
@@ -1019,7 +1040,7 @@ const handleSubmit = async () => {
     }
     else if(StudentData['ScoreData']?.['Step2Score']?.['Selected']?.['Name']==="Score" && isNaN(StudentData['ScoreData']?.['Step2Score']?.['Selected']?.['Value']) )
     {
-    	errors.Step1ScoreMarks="Please Enter A Valud Step 2 Score";
+    	errors.Step2ScoreMarks="Please Enter A Valud Step 2 Score";
     }
     if(StudentData['ScoreData']?.['Step3Score']?.['Selected']?.['Name']==="")
     {

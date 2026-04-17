@@ -14,12 +14,59 @@ import { ToastrService } from 'ngx-toastr';
 import * as XLSX from 'xlsx'; 
 import { UserService } from '../common/user.service';
 import { ProfileService } from './services/profile.service';
+interface ScoreSelection {
+  Name?: string;
+  Value?: any;
+}
 
+interface StepScore {
+  Selected: ScoreSelection;
+}
+
+interface ScoreData {
+  Step1Score: StepScore;
+  Step2Score: StepScore;
+  Step3Score: StepScore;
+  Step1Attempts?: string;
+  Step2Attempts?: string;
+  Step3Attempts?: string;
+}
+
+interface SelectedUser {
+  GraduationDate?: any;
+  GraduationExtendedMoreThan6Months?: string;
+
+  CountryOfMedicalSchool?: any;
+  NameOfMedicalSchool?: any;
+  NameOfMedicalSchoolOthers?: string;
+
+  ProfileRepeating?: string;
+
+  VisaRequirementOthers?: string;
+
+  ScoreData: ScoreData;
+
+  ECFMGCertificate?: string;
+  ECFMGCertificateDate?: any;
+
+  focusSpeciality?: string;
+  HomeCountryResidencyOption?: string;
+  homeCompletionYear?: number;
+  HomeCountrySpecility?: string;
+
+  DoYouHaveMasters?: string;
+  mastersDegreeName?: string;
+
+  redflag?: string;
+
+  HDUGAU?: any[];
+}
 @Component({
   selector: 'app-profile',
   templateUrl: './profile.component.html',
   styleUrls: ['./profile.component.scss']
 })
+
 export class ProfileComponent implements OnInit {
   visaList: Visa[];
   matchPlans: string[];
@@ -29,6 +76,9 @@ export class ProfileComponent implements OnInit {
   selectedVisaValues: string[] = [];
   Step1ScoreKeys: any[] = [];
   Step2ScoreKeys: any[] = [];
+  workExperiences: any[] = [];
+  researchData: any[] = [];
+  usceData: any[] = [];
   medicalSchoolOptionsList: any[] = [];
   Step1ScoreDropDown : any = {'Score':'Score','Pass':'Pass','Fail':'Fail','Not taken':'Not taken'};
  Step2ScoreDropDown: any = {'Score':'Score','Not taken':'Not taken'}
@@ -108,7 +158,12 @@ export class ProfileComponent implements OnInit {
       this.userData = await this.authService.userData;
       this.userPayments = await this.dbService.getUserPaymentByEmail(this.userData.email);
       this.userReferral = await this.dbService.getReferralCode(this.userData.uid);
-      this.selectedUser=this.userData;
+      //this.selectedUser=this.userData;
+      this.setSelectedUser(this.userData);
+      this.workExperiences = this.getWorkExperiences();
+      this.researchData = this.getResearch();
+      this.usceData = this.getUsceData();
+      console.log("this.selectedUser--->",this.selectedUser)
       this.convertVisa(this.userData);
       this.landing = "profile";
       this.loading = false;
@@ -120,6 +175,16 @@ export class ProfileComponent implements OnInit {
       console.log(err);
     }
   }
+  setSelectedUser(data: any) {
+  this.selectedUser = {
+    ...this.getEmptyUser(),
+    ...data,
+    ScoreData: {
+      ...this.getEmptyUser().ScoreData,
+      ...(data && data.ScoreData ? data.ScoreData : {})
+    }
+  };
+}
 prepareVisa() 
  {
   if (!this.selectedUser || !this.selectedUser.VisaRequirement) 
@@ -212,6 +277,62 @@ fixScoreData() {
       }
     }
   }
+}
+getHDUGAUValues() {
+  if (!this.selectedUser || !this.selectedUser.HDUGAU) {
+    return [];
+  }
+  return this.selectedUser.HDUGAU.map(function(x) {
+    return x.label;
+  });
+}
+getEmptyUser(): SelectedUser {
+  return {
+    GraduationDate: null,
+    GraduationExtendedMoreThan6Months: '',
+
+    CountryOfMedicalSchool: null,
+    NameOfMedicalSchool: null,
+    NameOfMedicalSchoolOthers: '',
+
+    ProfileRepeating: '',
+
+    VisaRequirementOthers: '',
+
+    ScoreData: {
+      Step1Score: { Selected: {} },
+      Step2Score: { Selected: {} },
+      Step3Score: { Selected: {} },
+      Step1Attempts: '',
+      Step2Attempts: '',
+      Step3Attempts: ''
+    },
+
+    ECFMGCertificate: '',
+    ECFMGCertificateDate: null,
+
+    focusSpeciality: '',
+    HomeCountryResidencyOption: '',
+
+    homeCompletionYear: null,
+    HomeCountrySpecility: '',
+
+    DoYouHaveMasters: '',
+    mastersDegreeName: '',
+
+    redflag: '',
+
+    HDUGAU: []
+  };
+}
+setHDUGAUValues(values: string[]) {
+  if (!this.selectedUser) {
+    this.selectedUser = {};
+  }
+
+  this.selectedUser.HDUGAU = (values || []).map(function(v) {
+    return { label: v };
+  });
 }
 formatDate(val: any) {
   if (!val) return '';

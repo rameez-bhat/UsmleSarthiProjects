@@ -1,3 +1,20 @@
+<style>
+  .label-field {
+  display: inline-block;
+  padding: 4px 10px;
+  background: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  min-width: 80px;
+  font-size: 13px;
+}
+
+.label-field.full {
+  display: block;
+  width: 100%;
+  padding: 6px 10px;
+}
+</style>
 <div id="contentToConvert">
   <div class="row text-left">
     <div class="display-4 m-4 p-2">Hello, {{ userData.displayName }}</div>
@@ -53,496 +70,281 @@
           </div>
           <div class="p-1 pl-2">
             <form ngNativeValidate #form>
-          <div class="card p-3 mb-3">
+              <div class="card p-3 mb-3">
   <h5 class="text-primary font-weight-bold mb-3">Education</h5>
 
   <div class="row">
+     <div class="col-md-6 mb-3">
+  <label>Year of Graduation *</label>
+  <div class="form-control bg-light">
+    {{ formatDate(selectedUser?.GraduationDate) | date:'yyyy' || 'N/A' }}
+  </div>
+</div>
+ <div class="col-md-6 mb-3">
+  <label>Extension (if any)</label>
+  <div class="form-control bg-light">
+    {{ selectedUser?.GraduationExtendedMoreThan6Months || 'N/A'}}
+  </div>
+</div>
+ <div class="col-md-6 mb-3">
+  <label>Country of Medical School</label>
+  <div class="form-control bg-light">
+    {{ selectedUser?.CountryOfMedicalSchool?.label || 'N/A'}}
+  </div>
+</div>
+<div class="col-md-6 mb-3">
+  <label>Medical School</label>
+  <div class="form-control bg-light">
+    {{ selectedUser?.NameOfMedicalSchool?.label || 'N/A'}}
+  </div>
+</div>
+<div
+  class="col-md-6 mb-3"
+  *ngIf="selectedUser?.NameOfMedicalSchool?.value === 'Others'"
+>
+  <label>Enter School Name</label>
+  <div class="form-control bg-light">
+    {{ selectedUser?.NameOfMedicalSchoolOthers || 'N/A' }}
+  </div>
+</div>
+<div class="col-md-6 mb-3">
+  <label>Are you a repeat applicant for residency?</label>
+  <div class="form-control bg-light">
+    {{ selectedUser?.ProfileRepeating || 'N/A'}}
+  </div>
+</div>
 
-    <!-- Year -->
+<div class="col-md-6 mb-3">
+  <label>Are you a repeat applicant for residency?</label>
+  <div class="form-control bg-light">
+    {{ selectedUser?.ProfileRepeating || 'N/A'}}
+  </div>
+</div>
+</div>
+    </div>
+    <div class="card p-3 mb-3">
+      <div class="row w-100">
+  <div class="card p-3 mb-3 w-100">
+    <h5 class="text-primary font-weight-bold mb-3">VISA Requirement</h5>
+<div class="col-md-6 mb-3 w-100">
+  <label>Visa?</label>
+  <div class="label-field w-100">
+    <ng-container *ngIf="selectedVisaValues?.length > 0; else noVisa">
+        <ul class="mb-0 pl-3">
+          <li *ngFor="let visa of selectedVisaValues">
+            {{ visa === 'Data not available' ? 'Other' : visa }}
+          </li>
+        </ul>
+      </ng-container>
+
+      <ng-template #noVisa>
+        N/A
+      </ng-template>
+  </div>
+  </div>
+
+  <div
+    class="col-12 mt-2"
+    *ngIf="selectedVisaValues?.includes('Others')"
+  >
+    <label>Other VISA Details</label>
+    <div class="form-control bg-light">
+      {{ selectedUser?.VisaRequirementOthers || 'N/A' }}
+    </div>
+  </div>
+ 
+
+
+
+  </div>
+
+
+</div>
+<div class="row">
+  <div class="card p-3 mb-3">
+  <h5 class="text-primary font-weight-bold mb-3">USMLE Scores</h5>
+
+  <div class="row">
+
+    <!-- STEP 1 -->
     <div class="col-md-6 mb-3">
-      <label>Year of Graduation *</label>
-     <nz-date-picker
-  nzMode="year"
-  nzFormat="yyyy"
-  [(ngModel)]="selectedUser.GraduationDate"
-  name="GraduationDate"
-  nzPlaceHolder="Select Year"
-  [nzAllowClear]="false"
-  class="w-100"
-></nz-date-picker>
+      <label>Step 1</label>
+      <div class="form-control bg-light">
+        {{ selectedUser?.ScoreData?.Step1Score?.Selected?.Name || 'N/A' }}
+      </div>
     </div>
 
-    <!-- Extension -->
-    <div class="col-md-6 mb-3">
-      <label>Extension (if any)</label>
-      <input
-        class="form-control"
-        [(ngModel)]="selectedUser.GraduationExtendedMoreThan6Months"
-        name="GraduationExtendedMoreThan6Months"
-      />
+    <div class="col-md-6 mb-3"
+      *ngIf="selectedUser?.ScoreData?.Step1Score?.Selected?.Name === 'Score'">
+      <label>Step 1 Score</label>
+      <div class="form-control bg-light">
+        {{ selectedUser?.ScoreData?.Step1Score?.Selected?.Value || 'N/A' }}
+      </div>
     </div>
 
-    <!-- Country -->
     <div class="col-md-6 mb-3">
-      <label>Country of Medical School *</label>
-      <nz-select
-        [(ngModel)]="selectedUser.CountryOfMedicalSchool"
-        name="CountryOfMedicalSchool"
-        nzShowSearch
-        nzPlaceHolder="Select Country"
-        (ngModelChange)="onCountryChange($event)"
-        class="w-100"
-      >
-        <nz-option
-          *ngFor="let c of allCountriesC"
-          [nzValue]="c"
-          [nzLabel]="c.label"
-        ></nz-option>
-      </nz-select>
+      <label>Any Step 1 Failure?</label>
+      <div class="form-control bg-light">
+        {{ selectedUser?.ScoreData?.Step1Attempts || 'N/A' }}
+      </div>
     </div>
 
-    <!-- School -->
+    <!-- STEP 2 -->
     <div class="col-md-6 mb-3">
-      <label>Medical School *</label>
-      <nz-select
-        [(ngModel)]="selectedUser.NameOfMedicalSchool"
-        name="NameOfMedicalSchool"
-        nzShowSearch
-        nzPlaceHolder="Select School"
-        class="w-100"
-      >
-        <nz-option
-          *ngFor="let m of medicalSchoolOptionsList"
-          [nzValue]="m"
-          [nzLabel]="m.label"
-        ></nz-option>
-      </nz-select>
+      <label>Step 2</label>
+      <div class="form-control bg-light">
+        {{ selectedUser?.ScoreData?.Step2Score?.Selected?.Name || 'N/A' }}
+      </div>
     </div>
 
-    <!-- Others -->
-    <div
-      class="col-md-6 mb-3"
-      *ngIf="selectedUser?.NameOfMedicalSchool?.value === 'Others'"
-    >
-      <label>Enter School Name</label>
-      <input
-        class="form-control"
-        [(ngModel)]="selectedUser.NameOfMedicalSchoolOthers"
-        name="NameOfMedicalSchoolOthers"
-      />
+    <div class="col-md-6 mb-3"
+      *ngIf="selectedUser?.ScoreData?.Step2Score?.Selected?.Name === 'Score'">
+      <label>Step 2 Score</label>
+      <div class="form-control bg-light">
+        {{ selectedUser?.ScoreData?.Step2Score?.Selected?.Value || 'N/A' }}
+      </div>
+    </div>
+
+    <div class="col-md-6 mb-3">
+      <label>Any Step 2 Failure?</label>
+      <div class="form-control bg-light">
+        {{ selectedUser?.ScoreData?.Step2Attempts || 'N/A' }}
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="col-md-6 mb-3">
+      <label>Step 3</label>
+      <div class="form-control bg-light">
+        {{ selectedUser?.ScoreData?.Step3Score?.Selected?.Name || 'N/A' }}
+      </div>
+    </div>
+
+    <div class="col-md-6 mb-3"
+      *ngIf="selectedUser?.ScoreData?.Step3Score?.Selected?.Name === 'Score'">
+      <label>Step 3 Score</label>
+      <div class="form-control bg-light">
+        {{ selectedUser?.ScoreData?.Step3Score?.Selected?.Value || 'N/A' }}
+      </div>
+    </div>
+
+    <div class="col-md-6 mb-3">
+      <label>Any Step 3 Failure?</label>
+      <div class="form-control bg-light">
+        {{ selectedUser?.ScoreData?.Step3Attempts || 'N/A' }}
+      </div>
     </div>
 
   </div>
 </div>
-          <div class="row mt-2">
-            <span class="col-6"
-              ><label>
-                Are you a repeat applicant for residency?<span
-                  style="color: red"
-                  >*</span
-                ></label
-              ></span
-            >
-            <span class="col-3"
-              ><label
-                ><input
-                  type="radio"
-                  name="repeatApplicant"
-                  [(ngModel)]="selectedUser.ProfileRepeating"
-                  value="Yes"
-                  required
-                />
-                Yes</label
-              ></span
-            >
-            <span class="col-3"
-              ><label
-                ><input
-                  type="radio"
-                  name="repeatApplicant"
-                  [(ngModel)]="selectedUser.ProfileRepeating"
-                  value="No"
-                />
-                No</label
-              ></span
-            >
-          </div>
-          <div
-            class="row mt-2"
-            *ngIf="
-              selectedUser.ProfileRepeating &&
-              selectedUser.ProfileRepeating != ''
-            "
-          >
-            <span class="col-12">
-              <label>
-                If you are a repeat applicant, mention year(s) in which you have
-                applied, speciality and any interviews</label
-              >
-            </span>
-            <span class="col-12">
-              <textarea
-                autosize
-                type="text"
-                placeholder="Please explain here.."
-                [(ngModel)]="selectedUser.ProfileRepeating"
-                name="ProfileRepeating"
-                class="form-control"
-                [required]="
-                  selectedUser.ProfileRepeating &&
-                  selectedUser.ProfileRepeating != ''
-                "
-              >
-              </textarea>
-            </span>
-          </div>
-          <div class="row mt-2">
-            <span class="col-12"
-              ><label for="visareq"
-                >VISA Requirement<span style="color: red">
-                  (Hold down the Ctrl (windows) / Command (Mac) button to select
-                  multiple options)</span
-                ></label
-              >
-              <select
-                class="form-control"
-                id="userVisa[]"
-                name="userVisa[]"
-                size="4"
-                multiple="multiple"
-                [(ngModel)]="selectedVisaValues"
-                required
-              >
-                <option [value]="visa.Type" *ngFor="let visa of customVisa">
-                  {{ visa.Type === "Data not available" ? "Other" : visa.Type }}
-                </option>
-              </select>
-            </span>
-            <span
-              class="col-12 mt-2"
-              *ngIf="
-                selectedVisaValues && selectedVisaValues.includes('Others')
-              "
-              ><input
-                type="text"
-                name="visaOther"
-                [(ngModel)]="selectedUser.VisaRequirementOthers"
-                class="form-control"
-                placeholder="Please explain here about other.."
-            /></span>
-          </div>
-          <div class="card p-3 mb-3">
-    <h5 class="text-primary">USMLE Scores</h5>
 
+
+</div>
+<div class="row">
+  <div class="card p-3 mb-3 w-100">
+    <h5 class="text-primary font-weight-bold mb-3">ECFMG Certificate</h5>
     <div class="row">
-
-      <!-- STEP 1 -->
       <div class="col-md-6 mb-3">
-        <label>Step 1</label>
-        <nz-select [(ngModel)]="selectedUser?.ScoreData?.Step1Score?.Selected.Name" [ngModelOptions]="{ standalone: true }">
-          <nz-option *ngFor="let i of Step1ScoreKeys"
-            [nzValue]="i.key"
-            [nzLabel]="i.value"></nz-option>
-        </nz-select>
-      </div>
-
-      <div class="col-md-6 mb-3"
-        *ngIf="selectedUser?.ScoreData?.Step1Score?.Selected?.Name === 'Score'">
-        <label>Step 1 Score</label>
-        <input type="text" class="form-control"
-          name="Step1ScoreMarks"
-          [attr.actualvalue]="selectedUser?.ScoreData?.Step1Score?.Selected?.Value"
-          [(ngModel)]="selectedUser.ScoreData.Step1Score.Selected.Value" />
-      </div>
-      <div class="col-md-6 mb-3">
-        <label>Any Step 1 Failure?</label>
-        <nz-select
-  [(ngModel)]="selectedUser.ScoreData.Step1Attempts"
-  [ngModelOptions]="{ standalone: true }"
->
-  <nz-option nzValue="1" nzLabel="1"></nz-option>
-  <nz-option nzValue="2" nzLabel="2"></nz-option>
-  <nz-option nzValue="3" nzLabel="3"></nz-option>
-</nz-select>
-      </div>
-
-      <!-- STEP 2 -->
-      <div class="col-md-6 mb-3">
-        <label>Step 2</label>
-        <nz-select [(ngModel)]="selectedUser?.ScoreData?.Step2Score?.Selected.Name"  [ngModelOptions]="{ standalone: true }">
-          <nz-option *ngFor="let i of Step2ScoreKeys"
-            [nzValue]="i.key"
-            [nzLabel]="i.value"></nz-option>
-        </nz-select>
-      </div>
-
-      <div class="col-md-6 mb-3"
-        *ngIf="selectedUser?.ScoreData?.Step2Score?.Selected?.Name === 'Score'">
-        <label>Step 2 Score</label>
-        <input type="number" class="form-control" name="Step2ScoreMarks"
-          [(ngModel)]="selectedUser.ScoreData.Step2Score.Selected.Value" />
-      </div>
-      <div class="col-md-6 mb-3">
-        <label>Any Step 2 Failure?</label>
-         <nz-select
-  [(ngModel)]="selectedUser.ScoreData.Step2Attempts"
-  [ngModelOptions]="{ standalone: true }"
->
-  <nz-option nzValue="1" nzLabel="1"></nz-option>
-  <nz-option nzValue="2" nzLabel="2"></nz-option>
-  <nz-option nzValue="3" nzLabel="3"></nz-option>
-</nz-select>
-      </div>
-      <!-- STEP 3 -->
-      <div class="col-md-6 mb-3">
-        <label>Step 3</label>
-        <nz-select [(ngModel)]="selectedUser?.ScoreData?.Step3Score?.Selected.Name" [ngModelOptions]="{ standalone: true }">
-          <nz-option *ngFor="let i of Step2ScoreKeys"
-            [nzValue]="i.key"
-            [nzLabel]="i.value"></nz-option>
-        </nz-select>
-      </div>
-
-      <div class="col-md-6 mb-3"
-        *ngIf="selectedUser?.ScoreData?.Step3Score?.Selected?.Name === 'Score'">
-        <label>Step 3 Score</label>
-        <input type="number" class="form-control" name="Step3ScoreMarks"
-          [(ngModel)]="selectedUser.ScoreData.Step3Score.Selected.Value" />
-      </div>
-       <div class="col-md-6 mb-3">
-        <label>Any Step 3 Failure?</label>
-        <nz-select [(ngModel)]="selectedUser.ScoreData.Step3Attempts" [ngModelOptions]="{ standalone: true }">
-          <nz-option nzValue="1" nzLabel="1"></nz-option>
-          <nz-option nzValue="2" nzLabel="2"></nz-option>
-          <nz-option nzValue="3" nzLabel="3"></nz-option>
-        </nz-select>
-      </div>
+  <label>Date of ECFMG Certificate</label>
+  <div class="form-control bg-light">
+    {{ formatDate(selectedUser?.ECFMGCertificateDate) | date:'yyyy' || 'N/A' }}
     </div>
   </div>
-          <div class="col-md-6 mb-3">
-        <label>ECFMG Certificate</label>
-        <nz-select [(ngModel)]="selectedUser.ECFMGCertificate" name="ECFMGCertificate">
-          <nz-option [nzValue]="''" nzLabel="==Select=="></nz-option>
-          <nz-option [nzValue]="'yes'" nzLabel="Yes"></nz-option>
-          <nz-option [nzValue]="'no'" nzLabel="No"></nz-option>
-        </nz-select>
+
+    </div>
+
+  </div>
+</div>
+<div class="row">
+  <div class="card p-3 mb-3 w-100">
+    <h5 class="text-primary font-weight-bold mb-3">Additional information</h5>
+    <div class="row">
+      <div class="col-md-6 mb-3">
+  <label>Focus Speciality for Residency</label>
+  <div class="form-control bg-light">
+    {{ selectedUser?.focusSpeciality }}
+    </div>
+  </div>
+  <div class="col-md-6 mb-3">
+  <label>Do you have home country residency</label>
+  <div class="form-control bg-light">
+    {{ selectedUser?.HomeCountryResidencyOption }}
+    </div>
+  </div>
+  <div *ngIf="selectedUser?.HomeCountryResidencyOption && selectedUser?.HomeCountryResidencyOption == 'yes'">
+   <div class="col-md-6 mb-3"
+      >
+      <label>Completion Year</label>
+      <div class="form-control bg-light">
+        {{ formatDate(selectedUser?.homeCompletionYear) | date:'yyyy' || 'N/A' }}
       </div>
-      
-      <div class="col-md-6 mb-3" *ngIf="selectedUser.ECFMGCertificate && selectedUser.ECFMGCertificate == 'yes'">
-      <label>Date of ECFMG Certificate</label>
-     <nz-date-picker
-  nzMode="date"
-  nzFormat="dd-MM-yyyy"
-  [(ngModel)]="selectedUser.ECFMGCertificateDate"
-  name="ECFMGCertificateDate"
-  nzPlaceHolder="Select Year"
-  [nzAllowClear]="false"
-  class="w-100"
-></nz-date-picker>
-    </div>    
-      
-          <div class="font-weight-bold h4 text-primary m-2 p-2">
-            Additional information
-          </div>
-          <div class="row mt-2">
-            <span class="col-6"
-              ><label for="primarySpeciality"
-                >Focus Speciality for Residency<span style="color: red"
-                  >*</span
-                ></label
-              ></span
-            >
-            <span class="col-6"
-              ><label
-                >Do you have home country residency?<span style="color: red"
-                  >*</span
-                ></label
-              ></span
-            >
-            <span class="col-6"
-              ><input
-                type="text"
-                class="form-control"
-                [(ngModel)]="selectedUser.focusSpeciality"
-                name="focusSpeciality"
-                aria-describedby="yogError"
-                placeholder="Enter your focus speciality for residency"
-                required
-            /></span>
-            <span class="col-3"
-              ><label
-                ><input
-                  type="radio"
-                  name="HomeCountryResidencyOption"
-                  [(ngModel)]="selectedUser.HomeCountryResidencyOption"
-                  
-                  value="yes"
-                  required
-                />
-                Yes</label
-              ></span
-            >
-            <span class="col-3"
-              ><label
-                ><input
-                  type="radio"
-                  name="HomeCountryResidencyOption"
-                  [(ngModel)]="selectedUser.HomeCountryResidencyOption"
-                  value="no"
-                />
-                No</label
-              ></span
-            >
-          </div>
-          <div
-            class="row mt-2"
-            *ngIf="
-              selectedUser.HomeCountryResidencyOption && selectedUser.HomeCountryResidencyOption == 'yes'
-            "
-          >
-            <span class="col-6"
-              ><label
-                >Completion Year<span style="color: red">*</span></label
-              ></span
-            >
-            <span class="col-6"
-              ><label for="step2Score"
-                >Home Country Residency Speciality
-                <span style="color: red">*</span></label
-              ></span
-            >
-            <span class="col-6"
-              ><input
-                type="number"
-                class="form-control"
-                name="homeCompletionYear"
-                [(ngModel)]="selectedUser.homeCompletionYear"
-                aria-describedby="step1ScoreError"
-                placeholder="Enter your completion year"
-                onfocus="this.placeholder = ''"
-                [required]="
-                  selectedUser.homeResidency &&
-                  selectedUser.homeResidency == 'Yes'
-                "
-            /></span>
-            <span class="col-6"
-              ><input
-                type="text"
-                class="form-control"
-                [(ngModel)]="selectedUser.HomeCountrySpecility"
-                name="HomeCountrySpecility"
-                aria-describedby="step2ScoreError"
-                placeholder="Enter the home country speciality"
-                [required]="
-                  selectedUser.HomeCountryResidencyOption &&
-                  selectedUser.HomeCountryResidencyOption == 'yes'
-                "
-            /></span>
-            <span class="col-12 mt-2">
-              <label> Other comments </label>
-            </span>
-            <span class="col-12">
-              <textarea
-                autosize
-                type="text"
-                name="HomeCountrySpecilityAdditionalDetails"
-                class="form-control"
-                [(ngModel)]="selectedUser.HomeCountrySpecilityAdditionalDetails"
-                placeholder="Please explain here.."
-              >
-              </textarea>
-            </span>
-          </div>
-          <div class="row mt-2">
-            <span class="col-12">
-              <label>
-                If you are applying to more than one speciality or undecided,
-                please explain
-              </label>
-            </span>
-            <span class="col-12"
-              ><input
-                type="text"
-                name="undecidedSpecialities"
-                class="form-control"
-                [(ngModel)]="selectedUser.undecidedSpecialities"
-                placeholder="Please explain here.."
-            /></span>
-          </div>
+    </div>
+    <div class="col-md-6 mb-3"
+      >
+      <label>Home Country Residency Speciality</label>
+      <div class="form-control bg-light">
+        {{ selectedUser?.HomeCountrySpecility }}
+      </div>
+    </div>
+    <div class="col-md-6 mb-3"
+      >
+      <label>Other comments</label>
+      <div class="form-control bg-light">
+        {{ selectedUser?.HomeCountrySpecilityAdditionalDetails }}
+      </div>
+    </div>
+<div class="col-md-6 mb-3"
+      >
+      <label>If you are applying to more than one speciality or undecided,
+                please explain</label>
+      <div class="form-control bg-light">
+        {{ selectedUser?.undecidedSpecialities }}
+      </div>
+    </div>
+  <div class="col-md-6 mb-3"
+      >
+      <label>Do you have a US Masters (MS) Degree</label>
+      <div class="form-control bg-light">
+        {{ selectedUser?.DoYouHaveMasters }}
+      </div>
+    </div>
+    <div class="col-md-6 mb-3"
+      >
+      <label>Other comments</label>
+      <div class="form-control bg-light">
+        {{ selectedUser?.HomeCountrySpecilityAdditionalDetails }}
+      </div>
+    </div>
+    <div *ngIf="selectedUser?.MastersDegree && selectedUser?.DoYouHaveMasters == 'yes'">
+      <div class="col-md-6 mb-3"
+      >
+      <label>Name of the degree</label>
+      <div class="form-control bg-light">
+        {{ selectedUser?.mastersDegreeName }}
+      </div>
+    </div>
+    </div>
 
-          <div class="row mt-2">
-            <span class="col-6"
-              ><label
-                >Do you have a US Masters (MS) Degree?<span style="color: red"
-                  >*</span
-                ></label
-              ></span
-            >
-            <span class="col-3"
-              ><label
-                ><input
-                  type="radio"
-                  name="masters"
-                  [(ngModel)]="selectedUser.DoYouHaveMasters"
-                  value="yes"
-                  required
-                />
-                Yes</label
-              ></span
-            >
-            <span class="col-3"
-              ><label
-                ><input
-                  type="radio"
-                  name="masters"
-                  [(ngModel)]="selectedUser.DoYouHaveMasters"
-                  value="no"
-                />
-                No</label
-              ></span
-            >
-          </div>
-          <div
-            class="row mt-2"
-            *ngIf="
-              selectedUser.MastersDegree && selectedUser.DoYouHaveMasters == 'yes'
-            "
-          >
-            <!-- <span class="col-6"
-              ><input
-                type="number"
-                class="form-control"
-                name="mastersCompletionYear"
-                [(ngModel)]="selectedUser.mastersCompletionYear"
-                aria-describedby="step1ScoreError"
-                placeholder="Enter your completion year"
-                onfocus="this.placeholder = ''"
-                [required]="
-                  selectedUser.MastersDegree && selectedUser.MastersDegree == 'Yes'
-                "
-            /></span> -->
-            <span class="col-12"
-              ><input
-                type="text"
-                class="form-control"
-                [(ngModel)]="selectedUser.mastersDegreeName"
-                name="mastersDegreeName"
-                aria-describedby="step2ScoreError"
-                placeholder="Name of the degree"
-                [required]="
-                  selectedUser.DoYouHaveMasters &&
-                  selectedUser.DoYouHaveMasters == 'yes'
-                "
-            /></span>
-          </div>
-          <div class="card p-3 mb-3">
-  <div class="font-weight-bold h4 text-primary m-2 p-2">Experience</div>
 
-  <div *ngIf="getWorkExperiences().length === 0">
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+</div>
+<div class="row">
+  <div class="card p-3 mb-3 w-100">
+    <h5 class="text-primary font-weight-bold mb-3">Experience</h5>
+    <div class="row">
+      <div *ngIf="workExperiences.length === 0">
     No Work Experience Found
   </div>
 
-  <div *ngFor="let exp of getWorkExperiences(); let i = index"
+  <div *ngFor="let exp of workExperiences; let i = index"
        class="border rounded p-3 mb-2">
 
     <div class="mb-2">
@@ -581,15 +383,18 @@
     </div>
 
   </div>
-</div>
-<div class="card p-3 mb-3">
-  <div class="font-weight-bold h4 text-primary m-2 p-2">Research</div>
-
-  <div *ngIf="getResearch().length === 0">
+      </div>
+    </div>
+  </div>
+  <div class="row">
+  <div class="card p-3 mb-3 w-100">
+    <h5 class="text-primary font-weight-bold mb-3">Research</h5>
+    <div class="row">
+      <div *ngIf="researchData.length === 0">
     No Research Found
   </div>
 
-  <div *ngFor="let res of getResearch(); let i = index"
+  <div *ngFor="let res of researchData; let i = index"
        class="border rounded p-3 mb-2">
 
     <div class="mb-2">
@@ -643,15 +448,18 @@
     </div>
 
   </div>
-</div>
-<div class="card p-3 mb-3">
-  <div class="font-weight-bold h4 text-primary m-2 p-2">Research</div>
-
-  <div *ngIf="getUsceData().length === 0">
+      </div>
+    </div>
+    </div>
+    <div class="row">
+  <div class="card p-3 mb-3 w-100">
+    <h5 class="text-primary font-weight-bold mb-3">USCE</h5>
+    <div class="row">
+      <div *ngIf="usceData.length === 0">
     No USCE Found
   </div>
 
-  <div *ngFor="let usce of getUsceData(); let i = index"
+  <div *ngFor="let usce of usceData; let i = index"
        class="border rounded p-3 mb-2">
 
     <div class="mb-2">
@@ -715,151 +523,15 @@
     </div>
 
   </div>
-</div>
+      </div>
+      </div>
+      </div>
 
 
-          
-          <div class="row mt-2">
-            <span class="col-12">
-              <label>
-                Any other information/red flag you want us to be aware of
-              </label>
-            </span>
-            <span class="col-12">
-              <textarea
-                autosize
-                type="text"
-                name="redFlags"
-                class="form-control"
-                [(ngModel)]="selectedUser.redflag"
-                placeholder="Please explain here.."
-              >
-              </textarea>
-            </span>
-          </div>
-          <div class="row mt-2">
-            <span class="col-6"
-              ><label
-                >How did you hear about USMLESarthi?<span style="color: red"
-                  >*</span
-                ></label
-              ></span
-            >
-            <span class="col-6"
-              ><select
-                class="form-control"
-                name="hearAbout"
-                [(ngModel)]="selectedUser?.HDUGAU[0].label"
-                required
-              >
-                <option value="Facebook">Facebook</option>
-                <option value="YouTube">Youtube</option>
-                <option value="Google">Google</option>
-                <option value="Reviewed Website">Reviewed Website</option>
-                <option value="Reddit">Reddit</option>
-                <option value="Twitter">Twitter</option>
-                <option value="LinkedIn">LinkedIn</option>
-                <option value="Telegram">Telegram</option>
-                <option value="Profile Review/Discussion with Sarthi team">
-                  Profile Review/Discussion with Sarthi team
-                </option>
-                <option value="Reffered by Friend/Senior">
-                  Referred by Friend/Senior
-                </option>
-                <option value="Others">Others</option>
-              </select></span
-            >
-            <span
-              class="col-12 mt-2"
-              *ngIf="
-                selectedUser.hearAbout && selectedUser.hearAbout == 'Others'
-              "
-              ><input
-                type="text"
-                name="hearAboutOthers"
-                [(ngModel)]="selectedUser.hearAboutOthers"
-                class="form-control"
-                placeholder="Please explain here about others.."
-                [required]="
-                  selectedUser.hearAbout && selectedUser.hearAbout == 'Others'
-                "
-            /></span>
-          </div>
-          <!--<button
-            type="submit"
-            class="btn btn-block btn-primary btn-outline-primary card-footer mt-3"
-            name="submit"
-            (click)="form.checkValidity() ? updateProfile() : null"
-          >
-            Save profile info
-          </button>-->
-          <div *ngIf="userPayments?.email" class="bg-secondary p-2">
-            <div class="font-weight-bold h5 mb-1">Payments History</div>
-            <div *ngIf="userPayments?.matchPayments?.length > 0" class="mb-1">
-              <div class="font-weight-bold h6 mb-0">Match Plan Payments</div>
-              <div
-                *ngFor="let payment of userPayments?.matchPayments; index as i"
-              >
-                An installment of amount ${{ payment.amount }}
-                {{
-                  payment.received == "Yes"
-                    ? " has been paid on "
-                    : " is due on "
-                }}
-                {{ payment.date }} via {{ payment.mode }}
-              </div>
-            </div>
+  
 
-            <div
-              *ngIf="userPayments?.researchPayments?.length > 0"
-              class="mb-1"
-            >
-              <div class="font-weight-bold h6 mb-0">Research Payments</div>
-              <div
-                *ngFor="
-                  let payment of userPayments?.researchPayments;
-                  index as i
-                "
-              >
-                An installment of amount ${{ payment.amount }}
-                {{
-                  payment.received == "Yes"
-                    ? " has been paid on "
-                    : " is due on "
-                }}
-                {{ payment.date }} of {{ payment.type }} via
-                {{ payment.mode }}
-              </div>
-            </div>
-            <div *ngIf="userPayments?.rotations?.length > 0" class="mb-1">
-              <div class="font-weight-bold h6 mb-0">Rotations Payments</div>
-              <div *ngFor="let payment of userPayments?.rotations; index as i">
-                An installment of amount ${{ payment.amount }}
-                {{
-                  payment.received == "Yes"
-                    ? " has been paid on "
-                    : " is due on "
-                }}
-                {{ payment.date }} for {{ payment.location }} via
-                {{ payment.mode }}
-              </div>
-            </div>
-          </div>
-          <!----<ng-template #requestButton>
-              <button type="submit" class="btn btn-block btn-primary btn-outline-primary card-footer" (click)="isRequestCollapsed = !isRequestCollapsed"
-              [attr.aria-expanded]="!isRequestCollapsed" >
-                Request for Profile Change</button>
-            <div class='form-group p-3 text-center' id="collapseRequest" [ngbCollapse]="isRequestCollapsed">
-              <label class="font-weight-bold text-primary"> Please tell us about the modifications </label>
-              <textarea class='form-control' [(ngModel)]="request" name='newNote' rows='3'
-                  placeholder='Enter your notes here for this particular hospital'>
-              </textarea>
-                <br />
-              <button class="btn-flat btn-md btn-outline-primary"
-                  (click)="makeRequest()">Make Request</button>
-              </div>
-                </ng-template>--->
-        </form>
+    </div>
+            </form>
             <div *ngIf="userPayments?.email" class="bg-secondary p-2">
               <div class="font-weight-bold h5 mb-1">Payments History</div>
               <div *ngIf="userPayments?.matchPayments?.length > 0" class="mb-1">

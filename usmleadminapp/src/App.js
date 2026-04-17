@@ -4,6 +4,8 @@ import { BrowserRouter } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { onAuthStateChanged } from 'firebase/auth';
 import { CSpinner, useColorModes } from '@coreui/react';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import './scss/style.scss';
 import { LoadingProvider } from './layout/LoadingContext';
 import SpinnerOverlay from './layout/SpinnerOverlay';
@@ -75,6 +77,14 @@ const App = () => {
     <Suspense fallback={<CSpinner color="primary" variant="grow" />}>
       <LoadingProvider theme={theme2}>
         <SpinnerOverlay />
+         <ToastContainer
+      position="top-right"
+      autoClose={4000}
+      hideProgressBar={false}
+      newestOnTop
+      closeOnClick
+      pauseOnHover
+    />
         <BrowserRouter>
           <DefaultLayout
             isUserLoggedIn={state.isLoggedIn}
