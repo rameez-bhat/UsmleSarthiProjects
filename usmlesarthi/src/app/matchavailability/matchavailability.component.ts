@@ -1,4 +1,4 @@
-import { Component, OnInit, TemplateRef, ViewChild,AfterViewInit,NgZone } from "@angular/core";
+import { Component, OnInit, TemplateRef, ViewChild,AfterViewInit,NgZone,ChangeDetectorRef } from "@angular/core";
 import { NgbCalendar, NgbModal } from "@ng-bootstrap/ng-bootstrap";
 import { ObservershipService } from "../observership/services/observership.service";
 import { ToastrService } from "ngx-toastr";
@@ -37,7 +37,7 @@ export class MatchAvailabilityComponent implements OnInit {
   enteredEmail="";
   paymentscreen: boolean =false;
   UserLoggedIn: boolean =false;
-  processingFeePercentage=4;
+  processingFeePercentage: number=4;
   paymentSelectionType="";
   enterOtherAmount=0;
   grouprequired='';
@@ -75,7 +75,8 @@ export class MatchAvailabilityComponent implements OnInit {
     public auth: AuthenticationService,
     public router: Router,
     public route: ActivatedRoute,
-    private ngZone: NgZone
+    private ngZone: NgZone,
+    private cdr: ChangeDetectorRef
   ) {}
 
   async ngOnInit() {
@@ -195,6 +196,22 @@ export class MatchAvailabilityComponent implements OnInit {
   }
   private sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+onInstallmentChange(value: any) {
+  //this.TotalInstallementsSelected = value;
+
+  if (value > 1) {
+   if(this.SelectedMatchPlan.processingFeePercentageWI)
+     {
+      this.processingFeePercentage=Number(this.SelectedMatchPlan.processingFeePercentageWI);
+     }
+  } else {
+    if(this.SelectedMatchPlan.processingFeePercentage)
+    {
+      this.processingFeePercentage=Number(this.SelectedMatchPlan.processingFeePercentage);
+    }
+  }
+  this.cdr.detectChanges();
 }
   redirectToLogin(modal: any): void {
     //modal.close(); // Close the modal

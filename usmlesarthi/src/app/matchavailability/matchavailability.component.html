@@ -104,6 +104,7 @@
                   [items]="TotalInstallementDropDown"
                   [multiple]="false"
                   [(ngModel)]="TotalInstallementsSelected"
+                  (ngModelChange)="onInstallmentChange($event)" 
                   style="padding:0px"
                 ></ng-select></span>
             </div>

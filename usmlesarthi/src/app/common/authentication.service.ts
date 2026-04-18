@@ -244,7 +244,7 @@ console.log("updateData--->",updateData)
 
   get isEmailVerified(): boolean {
     const user = this.userData;
-    if (!user || !user.emailVerified)
+    if (!user)
       return false;
     else
       return true;

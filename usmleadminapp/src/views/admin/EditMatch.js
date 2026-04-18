@@ -571,13 +571,28 @@ else
          {errors.fee  && <span className="validationerror">{errors.fee }</span>}
       </Box>
        <Box mt={3}>
+       <InputLabel>Processing Fee Percentage(Without Installements)</InputLabel>
         <TextField
-          label="Processing Fee Percentage"
+          label=""
           type="number"
           id="fee"
           fullWidth
           value={formdata.processingFeePercentage}
           onChange={(event) => onchangeForm(event, "processingFeePercentage" )}
+          onWheel={(e) => e.target.blur()} 
+        />
+         {errors.fee  && <span className="validationerror">{errors.fee }</span>}
+      </Box>
+      <Box mt={3}>
+       <InputLabel>Processing Fee Percentage(With Installements)</InputLabel>
+        <TextField
+          label=""
+          type="number"
+          id="fee"
+          fullWidth
+          onWheel={(e) => e.target.blur()} 
+          value={formdata.processingFeePercentageWI}
+          onChange={(event) => onchangeForm(event, "processingFeePercentageWI" )}
         />
          {errors.fee  && <span className="validationerror">{errors.fee }</span>}
       </Box>
