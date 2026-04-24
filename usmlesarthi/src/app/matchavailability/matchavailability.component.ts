@@ -105,8 +105,40 @@ export class MatchAvailabilityComponent implements OnInit {
      {
       this.processingFeePercentage=Number(this.SelectedMatchPlan.processingFeePercentage);
      }
-    this.TotalInstallements = (this.SelectedMatchPlan && this.SelectedMatchPlan.TotalInstallements) || 1;
-    for (let i = 1; i <= this.TotalInstallements; i++) {
+     let installements = this.SelectedMatchPlan.TotalInstallements;
+    // ✅ Normalize → always array
+    if (installements !== undefined && installements !== null) 
+    {
+      if (!Array.isArray(installements)) 
+      {
+        installements = [installements];
+      }
+    } 
+    else 
+    {
+      installements = [];
+    }
+    // ✅ Ensure numbers (important)
+    installements = installements.map((x: any) => Number(x));
+    console.log("this.TotalInstallementDropDown---->",installements)
+    this.TotalInstallements = installements;
+    //this.TotalInstallements = (this.SelectedMatchPlan && this.SelectedMatchPlan.TotalInstallements) || 1;
+    this.TotalInstallementDropDown = [];
+    installements.forEach((i: number) => {
+  if (i === 1) {
+    this.TotalInstallementDropDown.push({
+      value: i,
+      text: `Pay Full Payment`
+    });
+  } else {
+    this.TotalInstallementDropDown.push({
+      value: i,
+      text: `Pay In ${i} Installements`
+    });
+  }
+});
+console.log("this.TotalInstallementDropDown---->",this.TotalInstallementDropDown)
+    /*for (let i = 1; i <= this.TotalInstallements; i++) {
       if(i==1)
       {
         this.TotalInstallementDropDown.push({value:i,text:`Pay Full Payment`})
@@ -116,7 +148,7 @@ export class MatchAvailabilityComponent implements OnInit {
         this.TotalInstallementDropDown.push({value:i,text:`Pay In ${i} Installements`})
       }
       
-    }
+    }*/
     await this.sleep(2000);
     console.log('this.auth:', this.auth.userData);
     if(this.auth.isLoggedIn)
@@ -201,10 +233,19 @@ onInstallmentChange(value: any) {
   //this.TotalInstallementsSelected = value;
 
   if (value > 1) {
-   if(this.SelectedMatchPlan.processingFeePercentageWI)
-     {
-      this.processingFeePercentage=Number(this.SelectedMatchPlan.processingFeePercentageWI);
-     }
+   // ✅ Check if object exists
+    if (this.SelectedMatchPlan.processingFeePercentageWI) {
+
+      // ✅ Get fee based on selected installment
+      const fee = this.SelectedMatchPlan.processingFeePercentageWI[value];
+
+      if (fee !== undefined && fee !== null) {
+        this.processingFeePercentage = Number(fee);
+      } else {
+        // ❗ fallback if not set
+        this.processingFeePercentage = 0;
+      }
+    }
   } else {
     if(this.SelectedMatchPlan.processingFeePercentage)
     {

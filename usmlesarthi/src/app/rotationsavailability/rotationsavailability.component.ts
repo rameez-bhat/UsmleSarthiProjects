@@ -1031,7 +1031,6 @@ this.BookingSelectedDateEnq = {
             cancelUrl: 'https://residencymatch.usmlesarthi.com/payment-success-error'
           })
         });
-
          session = await response.json();
       }
       else
@@ -1092,7 +1091,7 @@ this.BookingSelectedDateEnq = {
            session = await response.json();
           }
       }
-          window.location.href = (session as any).url;
+         window.location.href = (session as any).url;
   
           if ((session as any).error) {
             alert((session as any).error.message);

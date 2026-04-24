@@ -4,14 +4,14 @@ import dayjs from 'dayjs';
 import { DatePicker } from 'antd';
 import Select1 from 'react-select';
 
-const PlatinumMentorShip = ({ ListOfPanelists,MatchPlanListObject, MatchValues, HandlePlatinumChange, HandlePlatinumMeetingsChange, errors, plan, DeleteMeetings, AddMeetings }) => {
+const PlatinumMentorShip = ({ ListOfPanelists, ChiefMentorlists, MatchPlanListObject, MatchValues, HandlePlatinumChange, HandlePlatinumMeetingsChange, errors, plan, DeleteMeetings, AddMeetings }) => {
   let lastRotationIndex = 0;
 /*const panelistOptions = Object.entries(ListOfPanelists).map(([email, objec]) => ({
   value: objec.email,
   label: objec.displayName+"("+objec.email+")"
 
 }));*/
-const mappedPanelists = Object.entries(ListOfPanelists).map(([email, objec]) => ({
+const mappedPanelists = Object.entries(ChiefMentorlists).map(([email, objec]) => ({
   value: objec.email,
   label: objec.displayName + " (" + objec.email + ")"
 }));
@@ -19,9 +19,9 @@ const mappedPanelists = Object.entries(ListOfPanelists).map(([email, objec]) => 
 const panelistOptionsOriginal = mappedPanelists;
 
 const panelistOptions = [
-  { value: "", label: "No Mentor" },
+  //{ value: "", label: "No Mentor" },
   ...mappedPanelists,
-  { value: "changed", label: "Mentor Changed" }
+  //{ value: "changed", label: "Mentor Changed" }
 ];
   const renderMeetings = () => {
     return MatchValues?.Platinum?.Meetings.map((MeetingsObj, Paymentindex) => {
@@ -202,10 +202,10 @@ const panelistOptions = [
 
   return (
     <>
-      {(MatchPlanListObject?.[plan]?.MentorRequired === 'mentors') && (
+      {(MatchPlanListObject?.[plan]?.MentorRequired === 'chiefmentor') && (
         <div className="RotationAddedPayment MatchPayment">
           <div className="TitleDiv">
-            <Typography sx={{ flexGrow: 1, backgroundColor: '#b2f2d9', p: 1, borderRadius: 2 }}><b>Platinum Details:</b></Typography>
+            <Typography sx={{ flexGrow: 1, backgroundColor: '#b2f2d9', p: 1, borderRadius: 2 }}><b>Mentor Details:</b></Typography>
           </div>
           <div className="PlatinumAddedPaymentBody">
             <Grid container spacing={2}>
@@ -237,10 +237,10 @@ const panelistOptions = [
     })
   }}
            
-                value={MatchValues['Platinum']?.['AssignedMentor']}
+                value={MatchValues['MentorAssignment']?.['AssignedMentor']}
 
         options={panelistOptions}
-        placeholder="Assigned Mentor"
+        placeholder="Assigned Chief Mentor"
         onChange={(event) => HandlePlatinumChange(event, 'AssignedMentor')}
         isSearchable
         //isMulti
@@ -248,7 +248,7 @@ const panelistOptions = [
       	 {errors.EmailWhatsAppInstructionsCustom && <span className="validationerror">{errors.EmailWhatsAppInstructionsCustom}</span>}
                  </FormControl>
                </Grid>
-               {MatchValues['Platinum']?.['AssignedMentor']?.value==="changed" &&(
+               {MatchValues['MentorAssignment']?.['AssignedMentor']?.value==="changed" &&(
                <>
                <Grid item xs={6}>
               <FormControl fullWidth>
@@ -266,7 +266,7 @@ const panelistOptions = [
     })
   }}
            
-                value={MatchValues['Platinum']?.['ChangedFromAssignedMentor']}
+                value={MatchValues['MentorAssignment']?.['ChangedFromAssignedMentor']}
 
         options={panelistOptionsOriginal}
         placeholder="Changed From Mentor"
@@ -293,7 +293,7 @@ const panelistOptions = [
     })
   }}
            
-                value={MatchValues['Platinum']?.['ChangedFromAssignedMentor']}
+                value={MatchValues['MentorAssignment']?.['ChangedFromAssignedMentor']}
 
         options={panelistOptionsOriginal}
         placeholder="Changed From Mentor"
@@ -309,7 +309,7 @@ const panelistOptions = [
                   <Typography variant="subtitle1" color="textSecondary" sx={{ flexGrow: 1, p: 1, borderRadius: 1 }}>Date Of Mentor Changed:</Typography>
                   <Typography variant="body1" sx={{ p: 1, borderRadius: 1 }}>
                     <DatePicker
-                      defaultValue={MatchValues['Platinum']?.['DateOfMentorChanged'] ? dayjs(MatchValues['Platinum']?.['DateOfMentorChanged']) : null}
+                      defaultValue={MatchValues['MentorAssignment']?.['DateOfMentorChanged'] ? dayjs(MatchValues['MentorAssignment']?.['DateOfMentorChanged']) : null}
                       onChange={(event) => HandlePlatinumChange(event, 'DateOfMentorChanged')}
                       dateFormat="dd/mm/yyyy"
                       showYearDropdown
@@ -330,7 +330,7 @@ const panelistOptions = [
                   <Typography variant="subtitle1" color="textSecondary" sx={{ flexGrow: 1, p: 1, borderRadius: 1 }}>Date Of Mentor Assigned:</Typography>
                   <Typography variant="body1" sx={{ p: 1, borderRadius: 1 }}>
                     <DatePicker
-                      defaultValue={MatchValues['Platinum']?.['DateOfMentorAssigned'] ? dayjs(MatchValues['Platinum']?.['DateOfMentorAssigned']) : null}
+                      defaultValue={MatchValues['MentorAssignment']?.['DateOfMentorAssigned'] ? dayjs(MatchValues['MentorAssignment']?.['DateOfMentorAssigned']) : null}
                       onChange={(event) => HandlePlatinumChange(event, 'DateOfMentorAssigned')}
                       dateFormat="dd/mm/yyyy"
                       showYearDropdown
@@ -351,7 +351,7 @@ const panelistOptions = [
                     fullWidth
                     multiline
                     minRows={2}
-                    value={MatchValues['Platinum']?.['MatchPlanDocument']}
+                    value={MatchValues['MentorAssignment']?.['MatchPlanDocument']}
                     required
                     onChange={(event) => HandlePlatinumChange(event, 'MatchPlanDocument',false)}
                     sx={{ my: 0, mb: '4px'}}

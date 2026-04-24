@@ -10,6 +10,9 @@ import {
   MenuItem,
   Divider,
   Chip,
+  Grid,
+  FormControl,
+  InputLabel,
 } from "@mui/material";
 import Select1 from 'react-select';
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
@@ -23,6 +26,7 @@ import JoditEditor from "jodit-react";
 import { useLoading } from "../../layout/LoadingContext";
 let panelistOptions={}
 let groupedOptions;
+let groupedOptionsT;
 export default function EditStudentMocksAdmin() {
   const { id } = useParams(); // user uid
   const {
@@ -82,15 +86,17 @@ groupedOptions = [
     value: objec.email,
     label: objec.name,
   }))
-  },
+  }
+  
+];
+groupedOptionsT = [
   {
     label: "Team",
     options: ListOfTeam.data.map((item) => ({
     value: item.email,
     label: item.displayName,
   }))
-  }
-  
+  } 
 ];
 
       if (userDataSelected.length > 0) {
@@ -369,6 +375,25 @@ groupedOptions = [
                           {errors[`date_${index}`]}
                         </Typography>
                       )}
+                      
+                      <Grid item xs={6} sx={{ mt: 2 }}>
+              <FormControl fullWidth>
+                <InputLabel id="meeting-label">Select Mentor</InputLabel>
+                <Select
+                  value={mock.AssignMentorSelect || 'no'}
+                  label="Need Notify"
+                  required
+                   onChange={(e) =>updateMock(index, "AssignMentorSelect", e.target.value)}
+                >
+                  <MenuItem value="panelist">Panelist</MenuItem>
+                  <MenuItem value="teammember">Team Member</MenuItem>
+                </Select>
+                {errors[`AssignMentorSelect_${index}`] && (<Typography color="error" mt={1}>{errors[`AssignMentorSelect_${index}`]}</Typography>)}
+              </FormControl>
+              
+            </Grid>
+            {mock.AssignMentorSelect=="panelist" && (
+            <>
                           <Select1
   styles={{
     control: (base) => ({
@@ -383,6 +408,7 @@ groupedOptions = [
       zIndex: 9999,
     }),
   }}
+   sx={{ mt: 2 }}
   value={
     mock.mentorEmail
       ? {
@@ -399,11 +425,50 @@ groupedOptions = [
     updateMock(index, "mentorName", selected?.label || null);
   }}
 />
+{errors[`mentor_${index}`] && (<Typography color="error" mt={1}>{errors[`mentor_${index}`]}</Typography>)}
+</>
+                    )}
+                    {mock.AssignMentorSelect=="teammember" && (
+                    <>
+                          <Select1
+  styles={{
+  
+    control: (base) => ({
+      ...base,
+      backgroundColor: 'transparent',
+      borderColor: errors[`mentor_${index}`] ? '#d32f2f' : '#ccc',
+      boxShadow: 'none',
+      minHeight: '44px',
+    }),
+    menu: (base) => ({
+      ...base,
+      zIndex: 9999,
+    }),
+  }}
+   sx={{ mt: 2 }}
+  value={
+    mock.mentorEmail
+      ? {
+          value: mock.mentorEmail,
+          label: mock.mentorName,
+        }
+      : null
+  }
+  options={groupedOptionsT}
+  placeholder="Assigned Team"
+  isSearchable
+  onChange={(selected) => {
+    updateMock(index, "mentorEmail", selected?.value || null);
+    updateMock(index, "mentorName", selected?.label || null);
+  }}
+/>
 {errors[`mentor_${index}`] && (
                         <Typography color="error" mt={1}>
                           {errors[`mentor_${index}`]}
                         </Typography>
                       )}
+</>
+                    )}
                         </>
                       )}
 

@@ -24,6 +24,7 @@ import { ColoredTabs, ColoredTab, CenteredBox, CenteredBoxInfo } from '../../com
 import  '../../components/css/style.css';
 import OnBoardingHtml from "./OnBoarding";
 import PlatinumMentorShip from "./PlatinumMentorShip";
+import ChiefMentorShip from "./ChiefMentorShip";
 import UserServices from "./UserServices";
 import CommonNotes from "./CommonNotes";
 import StudentEnqueries from "./StudentEnqueries";
@@ -59,6 +60,7 @@ dayjs.extend(timezone);
  	let NotesIndexMain=0
  	let newRotationsView={};
  	let ListOfPanelists=[];
+ 	let ChiefMentorlists=[];
 const UserDetails = (LoginInUserMain) => {
 
 ActualUser=LoginInUserMain.ActualUser;
@@ -446,7 +448,6 @@ ActualUser=LoginInUserMain.ActualUser;
   let CancleApplicationPaymentDate="";
   let CancleApplicationCustomNote="";
   useEffect(() => {
-
   if (rotationValues?.['Rotations']?.[0]?.['ContractStatus']?.label === 'Signed' && !rotationValues?.['Rotations']?.[0]?.['ContractSignedDate'])
   {
       const newRotationsView = [...rotationValues['Rotations']];
@@ -515,7 +516,6 @@ ActualUser=LoginInUserMain.ActualUser;
 	useEffect(() => {
   }, [id,MatchValues, rotationValues,researchValues]);
   useEffect(() => {
-
     fetchUserData();
     if (contentRef.current) {
       handleScroll(); // Initial check
@@ -591,12 +591,15 @@ ActualUser=LoginInUserMain.ActualUser;
         const userDataSelectedAgent = await FetchDataFromCollection("AgentUserConnection", 20, "uid", "==", id, 0);
         //ListOfPanelists = await FetchDataFromCollection("Panelists", 2000, null, null, null, 0);
         const ListOfPanelistsData = await fetchAdminDataWithJoin("UsersRoles","Users",3000,null,"Role","==","Mentor");
-         console.log("ListOfPanelists====>",ListOfPanelistsData)
+        const ChiefMentorData = await fetchAdminDataWithJoin("UsersRoles","Users",3000,null,"Role","==","chiefmentor");
         if(ListOfPanelistsData.data.length)
         {
           ListOfPanelists=ListOfPanelistsData.data
         }
-        console.log("ListOfPanelists====>",ListOfPanelistsData)
+        if(ChiefMentorData.data.length)
+        {
+          ChiefMentorlists=ChiefMentorData.data
+        }
      	const adminOptions = await fetchAdminDataWithJoin("UsersRoles","Users",300,null,"Role","==","Admin");
 		      if(typeof userDataSelected[0].Step1Score!=="undefined" && typeof userDataSelected[0].Step1Score==="object")
         	{
@@ -3834,6 +3837,56 @@ if(typeof MatchValues['Platinum']=="undefined")
         'Platinum': newval,
       }));
 }
+const HandleMentorChange = (event,name,hasrelation=false,subname="") =>{
+let value;
+	if(typeof event.target!="undefined")
+  {
+  	value=event.target.value;
+  }
+  else if(typeof event.$d!="undefined")
+  {
+  	value=event.toLocaleString('en-GB', { timeZone: 'GMT' });
+  }
+  else if(typeof event.label!="undefined")
+  {
+  	value=event;
+  }
+  else
+  {
+  	 value=event.label;
+  }
+if(typeof MatchValues['MentorAssignment']=="undefined")
+{
+	MatchValues['MentorAssignment']={Meetings:[]};
+}
+
+      let newval=MatchValues['MentorAssignment'];
+      if(hasrelation && subname==="")
+      {
+      	if(typeof newval[name]==="undefined")
+      	{
+      		newval[name]={};
+      	}
+      	newval[name]['Value']=value;
+      }
+      else if(hasrelation && subname!=="")
+      {
+      	if(typeof newval[name]['Relation']==="undefined")
+      	{
+      		newval[name]['Relation']={};
+      	}
+      	newval[name]['Relation'][subname]=value;
+      }
+      else
+      {
+      	newval[name]=value;
+      }
+
+    	setMatchValues((prevValues) => ({
+        ...prevValues,
+        'MentorAssignment': newval,
+      }));
+}
 const HandleMatchChange = (event,name,PayInd) =>{
 let value;
   if(typeof event.target!="undefined")
@@ -5054,11 +5107,41 @@ let lastRotationIndex =0;
                   {errors.plan && <span className="validationerror">{errors.plan}</span>}
                 </FormControl>
               </Grid>
+              <Grid item xs={6}>
+                <FormControl fullWidth>
+                  <InputLabel id="GeneralNotify">Notify User</InputLabel>
+                  <Select
+                    labelId="plan-label"
+                    id="GeneralNotify"
+                    value={MatchValues['GeneralNotify'] || 'no'}
+                    label="Notify User"
+                    required
+                    onChange={(event) => HandleMatchChange(event,'GeneralNotify' )}
+                  >
+                    <MenuItem value="no">No</MenuItem>
+              		<MenuItem value="yes">Yes</MenuItem>
+                  </Select>
+                  {errors.MatchPaymentPlan && <span className="validationerror">{errors.MatchPaymentPlan}</span>}
+                </FormControl>
+              </Grid>
               <PlatinumMentorShip
             MatchValues={MatchValues}
             plan={plan}
             ListOfPanelists={ListOfPanelists}
             HandlePlatinumChange={HandlePlatinumChange}
+            MatchPlanListObject={MatchPlanListObject}
+            errors={errors}
+            DeleteMeetings={DeleteMeetings}
+            AddMeetings={AddMeetings}
+            HandlePlatinumMeetingsChange={HandlePlatinumMeetingsChange}
+          />
+          <ChiefMentorShip
+            MatchValues={MatchValues}
+            plan={plan}
+            ListOfPanelists={ListOfPanelists}
+            ChiefMentorlists={ChiefMentorlists}
+            MatchPlanListObject={MatchPlanListObject}
+            HandlePlatinumChange={HandleMentorChange}
             errors={errors}
             DeleteMeetings={DeleteMeetings}
             AddMeetings={AddMeetings}
@@ -5217,6 +5300,33 @@ let lastRotationIndex =0;
                   {errors.MatchPaymentPlan && <span className="validationerror">{errors.MatchPaymentPlan}</span>}
                 </FormControl>
               </Grid>
+              {MatchValues?.['PaymentPlan']==='On Installments' && (
+              <Grid item xs={6}>
+                <FormControl fullWidth>
+                  <InputLabel id="TotalInstallments">No Of Installements</InputLabel>
+                  <Select
+                    labelId="plan-label"
+                    id="TotalInstallments"
+                    value={MatchValues['TotalInstallments']}
+                    label="No Of Installements"
+                    required
+                    onChange={(event) => HandleMatchChange(event,'TotalInstallments' )}
+                  >
+                    <MenuItem value="1">1</MenuItem>
+              		<MenuItem value="2">2</MenuItem>
+              		<MenuItem value="3">3</MenuItem>
+              		<MenuItem value="4">4</MenuItem>
+              		<MenuItem value="5">5</MenuItem>
+              		<MenuItem value="6">6</MenuItem>
+              		<MenuItem value="7">7</MenuItem>
+              		<MenuItem value="8">8</MenuItem>
+              		<MenuItem value="9">9</MenuItem>
+              		<MenuItem value="10">10</MenuItem>
+                  </Select>
+                  {errors.MatchPaymentPlan && <span className="validationerror">{errors.MatchPaymentPlan}</span>}
+                </FormControl>
+              </Grid>
+              )}
 
       	<Grid item xs={6}>
                 <Box sx={{ display: 'flex', p: 0, borderRadius: 1 ,border:1}}>

@@ -429,7 +429,7 @@ ActualUser=LoginInUserMain.ActualUser;
   const [open, setOpen] = useState(false);
   const [OnBoardingOpen, setOnBoardingOpen] = useState(false);
   const [MatchcreatedAtexists, setMatchcreatedAtexists] = useState(false);
-  const [MatchValues, setMatchValues] = useState(null);
+  const [MatchValues, setMatchValues] = useState({});
   const [NoteSectionData, setNoteSectionData] = useState([]);
   const [CommonUserNotesData, setCommonUserNotesData] = useState([]);
   const [rotationValues, setrotationValues] = useState({});
@@ -514,14 +514,16 @@ ActualUser=LoginInUserMain.ActualUser;
   }
 }, [rotationValues?.['Rotations']?.[0]?.['ContractStatus'], rotationValues?.['Rotations']?.[1]?.['ContractStatus'], rotationValues?.['Rotations']?.[2]?.['ContractStatus'], rotationValues?.['Rotations']?.[3]?.['ContractStatus'],rotationValues?.['Rotations']?.[4]?.['ContractStatus']]);
 	useEffect(() => {
+	console.log("MatchValues---->",MatchValues)
   }, [id,MatchValues, rotationValues,researchValues]);
   useEffect(() => {
-
+ console.log("MatchValues---->",MatchValues)
     fetchUserData();
     if (contentRef.current) {
       handleScroll(); // Initial check
 
     }
+   
   }, [id,setMatchValues, setrotationValues]);
   const  getNameByCode= async (code) => {
   const state = CountryWithStates[239].states.find(item => item.code === code.toUpperCase());
@@ -561,20 +563,7 @@ ActualUser=LoginInUserMain.ActualUser;
           }
         });*/
 
-    setMatchValues({Payments:[{Discount:{
-      Value: '',
-      Code: '',
-      Amount: '',
-      Notes: ''
-    },FeeType:'',ModeOfPayment:'',Amount:'',PaymentDate:'',RotationPaymentNotes:''}],
-    Platinum:{Meetings:[]},
-    Refund:{
-      RequestedDate: '',
-      ProcessedDate: '',
-      Reason: '',
-      Channel: '',
-      Note:''
-    },PaymentPlan:'',EnrollmentDate:'',RotationFeesToSarthi:''});
+   
      const Locationcode = await FetchUniqueData("Rotations","location_code");
     
      //await deleteDuplicateNotes();
@@ -644,8 +633,10 @@ ActualUser=LoginInUserMain.ActualUser;
         	if(typeof UserServicesSelected[0]?.Match!=="undefined")
         	{
 
-        		const convertedData = UserServicesSelected.map(doc => convertMatchObjectToArray(doc));
-        		UserServicesSelected[0].Match=convertedData[0].Match;
+        		//const convertedData = UserServicesSelected.map(doc => convertMatchObjectToArray(doc));
+        		const convertedData=convertMatchObjectToArray(UserServicesSelected[0]?.Match)
+        		UserServicesSelected[0].Match=convertedData;
+        		setMatchValues(convertedData);
         	}
         	if(typeof UserServicesSelected[0]?.Research!=="undefined")
         	{
@@ -748,14 +739,17 @@ ActualUser=LoginInUserMain.ActualUser;
 			}
 			if(userDataSelected[0]["Services"]?.Match)
 			{
-				if(typeof userDataSelected[0]["Services"]['Match']['Platinum']==="undefined")
+				/*if(typeof userDataSelected[0]["Services"]['Match']['Platinum']==="undefined")
 				{
 					userDataSelected[0]["Services"]['Match']['Platinum']={'Meetings':[]};
 
-				}
+				}*/
 				//setMatchValues(userDataSelected[0]["Services"]['Match']);
-				console.log('convertMatchObjectToArray(userDataSelected->',convertMatchObjectToArray(userDataSelected[0]["Services"]['Match']))
-				setMatchValues(convertMatchObjectToArray(userDataSelected[0]["Services"]['Match']));
+				console.log("MatchValues----->",userDataSelected[0]["Services"])
+				/*const convtData=convertMatchObjectToArray(userDataSelected[0]["Services"]['Match']);
+				console.log('convertMatchObjectToArray(userDataSelected-->',convtData)
+				setMatchValues(convtData);
+				console.log("MatchValues----->",userDataSelected[0]["Services"])*/
 			}
 
 			if(userDataSelected[0]["Services"]?.Match?.Plan?.Name==="Custom")
@@ -1028,31 +1022,31 @@ const convertResearchArrayToObject = (rotationData) => {
   // If Research is not an array, return rotationData as is
   return rotationData;
 };
-const convertMatchObjectToArray = (matchData) => {
-  if (matchData && matchData.Match && typeof matchData.Match === 'object') {
-    
-    const matchArray = Object.entries(matchData.Match)
+const convertMatchObjectToArray = (data) => {
+
+  const match = data;
+  // ✅ Only proceed if EnrollmentDate exists
+  if (!match?.EnrollmentDate) return data;
+
+  // Extract timestamps separately
+  const { createdAt, updatedAt, ...restMatch } = match;
+
+  let updatedMatch = { ...restMatch };
+
+  // ✅ Convert Payments object → array
+  if (updatedMatch?.Payments && typeof updatedMatch.Payments === 'object' && !Array.isArray(updatedMatch.Payments)) {
+    updatedMatch.Payments = Object.entries(updatedMatch.Payments)
       .sort(([a], [b]) => a.localeCompare(b))
-      .map(([key, match]) => {
-
-        // Convert Payments object → array
-        if (match?.Payments && typeof match.Payments === 'object') {
-          match.Payments = Object.entries(match.Payments)
-            .sort(([a], [b]) => a.localeCompare(b))
-            .map(([pKey, payment]) => payment);
-        }
-
-        return {
-          ...match,
-          matchKey: key
-        };
-      });
-
-    return {
-      ...matchData,
-      Match: matchArray
-    };
+      .map(([_, payment]) => payment);
   }
+
+  const matchData= {
+      MatchPlans: {
+        match0: updatedMatch   // ✅ Payments now inside match0
+      },
+      ...(createdAt && { createdAt }),
+      ...(updatedAt && { updatedAt })
+  };
 
   return matchData;
 };
@@ -3795,24 +3789,36 @@ if(typeof MatchValues['Platinum']=="undefined")
         'Platinum': newval,
       }));
 }
-const HandleMatchChange = (event, field, matchIndex, paymentIndex = -1) => {
-  let value;
+const HandleMatchChange = (event, field, matchIndex, paymentIndex = null) => {
+const updatedMatches = { ...MatchValues.MatchPlans };
 
-  if (event.target) value = event.target.value;
-  else if (event.$d) value = Timestamp.fromDate(event.toDate());
-  else value = event;
+const matchKeys = Object.keys(updatedMatches);
+const currentMatchKey = matchKeys[matchIndex];
+console.log("event=======>",event)
+console.log("field=======>",field)
+console.log("matchIndex=======>",matchIndex)
+console.log("currentMatchKey=======>",currentMatchKey)
+console.log("matchKeys=======>",matchKeys)
+if (paymentIndex !== null) {
+  updatedMatches[currentMatchKey].Payments[paymentIndex][field] =
+    event.target ? event.target.value : event;
+} else {
+if(field=="Plan")
+{
+	updatedMatches[currentMatchKey][field]['Name'] =  event.target ? event.target.value : event;
+}
+else if(field=="Plan")
+{
+	updatedMatches[currentMatchKey][field] =
+    event.target ? event.target.value : event;
+}
+  
+}
 
-  setMatchValues(prev => {
-    const updated = [...prev];
-
-    if (paymentIndex !== -1) {
-      updated[matchIndex].Payments[paymentIndex][field] = value;
-    } else {
-      updated[matchIndex][field] = value;
-    }
-
-    return updated;
-  });
+setMatchValues({
+  ...MatchValues,
+  MatchPlans: updatedMatches,
+});
 };
 const AddMatch = () => {
   setMatchValues(prev => [
@@ -4588,11 +4594,11 @@ let lastRotationIndex =0;
           <TabPanel value={value} index={0}>
   <Grid container spacing={2}>
 
-    {MatchValues?.map((matchItem, matchIndex) => (
+    {Object.values(MatchValues?.MatchPlans || {}).map((matchItem, matchIndex) => (
 
       <Grid item xs={12} key={matchIndex} className="MatchContainer">
 
-        {/* 🔹 HEADER */}
+        {/* HEADER */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
           <Typography variant="h6">Match #{matchIndex + 1}</Typography>
 
@@ -4605,15 +4611,15 @@ let lastRotationIndex =0;
           </Button>
         </Box>
 
-        {/* 🔹 PLAN */}
+        {/* 🔹 PLAN + SEASON */}
         <Grid container spacing={2}>
 
           <Grid item xs={6}>
             <FormControl fullWidth>
               <InputLabel>Plan</InputLabel>
               <Select
-                value={matchItem.plan || ''}
-                onChange={(e) => HandleMatchChange(e, 'plan', matchIndex)}
+                value={matchItem?.Plan?.Name || ''}
+                onChange={(e) => HandleMatchChange(e, 'Plan', matchIndex)}
               >
                 {Object.entries(MatchPlanListObject).map(([key, value]) => (
                   <MenuItem key={key} value={key}>{value.Name}</MenuItem>
@@ -4623,13 +4629,12 @@ let lastRotationIndex =0;
             </FormControl>
           </Grid>
 
-          {/* 🔹 MATCH SEASON */}
           <Grid item xs={6}>
             <FormControl fullWidth>
               <InputLabel>Match Season</InputLabel>
               <Select
-                value={matchItem.matchSeason || ''}
-                onChange={(e) => HandleMatchChange(e, 'matchSeason', matchIndex)}
+                value={matchItem?.Season || ''}
+                onChange={(e) => HandleMatchChange(e, 'Season', matchIndex)}
               >
                 {MatchSessionList.map((item) => (
                   <MenuItem key={item} value={item}>
@@ -4643,6 +4648,55 @@ let lastRotationIndex =0;
 
         </Grid>
 
+        {/* 🔹 ENROLLMENT DATE */}
+        <Grid container spacing={2} sx={{ mt: 1 }}>
+          <Grid item xs={6}>
+            <DatePicker
+              defaultValue={
+                matchItem?.EnrollmentDate
+                  ? dayjs(matchItem.EnrollmentDate.toDate().toISOString())
+                  : null
+              }
+              onChange={(e) =>
+                HandleMatchChange(e, 'EnrollmentDate', matchIndex)
+              }
+            />
+          </Grid>
+
+          <Grid item xs={6}>
+            <FormControl fullWidth>
+              <InputLabel>Status</InputLabel>
+              <Select
+                value={matchItem?.Status?.Name || ''}
+                onChange={(e) => HandleMatchChange(e, 'Status', matchIndex)}
+              >
+                {Object.entries(MatchPlanStatus).map(([k, v]) => (
+                  <MenuItem key={k} value={k}>{v}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+        </Grid>
+
+        {/* 🔹 PAYMENT PLAN */}
+        <Grid container spacing={2} sx={{ mt: 1 }}>
+          <Grid item xs={6}>
+            <FormControl fullWidth>
+              <InputLabel>Payment Plan</InputLabel>
+              <Select
+                value={matchItem?.PaymentPlan || ''}
+                onChange={(e) =>
+                  HandleMatchChange(e, 'PaymentPlan', matchIndex)
+                }
+              >
+                {Object.entries(MatchPaymentPlans).map(([k, v]) => (
+                  <MenuItem key={k} value={k}>{v}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+        </Grid>
+
         {/* 🔹 PAYMENTS */}
         <Box sx={{ mt: 3 }}>
           <Typography variant="subtitle1"><b>Payments</b></Typography>
@@ -4654,7 +4708,7 @@ let lastRotationIndex =0;
                 <TextField
                   label={`Amount #${pIndex + 1}`}
                   fullWidth
-                  value={payment.Amount || ''}
+                  value={payment?.Amount || ''}
                   onChange={(e) =>
                     HandleMatchChange(e, 'Amount', matchIndex, pIndex)
                   }
@@ -4665,7 +4719,7 @@ let lastRotationIndex =0;
                 <FormControl fullWidth>
                   <InputLabel>Mode</InputLabel>
                   <Select
-                    value={payment.ModeOfPayment || ''}
+                    value={payment?.ModeOfPayment || ''}
                     onChange={(e) =>
                       HandleMatchChange(e, 'ModeOfPayment', matchIndex, pIndex)
                     }
@@ -4679,7 +4733,11 @@ let lastRotationIndex =0;
 
               <Grid item xs={6}>
                 <DatePicker
-                  value={payment.PaymentDate || null}
+                  defaultValue={
+                    payment?.PaymentDate
+                      ? dayjs(payment.PaymentDate.toDate().toISOString())
+                      : null
+                  }
                   onChange={(e) =>
                     HandleMatchChange(e, 'PaymentDate', matchIndex, pIndex)
                   }
@@ -4712,6 +4770,7 @@ let lastRotationIndex =0;
           <Typography variant="subtitle1"><b>Refund</b></Typography>
 
           <Grid container spacing={2}>
+
             <Grid item xs={6}>
               <TextField
                 label="Refund Amount"
@@ -4735,6 +4794,7 @@ let lastRotationIndex =0;
                 <MenuItem value="Refunded">Refunded</MenuItem>
               </Select>
             </Grid>
+
           </Grid>
         </Box>
 
@@ -4743,7 +4803,7 @@ let lastRotationIndex =0;
       </Grid>
     ))}
 
-    {/* 🔥 ADD MATCH BUTTON */}
+    {/* 🔥 ADD MATCH */}
     <Grid item xs={12}>
       <Button variant="contained" onClick={AddMatch}>
         Add Match

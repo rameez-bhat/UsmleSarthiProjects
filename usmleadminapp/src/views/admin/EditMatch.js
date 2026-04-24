@@ -22,6 +22,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs from "dayjs";
+import { toast } from 'react-toastify';
 import  '../../components/css/style.css';
 import { useLoading } from '../../layout/LoadingContext';
 
@@ -33,9 +34,9 @@ import {
   doc,
   query,
   updateDoc,
+  deleteField,
   where,
 } from "firebase/firestore";
-
 
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
@@ -266,6 +267,17 @@ style: `
         {
   			docData.Features = [];
 		}
+		if (docData.TotalInstallements !== undefined) 
+		{
+    		if (!Array.isArray(docData.TotalInstallements)) 
+    		{
+      			docData.TotalInstallements = [docData.TotalInstallements];
+    		}
+  		} 
+  		else 
+  		{
+    		docData.TotalInstallements = [];
+  		}
 		setformdata(docData);
       }
     } catch (error) {
@@ -304,6 +316,10 @@ const onchangeForm = (event,name) =>
   { 
     value=event; 
   } 
+  else if (Array.isArray(event)) 
+  {
+    value = event;
+  }
   else if(typeof event[0]!="undefined") 
   { 
     value=event; 
@@ -312,7 +328,24 @@ const onchangeForm = (event,name) =>
   {
   	value=Number(event.target.value); 
   }
-  setformdata((prevValues) => ({ ...prevValues, [name]: value, })); 
+  if (name?.toString().startsWith("pfee_")) {
+    const inst = name.split("_")[1];
+
+    setformdata((prev) => ({
+      ...prev,
+      processingFeePercentageWI: {
+        ...prev.processingFeePercentageWI,
+        [inst]: Number(value)
+      }
+    }));
+  } else {
+    // ✅ Normal fields
+    setformdata((prev) => ({
+      ...prev,
+      [name]: value
+    }));
+  }
+  //setformdata((prevValues) => ({ ...prevValues, [name]: value, })); 
 }
  const addFeature = () => {
   setformdata((prev) => ({
@@ -408,12 +441,21 @@ const handleImageUpload = async (e) => {
   if (!formdata.Type || formdata.Type.trim() === "") {
     errors.Type="Please Select The Service.";
   }
-if (!formdata.TotalInstallements || isNaN(formdata.TotalInstallements)) {
-    errors.TotalInstallements="Plan Total Installements must be a valid number.";
-  }
   if (!formdata.fee || isNaN(formdata.fee)) {
     errors.fee="Plan fee must be a valid number.";
   }
+const installements = formdata?.TotalInstallements || [];
+  const fees = formdata?.processingFeePercentageWI || {};
+
+  installements.forEach((inst) => {
+    if (
+      fees?.[inst] === undefined ||
+      fees?.[inst] === "" ||
+      isNaN(fees?.[inst])
+    ) {
+      errors[`pfee_${inst}`] = `Processing fee required for instalment ${inst}`;
+    }
+  });
 
 
   return errors;
@@ -425,6 +467,19 @@ if (!formdata.TotalInstallements || isNaN(formdata.TotalInstallements)) {
 
   //TooltipsPopovers("error", "Please Fill All Required Fields.", "Status");
   scrollToFirstError(vErrors);
+   toast.error(
+    <div>
+      <strong>Please fix the following:</strong>
+      <ol style={{ marginTop: '8px', paddingLeft: '18px' }}>
+        {Object.values(vErrors).map((err, index) => (
+        <li key={index}>{err}</li>
+      ))}
+      </ol>
+    </div>,
+    {
+      autoClose: 5000,
+    }
+  );
 
   return;
 }
@@ -438,7 +493,10 @@ else
       	const snapshot = await getDocs(q);
       	if (!snapshot.empty) {
         const docRef = snapshot.docs[0].ref;
-
+		 await updateDoc(docRef, {
+    TotalInstallements: deleteField(),
+    processingFeePercentageWI: deleteField()
+  });
         await updateDoc(docRef, formdata);
 		hideLoading();
         alert("Plan updated successfully!");
@@ -583,39 +641,58 @@ else
         />
          {errors.fee  && <span className="validationerror">{errors.fee }</span>}
       </Box>
-      <Box mt={3}>
-       <InputLabel>Processing Fee Percentage(With Installements)</InputLabel>
-        <TextField
-          label=""
-          type="number"
-          id="fee"
-          fullWidth
-          onWheel={(e) => e.target.blur()} 
-          value={formdata.processingFeePercentageWI}
-          onChange={(event) => onchangeForm(event, "processingFeePercentageWI" )}
-        />
-         {errors.fee  && <span className="validationerror">{errors.fee }</span>}
-      </Box>
       <Grid item xs={12} sm={6}>
-            <InputLabel>Maximum Number Of Installements</InputLabel>
+            <InputLabel>Select Installement To Show</InputLabel>
+            <Select
+  multiple
+  fullWidth
+  id="TotalInstallements"
+  value={formdata?.TotalInstallements || []}
+  onChange={(event) => onchangeForm(event, 'TotalInstallements')}
+  renderValue={(selected) => selected.join(', ')}
+>
+  {[1,2,3,4,5,6,7,8,9,10].map((num) => (
+    <MenuItem key={num} value={num}>
+      {num}
+    </MenuItem>
+  ))}
+</Select>
+            {errors.TotalInstallements  && <span className="validationerror">{errors.TotalInstallements }</span>}
+          </Grid>
+          {formdata?.TotalInstallements?.map((inst) => (
+  <Box mt={3} key={inst}>
+    <InputLabel>
+      Processing Fee % for {inst} Instalments
+    </InputLabel>
+
+    <TextField
+      type="number"
+      fullWidth
+      value={formdata?.processingFeePercentageWI?.[inst] || ''}
+      onChange={(e) => onchangeForm(e, `pfee_${inst}`)}
+      onWheel={(e) => e.target.blur()}
+    />
+
+    {errors[`pfee_${inst}`] && (
+      <span className="validationerror">
+        {errors[`pfee_${inst}`]}
+      </span>
+    )}
+  </Box>
+))}
+          <Grid item xs={12} sm={6}>
+            <InputLabel>Mentor Required</InputLabel>
             <Select
               fullWidth
-              id="TotalInstallements"
-              value={formdata?.TotalInstallements || ''}
-              onChange={(event) => onchangeForm(event, 'TotalInstallements')}
+              id="MentorRequired"
+              value={formdata?.MentorRequired || 'no'}
+              onChange={(event) => onchangeForm(event, 'MentorRequired')}
             >
-              <MenuItem value="1">1</MenuItem>
-              <MenuItem value="2">2</MenuItem>
-              <MenuItem value="3">3</MenuItem>
-              <MenuItem value="4">4</MenuItem>
-              <MenuItem value="5">5</MenuItem>
-              <MenuItem value="6">6</MenuItem>
-              <MenuItem value="7">7</MenuItem>
-              <MenuItem value="8">8</MenuItem>
-              <MenuItem value="9">9</MenuItem>
-              <MenuItem value="10">10</MenuItem>
+              <MenuItem value="no">No</MenuItem>
+              <MenuItem value="chiefmentor">Chief Mentor</MenuItem>
+              <MenuItem value="mentors">Mentors</MenuItem>
             </Select>
-            {errors.TotalInstallements  && <span className="validationerror">{errors.TotalInstallements }</span>}
+            {errors.MentorRequired  && <span className="validationerror">{errors.MentorRequired }</span>}
           </Grid>
            <Grid item xs={12} sm={6}>
             <InputLabel>View(Frontend) Order Number</InputLabel>

@@ -278,5 +278,5 @@ const routes = {"public":[
     { path: '/admin/reply/:id?', name: 'AnswerQuestions',exact: true, element: AnswerQuestions },
 ]
 }
-
+routes['chiefmentor']=routes['Admin'];
 export default routes

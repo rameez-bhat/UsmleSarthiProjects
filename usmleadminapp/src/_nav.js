@@ -45,7 +45,7 @@ import { CNavGroup, CNavItem, CNavTitle } from '@coreui/react'
 const getNavigation = (user) => {
   let navigation = [];
   // SuperAdmin role navigation
-  if (user?.role === "Admin" || user?.role === "SuperAdmin") {
+  if (user?.role === "Admin" || user?.role === "SuperAdmin" || user?.role === "chiefmentor") {
     navigation = [
       {
         component: CNavItem,
