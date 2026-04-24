@@ -120,11 +120,20 @@ export class MatchAvailabilityComponent implements OnInit {
     }
     // ✅ Ensure numbers (important)
     installements = installements.map((x: any) => Number(x));
-    console.log("this.TotalInstallementDropDown---->",installements)
     this.TotalInstallements = installements;
     //this.TotalInstallements = (this.SelectedMatchPlan && this.SelectedMatchPlan.TotalInstallements) || 1;
     this.TotalInstallementDropDown = [];
-    installements.forEach((i: number) => {
+    const sortedInstallements = installements
+  .map(Number)
+  .sort((a, b) => a - b);
+
+this.TotalInstallementDropDown = sortedInstallements.map((i: number) => ({
+  value: i,
+  text: i === 1
+    ? 'Pay Full Payment'
+    : `Pay In ${i} Installements`
+}));
+   /* installements.forEach((i: number) => {
   if (i === 1) {
     this.TotalInstallementDropDown.push({
       value: i,
