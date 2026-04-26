@@ -108,6 +108,7 @@
                   style="padding:0px"
                 ></ng-select></span>
             </div>
+            <div class="info-row" style="color:blue;font-size:16px" *ngIf="TotalInstallementsSelected>1"><span style="color:blue">Net Amount Payable:</span> <span>${{ ((SelectedMatchPlan?.fee -PromotorDiscountsAmount+(SelectedMatchPlan?.fee*this.processingFeePercentage/100)+0.30-getDiscountAmount(SelectedMatchPlan))/TotalInstallementsSelected) | number:'1.2-2' }}/ Month</span></div>
             <label class="terms-inline" style="display:table">
           <input type="checkbox" [(ngModel)]="payOtherAmount" />
           Pay Other Amount
