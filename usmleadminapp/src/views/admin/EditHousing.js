@@ -14,6 +14,7 @@ MenuItem,
 InputLabel,
 Paper
 } from "@mui/material";
+import Select1 from "react-select";
 
 import DeleteIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
@@ -54,7 +55,7 @@ export default function EditRotation() {
 const { match_id } = useParams();
 const navigate = useNavigate();
 
-const { TooltipsPopovers, showLoading, hideLoading, Timestamp } = useLoading();
+const { TooltipsPopovers, showLoading, hideLoading, Timestamp, SelectWithWhereAnd } = useLoading();
 
 const [loading, setLoading] = useState(true);
 
@@ -69,6 +70,7 @@ const [docId,setDocId] = useState(null);
 const [countryList] = useState(Country.getAllCountries());
 const [stateList,setStateList] = useState([]);
 const [cityList,setCityList] = useState([]);
+const [RotationList, setRotationList] = useState({});
 
 useEffect(()=>{
 
@@ -85,20 +87,41 @@ if(match_id)
 {
 	const q = query(collection(db,"Housings"),where("housingId","==",match_id));
 	const snapshot = await getDocs(q);
+	let WhereOrObject=[{"name":"DoctorAssigned","condition":"==","value":"no"}];
+    const results = await SelectWithWhereAnd("Rotations", WhereOrObject);	
+   	if(results.status=="success")
+    {
+    		const options = results.data.map(item => ({
+  label: item.location_code,
+  value: item.location_code
+}));
+    		setRotationList(options)
+    }
 	if(!snapshot.empty)
 	{
 		const docSnap = snapshot.docs[0];
 		setDocId(docSnap.id);
 		const docData = docSnap.data();
+		let AlllocationCodes = [];
+
+if (docData?.LocationCodes) {
+  AlllocationCodes = Object.keys(docData.LocationCodes).map(code => ({
+    value: code,
+    label: code
+  }));
+}
+//docData.LocationCodes=AlllocationCodes
 		setformdata(prev=>({
 			...prev,
-			...docData
+			...docData,
+			LocationCodes: AlllocationCodes
 			}));
 		if(docData.country)
 		{
 			const states = State.getStatesOfCountry("US");
 			setStateList(states);
 		}
+		
 		if(docData.state)
 		{
 			const stateObj = State.getStatesOfCountry("US").find(s => s.name === docData.state || s.isoCode === docData.state);
@@ -163,6 +186,7 @@ let value;
   {
   	value=Number(event.target.value); 
   }
+ 
 
 setformdata(prev=>({
 ...prev,
@@ -403,7 +427,7 @@ newErrors[`feature_content_${index}`]="Feature description required";
 
 });
 }
-
+console.log("newErrors----->",newErrors)
 setErrors(newErrors);
 
 return Object.keys(newErrors).length===0;
@@ -517,16 +541,23 @@ window.scrollTo(0,0);
 return;
 }
 showLoading();
+const locationMap = {};
 
+(formdata?.LocationCodes || []).forEach(item => {
+  if (item?.value) {
+    locationMap[item.value] = item.value;
+  }
+});
 try{
-
+console.log("formdata----->",formdata)
 if(docId){
-
+console.log("formdata----->",formdata)
 // UPDATE EXISTING
 await updateDoc(
 doc(db,"Housings",docId),
 {
 ...formdata,
+LocationCodes: locationMap,
 updatedAt:new Date()
 }
 );
@@ -540,6 +571,7 @@ const newDoc = await addDoc(
 collection(db,"Housings"),
 {
 ...formdata,
+LocationCodes: locationMap,
 createdAt:new Date()
 }
 );
@@ -598,6 +630,20 @@ helperText={errors.title}
 />
 
 </Grid>
+<Grid item xs={12} sm={6}>
+                <Select1
+                fullWidth
+        value={formdata?.LocationCodes}
+        variant="outlined"
+        options={RotationList}
+        placeholder="Linked Rotation"
+        label="Linked Rotation"
+        onChange={(event) => onchangeForm(event, 'LocationCodes')}
+        isSearchable
+        isMulti
+      />
+      	{errors?.locationCode  && <span className="validationerror">{errors?.locationCode }</span>}
+               </Grid>
 <Grid item xs={12} sm={6}>
 
             <Select

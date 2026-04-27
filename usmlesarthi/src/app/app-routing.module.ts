@@ -59,7 +59,8 @@ const appRoutes: Routes = [
   { path: "rol", component: RankOrderListComponent, canActivate: [AuthGuardProfileLock] },
   { path: "profile", component: ProfileComponent, canActivate: [AuthGuardProfile] },
   { path: 'faqs', component: FaqsComponent, canActivate: [AuthGuardProfileLock]},  
-  { path: "housing", component: HousingComponent},
+  { path: "housing/:rotationcode", component: HousingComponent},
+  { path: "housing", component: HousingComponent },
   { path: "home", component: HomeComponent },
   { path: "admin", component: AdminPanelComponent, canActivate: [AuthGuardAdmin], children:[
     {path: "verifyData", component:VerifyDataComponent},

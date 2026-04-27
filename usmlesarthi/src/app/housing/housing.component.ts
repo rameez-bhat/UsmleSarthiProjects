@@ -25,6 +25,7 @@ export class HousingComponent implements OnInit {
   selectedStates = [];
   selectedHousing:any = null;
   selectedImage:string = "";
+  rotationcode: string = null;
   currentImageIndex:number = 0;
   touchStartX = 0;
   sortFees  : boolean =  false;
@@ -56,6 +57,11 @@ export class HousingComponent implements OnInit {
     try{
       this.loading = true;
       this.landing = "list";
+      this.route.params.subscribe(params => {
+      this.rotationcode = params['rotationcode'] || null;
+
+  console.log("rotationcode===>",this.rotationcode);
+});
       document.addEventListener("keydown",(e)=>{
 
 if(e.key === "ArrowRight"){
@@ -67,7 +73,7 @@ this.prevImage();
 }
 
 });
-      let results = await Promise.all([this.dbService.getAllHospitals(), this.dbService.getEnquiriesByUId (this.auth.userData)]);
+      let results = await Promise.all([this.dbService.getAllHospitals(this.rotationcode), this.dbService.getEnquiriesByUId (this.auth.userData)]);
       this.rotationsObject = results[0];
       this.hospitals = Object.values(this.rotationsObject);
       this.userEnquiries = results[1];

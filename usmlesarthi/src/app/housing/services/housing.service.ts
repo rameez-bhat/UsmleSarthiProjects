@@ -10,10 +10,28 @@ export class HousingService {
 
   constructor(private firestore: AngularFirestore) { }
 
-  async getAllHospitals() {
+  async getAllHospitals(rotationcode) {
     
     this.rotations = {};
-    let docsRef = await this.firestore.collection("Housings").get().toPromise();
+    let docsRef;
+    if(rotationcode!=null &&  rotationcode!="")
+    {
+        docsRef = await this.firestore
+    .collection("Housings", ref =>
+      ref.where(`LocationCodes.${rotationcode}`, '==', rotationcode)
+    )
+    .get()
+    .toPromise();
+    if(docsRef.empty)
+    {
+      docsRef = await this.firestore.collection("Housings").get().toPromise();
+    }
+    }
+    else
+    {
+      docsRef = await this.firestore.collection("Housings").get().toPromise();
+    }
+    //let docsRef = await this.firestore.collection("Housings").get().toPromise();
     for (let doc of docsRef.docs){
       let data = doc.data();
       data.id = doc.id;
