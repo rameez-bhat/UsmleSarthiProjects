@@ -87,7 +87,7 @@ if(match_id)
 {
 	const q = query(collection(db,"Housings"),where("housingId","==",match_id));
 	const snapshot = await getDocs(q);
-	let WhereOrObject=[{"name":"DoctorAssigned","condition":"==","value":"no"}];
+	let WhereOrObject=[{"name":"DoctorAssigned","condition":"!=","value":"they"}];
     const results = await SelectWithWhereAnd("Rotations", WhereOrObject);	
    	if(results.status=="success")
     {
