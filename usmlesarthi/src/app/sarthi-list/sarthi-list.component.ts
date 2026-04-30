@@ -130,7 +130,7 @@ export class SarthiListComponent implements OnInit {
     try {
 
       this.userProfile = await this.authService.userData;
-      if (this.userProfile.Locked === "0") {
+      if (this.userProfile.Locked === "0" && 0) {
         this.toastr.info("Please navigate to your profile(on top right) and complete the form");
         this.landing = "";
         this.loading = true;
