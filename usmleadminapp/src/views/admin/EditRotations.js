@@ -408,7 +408,10 @@ if (formdata?.visaLetterBy?.physician) {
 
   for (let h of heads) {
     const feeObj = formdata.visaLetterBy.physicianDetails.fees[h];
-    if (!feeObj?.fee && !feeObj?.securityDeposit) {
+    //const feeObj = formdata.visaLetterBy.physicianDetails.fees[h];
+  	const feeEmpty = feeObj?.fee === null || feeObj?.fee === undefined || feeObj?.fee === "";
+  	const secEmpty = feeObj?.securityDeposit === null || feeObj?.securityDeposit === undefined || feeObj?.securityDeposit === "";
+    if (feeEmpty && secEmpty) {
       TooltipsPopovers(
         "Error",
         `Enter fee or security deposit for ${h} letterhead`,
@@ -881,7 +884,7 @@ if (formdata?.visaLetterBy?.physician) {
               <TextField
                 type="number"
                 fullWidth
-                value={formdata.visaLetterBy.physicianDetails?.fees[type]?.fee || ""}
+                value={formdata.visaLetterBy.physicianDetails?.fees[type]?.fee || 0}
                 onChange={(e) =>
                   handlePhysicianFeeChange(type, "fee", e.target.value)
                 }
@@ -894,7 +897,7 @@ if (formdata?.visaLetterBy?.physician) {
                 type="number"
                 fullWidth
                 value={
-                  formdata.visaLetterBy.physicianDetails.fees[type]?.securityDeposit || ""
+                  formdata.visaLetterBy.physicianDetails.fees[type]?.securityDeposit || 0
                 }
                 onChange={(e) =>
                   handlePhysicianFeeChange(type, "securityDeposit", e.target.value)
