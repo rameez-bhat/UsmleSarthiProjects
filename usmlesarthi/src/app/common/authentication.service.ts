@@ -294,6 +294,7 @@ console.log("updateData--->",updateData)
         Locked: "0",
         Role: "NA",
       }
+      //We have sent a confirmation email to
       //this.setProfileData(this.userData);
     } else {
       this.userData = {
