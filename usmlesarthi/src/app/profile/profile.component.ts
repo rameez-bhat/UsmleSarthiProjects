@@ -154,10 +154,14 @@ export class ProfileComponent implements OnInit {
   async ngOnInit() {
     this.loading = true;
     try{
+      console.log("this.selectedUser--->",this.selectedUser)
       this.visaList = await this.dbService.getVisaList();
+      console.log("this.selectedUser--->",this.authService)
       this.userData = await this.authService.userData;
       this.userPayments = await this.dbService.getUserPaymentByEmail(this.userData.email);
+      console.log("this.selectedUser2--->",this.userData.uid) 
       this.userReferral = await this.dbService.getReferralCode(this.userData.uid);
+       console.log("this.selectedUser2--->",this.selectedUser)
       //this.selectedUser=this.userData;
       this.setSelectedUser(this.userData);
       this.workExperiences = this.getWorkExperiences();

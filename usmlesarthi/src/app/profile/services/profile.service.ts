@@ -24,9 +24,25 @@ export class ProfileService {
       return docRef.data();
     }
     else{
-      let createReferralCode = firebase.functions().httpsCallable("createReferralCode");
+      console.log("USER:", firebase.auth().currentUser);
+      const response = await fetch(
+  "https://createreferralcode-5rztgyg64q-uc.a.run.app",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      uid: userId
+    })
+  }
+);
+
+const data = await response.json();
+  console.log(data);
+      /*let createReferralCode = firebase.app().functions("us-central1").httpsCallable("createReferralCode");
       let response = (await createReferralCode()).data;
-      let { data } = response;
+      let { data } = response;*/
       if (!(data && data.code))
         throw "Internal Error";
       return data;
