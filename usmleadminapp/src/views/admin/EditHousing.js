@@ -40,6 +40,7 @@ import { db } from "../../firebase";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
 import JoditEditor from "jodit-react";
+import { toast } from 'react-toastify';
 
 import dayjs from "dayjs";
 
@@ -341,9 +342,7 @@ hideLoading();
 
 };
 const validateForm = () => {
-
 let newErrors = {};
-
 if(!formdata.title || formdata.title.trim()==="")
 newErrors.title="Housing name is required";
 
@@ -406,8 +405,8 @@ newErrors.discountTo="Discount end date required";
 
 if(formdata.discountFrom && formdata.discountTo)
 {
-if(dayjs(formdata.discountTo).isBefore(dayjs(formdata.discountFrom)))
-newErrors.discountTo="End date must be after start date";
+	if(dayjs(formdata.discountTo).isBefore(dayjs(formdata.discountFrom)))
+	newErrors.discountTo="End date must be after start date";
 }
 
 }
@@ -417,21 +416,19 @@ newErrors.images="Please upload at least one image";
 
 if(formdata.FeaturesArray && formdata.FeaturesArray.length>0)
 {
-formdata.FeaturesArray.forEach((feat,index)=>{
+	formdata.FeaturesArray.forEach((feat,index)=>
+	{
+		if(!feat.title || feat.title.trim()==="")
+			newErrors[`feature_title_${index}`]="Feature title required";
+		if(!feat.contentHtml || feat.contentHtml.trim()==="")
+			newErrors[`feature_content_${index}`]="Feature description required";
 
-if(!feat.title || feat.title.trim()==="")
-newErrors[`feature_title_${index}`]="Feature title required";
-
-if(!feat.contentHtml || feat.contentHtml.trim()==="")
-newErrors[`feature_content_${index}`]="Feature description required";
-
-});
+	});
 }
-console.log("newErrors----->",newErrors)
-setErrors(newErrors);
-
-return Object.keys(newErrors).length===0;
-
+return newErrors;
+//console.log("newErrors----->",newErrors)
+//setErrors(newErrors);
+//return Object.keys(newErrors).length===0;
 };
 /*const deleteImage=(index)=>{
 
@@ -535,9 +532,23 @@ console.error("Error deleting image:",err);
 };
 
 const saveHousing = async () => {
-if(!validateForm())
+const checkforerror=validateForm();
+if(Object.keys(checkforerror).length)
 {
 window.scrollTo(0,0);
+toast.error(
+    <div>
+      <strong>Please fix the following:</strong>
+      <ol style={{ marginTop: '8px', paddingLeft: '18px' }}>
+        {Object.values(checkforerror).map((err, index) => (
+        <li key={index}>{err}</li>
+      ))}
+      </ol>
+    </div>,
+    {
+      autoClose: 5000,
+    }
+  );
 return;
 }
 showLoading();
@@ -959,7 +970,7 @@ onChange={handleMultipleImagesUpload}
 />
 
 </Button>
-
+{errors.images  && <span className="validationerror">{errors.images }</span>}
 <Box mt={2} display="flex" gap={2} flexWrap="wrap">
 
 {formdata.images?.map((img,index)=>(
