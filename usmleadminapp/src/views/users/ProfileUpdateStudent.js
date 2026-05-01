@@ -1186,6 +1186,8 @@ const options = uniqueCodes.map(codes => ({
       		dataTobesend['PhoneCountry']={};
       		dataTobesend['PhoneCountry']=StudentData.PhoneCountry;
       		dataTobesend['phoneNumber']=StudentData.phoneNumber;
+      		dataTobesend['emailVerified']=true;
+      		StudentData['emailVerified']=true;
       		dataTobesend['SameAsWhatsAppNumber']=StudentData.SameAsWhatsAppNumber;
       		if(StudentData['SameAsWhatsAppNumber']['value']==="yes")
       		{
@@ -1196,6 +1198,7 @@ const options = uniqueCodes.map(codes => ({
       		console.log("result--->",StudentData)
       		await deleteFieldFromDocument("Users",id,"WorkExperienceData");
       		await deleteFieldFromDocument("Users",id,"USCEDATA");
+      		await handleUpdate("UsersRoles",id,{emailVerified:true})
 			handleUpdate("Users",id,StudentData).then((result) => {
      		hideLoading();
      		 NoteSectionData.forEach(async(NotesOb,NotesInd) => {
