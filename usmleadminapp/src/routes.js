@@ -67,6 +67,8 @@ const IssueResolved = React.lazy(() => import('./views/admin/IssueResolved'))
 const ListOfPanelist = React.lazy(() => import('./views/admin/ListOfPanelist'))
 const EditPanelist = React.lazy(() => import('./views/admin/EditPanelist'))
 const AddSingleList = React.lazy(() => import('./views/admin/AddSingleList'))
+const JournalistsList = React.lazy(() => import('./views/admin/JournalistsList'))
+const JournalistsDetails = React.lazy(() => import('./views/admin/JournalistDetails'))
 
 
 const ProfileUpdateStudent = React.lazy(() => import('./views/users/ProfileUpdateStudent'))
@@ -161,6 +163,8 @@ const routes = {"public":[
     { path: '/admin/listofpanelist', name: 'Mentor List',exact: true, element: ListOfPanelist },
     { path: '/admin/editpanelist/:match_id?', name: 'Edit Panelist',exact: true, element: EditPanelist },
     { path: '/admin/addsinglelist', name: 'Add Programe',exact: true, element: AddSingleList },
+    { path: '/admin/journalist', name: 'Journalist Details',exact: true, element: JournalistsList },
+    { path: '/admin/journalist/:mentorId', name: 'Journalist Details',exact: true, element: JournalistsDetails },
 ],
 "users":[
 	{ path: '/users/register', name: 'RegisterUser',exact: true, element: RegisterUser },

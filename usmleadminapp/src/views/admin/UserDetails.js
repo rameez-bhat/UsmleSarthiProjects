@@ -2384,8 +2384,16 @@ const AddRotationPayment = (PaymentLoop,RotationLoop,Type="Rotation") =>{
 			{
 				MatchValues['Payments']=[];
 			}
+			const existingPayments = MatchValues?.Payments || [];
+
+  // 🔴 Reset all previous PaymentNotify
+  const newRotations = existingPayments.map((p) => ({
+    ...p,
+    PaymentNotify: "no"
+  }));
+    
 			console.log("MatchValues['Payments']====>",MatchValues['Payments'])
-			const newRotations = [...MatchValues['Payments']];
+			//const newRotations = [...MatchValues['Payments']];
   newRotations.push({Discount:{
       Value: '',
       Code: '',
@@ -5124,6 +5132,18 @@ let lastRotationIndex =0;
                   {errors.MatchPaymentPlan && <span className="validationerror">{errors.MatchPaymentPlan}</span>}
                 </FormControl>
               </Grid>
+              <Grid item xs={6}>
+                  <TextField
+                    label="Total Amount To Pay"
+                    variant="outlined"
+                    fullWidth
+                    value={MatchValues['TotalAmountToPay'] || MatchPlanListObject?.[plan]?.fee}
+                    required
+                    onChange={(event) => HandleMatchChange(event,'TotalAmountToPay' )}
+                    sx={{ my: 0, "margin-bottom": "4px" }}
+                  />
+                  {errors.customPlan  && <span className="validationerror">{errors.customPlan }</span>}
+                </Grid>
               <PlatinumMentorShip
             MatchValues={MatchValues}
             plan={plan}
@@ -5267,7 +5287,7 @@ let lastRotationIndex =0;
                   </FormControl>
                 </Grid>
                  )}
-                 {MatchStatusNotApplyingSelected==='Other' && (
+            {MatchStatusNotApplyingSelected==='Other' && (
                 <Grid item xs={6}>
                   <TextField
                     label="Custom Note"

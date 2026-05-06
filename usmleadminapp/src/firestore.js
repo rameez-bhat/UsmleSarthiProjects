@@ -121,9 +121,6 @@ const handleUpdateOrCreateByConditions = async (collectionName,conditions,data) 
 };
 const handleUpdate = async (CollectionName,docId,data) => {
     try {
-      console.log("CollectionName===>",CollectionName)
-       console.log("docId===>",docId)
-       console.log("data===>",data)
       //await collection(db,CollectionName).doc(docId).update(data);
        const docRef = doc(db, CollectionName, docId);
       //await updateDoc(docRef, data);

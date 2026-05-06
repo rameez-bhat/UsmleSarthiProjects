@@ -147,6 +147,20 @@ const getNavigation = (user) => {
       },
       {
         component: CNavGroup,
+        name: 'Journalist',
+        to: '/base',
+        icon: <CIcon icon={cilList} customClassName="nav-icon" />,
+       items: [
+          {
+            component: CNavItem,
+            icon: <CIcon icon={cilBabyCarriage} customClassName="nav-icon" />,
+            name: 'List Journalists',
+            to: '/admin/journalist',
+          }
+        ],
+      },
+      {
+        component: CNavGroup,
         name: 'Housing',
         to: '/base',
         icon: <CIcon icon={cilList} customClassName="nav-icon" />,

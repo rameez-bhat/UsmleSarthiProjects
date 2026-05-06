@@ -25,6 +25,8 @@ import {
   Paper,
   Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle,FormControl
 } from '@mui/material';
+import { doc, setDoc, updateDoc, deleteField,deleteDoc,increment } from "firebase/firestore";
+import { db } from "../../firebase";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
@@ -39,11 +41,18 @@ const CountryOption = ({ label, flag }) => (
     {label}
   </div>
 );
+let panelistRealData={};
 let interviewData={};
 const BASE_URL = "https://student.usmlesarthi.com/register";
 const BASE_URL1 = "https://residencymatch.usmlesarthi.com/authenticate";
 let referralUrl = "";
 let ListOfPanelists=[];
+const SERVICE_PRICE = {
+  firstjournalistreview: 35,
+  secondjournalistreview: 35,
+  erasjournalistreview: 35,
+  physicianjournalistreview: 150
+};
 const RedFlagOptions = [
   { value: 'Lack of USCE', label: 'Lack of USCE' },
   { value: 'number of exam attempts', label: 'Number of Exam Attempts' },
@@ -152,6 +161,187 @@ const handleCopy = async (url,which) => {
     setCopied(which);
     setTimeout(() => setCopied(false), 2000);
   };
+  const syncMentorEarnings = async ({
+  db,
+  studentId,
+  newData,
+  oldData
+}) => {
+  const newReviews = newData?.journalistreview || {};
+  const oldReviews = oldData?.journalistreview || {};
+
+  const allKeys = new Set([
+    ...Object.keys(newReviews),
+    ...Object.keys(oldReviews)
+  ]);
+console.log("newData====",newData)
+console.log("allKeys====",allKeys)
+  for (const serviceKey of allKeys) {
+    const newItem = newReviews[serviceKey];
+    const oldItem = oldReviews[serviceKey];
+	console.log("newItem====",newItem)
+	console.log("panelistRealData====",panelistRealData)
+    const newMentorId =
+      panelistRealData[newItem?.senttojournalist?.value]?.uid ;
+
+    const oldMentorId =
+      panelistRealData[oldItem?.senttojournalist?.value]?.uid;
+	console.log("newItem===>",newItem)
+console.log("oldItem===>",oldItem)
+console.log("newMentorId===>",newMentorId)
+console.log("oldMentorId===>",oldMentorId)
+    const price = SERVICE_PRICE[serviceKey] || 0;
+
+    // 🔴 SERVICE REMOVED
+    if (!newItem && oldItem && oldMentorId) {
+    console.log(db, "Users", oldMentorId, "Earnings", studentId)
+      await updateDoc(
+        doc(db, "Users", oldMentorId, "Earnings", studentId),
+        {
+          [`services.${serviceKey}`]: deleteField()
+        }
+      );
+      // 🔥 delete flat record
+      await deleteDoc(
+        doc(db, "MentorEarningsFlat", `${oldMentorId}_${studentId}_${serviceKey}`)
+      );
+      // 🔥 update cached total
+      await updateDoc(doc(db, "Users", oldMentorId), {
+        totalEarnings: increment(-price)
+      });
+      continue;
+    }
+
+    // 🔴 MENTOR CHANGED
+    if (newItem && oldItem && newMentorId !== oldMentorId) {
+      if (oldMentorId) {
+      console.log(db, "Users", oldMentorId, "Earnings", studentId, `services.${serviceKey}`)
+        await updateDoc(
+          doc(db, "Users", oldMentorId, "Earnings", studentId),
+          {
+            [`services.${serviceKey}`]: deleteField()
+          }
+        );
+        await deleteDoc(
+          doc(db, "MentorEarningsFlat", `${oldMentorId}_${studentId}_${serviceKey}`)
+        );
+        await updateDoc(doc(db, "Users", oldMentorId), {
+          totalEarnings: increment(-price)
+        });
+      }
+
+      if (newMentorId) {
+        await setDoc(
+          doc(db, "Users", newMentorId, "Earnings", studentId),
+          {
+            studentId,
+    		email: newData?.email,
+    		displayName: newData?.displayName,
+    		['services']: {[serviceKey]:
+    		{
+      			service: serviceKey,
+      			amount: price,
+      			updatedAt: new Date(),
+      			createdAt: new Date()
+    		}},
+    		updatedAt: new Date(),
+    		createdAt: new Date()
+          },
+          { merge: true }
+        );
+        await setDoc(
+          doc(db, "MentorEarningsFlat", `${newMentorId}_${studentId}_${serviceKey}`),
+          {
+            mentorId: newMentorId,
+            studentId,
+            displayName: newData?.displayName,
+            email: newData?.email,
+            service: serviceKey,
+            amount: price,
+            date: new Date()
+          }
+        );
+        await updateDoc(doc(db, "Users", newMentorId), {
+          totalEarnings: increment(price)
+        });
+      }
+      continue;
+    }
+
+    // 🔴 NEW SERVICE
+    if (newItem && !oldItem && newMentorId) {
+    console.log(db, "Users", oldMentorId, "Earnings", studentId)
+      await setDoc(
+        doc(db, "Users", newMentorId, "Earnings", studentId),
+        {
+        	studentId,
+    		email: newData?.email,
+    		displayName: newData?.displayName,
+    		['services']: {[serviceKey]:
+    		{
+      			service: serviceKey,
+      			amount: price,
+      			updatedAt: new Date(),
+      			createdAt: new Date(),
+    		}},
+    		createdAt: new Date(),
+    		updatedAt: new Date()
+        },
+        { merge: true }
+      );
+      await setDoc(
+        doc(db, "MentorEarningsFlat", `${newMentorId}_${studentId}_${serviceKey}`),
+        {
+          mentorId: newMentorId,
+          studentId,
+          displayName: newData?.displayName,
+          email: newData?.email,
+          service: serviceKey,
+          amount: price,
+          date: new Date()
+        }
+      );
+      await updateDoc(doc(db, "Users", newMentorId), {
+        totalEarnings: increment(price)
+      });
+      continue;
+    }
+
+    // 🔴 UPDATE EXISTING
+    if (newItem && oldItem && newMentorId === oldMentorId && typeof newMentorId!="undefined") {
+    console.log(db, "Users", oldMentorId, "Earnings", studentId)
+      await setDoc(
+        doc(db, "Users", newMentorId, "Earnings", studentId),
+        {
+          	studentId,
+    		email: newData?.email,
+    		displayName: newData?.displayName,
+    		['services']: {[serviceKey]:
+    		{
+      			service: serviceKey,
+      			amount: price,
+      			updatedAt: new Date()
+    		}},
+    		updatedAt: new Date()
+        },
+        { merge: true }
+      );
+      await setDoc(
+        doc(db, "MentorEarningsFlat", `${newMentorId}_${studentId}_${serviceKey}`),
+        {
+          mentorId: newMentorId,
+          studentId,
+          displayName: newData?.displayName,
+          email: newData?.email,
+          service: serviceKey,
+          amount: price,
+          date: new Date()
+        },
+        { merge: true }
+      );
+    }
+  }
+};
   const fetchUserData = async () => {
 
   showLoading()
@@ -164,11 +354,20 @@ const handleCopy = async (url,which) => {
     {
         ListOfPanelists=ListOfPanelistsData.data
     }
-    panelistOptions = Object.entries(ListOfPanelists).map(([email, objec]) => ({
+    /*panelistOptions = Object.entries(ListOfPanelists).map(([email, objec]) => ({
   value: objec.email,
   label: objec.displayName+"("+objec.email+")"
+  panelistRealData[objec.email]=objec;
 
-}));
+}));*/
+panelistOptions = Object.entries(ListOfPanelists).map(([email, objec]) => {
+  panelistRealData[objec.email] = objec;
+
+  return {
+    value: objec.email,
+    label: `${objec.displayName} (${objec.email})`
+  };
+});
     if(userDataSelectedInterviews.length > 0)
     {
         interviewData=userDataSelectedInterviews[0];
@@ -257,6 +456,12 @@ const handleSubmit = async () => {
     showLoading();
   
     await handleUpdate("Users", id, StudentData);
+    await syncMentorEarnings({
+      db,
+      studentId: id,
+      newData: StudentData,
+      oldData: initialData
+    });
     alert("Saved Successfully");
 	//navigate("/admin/referrallist");
     //setServices([{ ...ReferralemptyServiceRow }]);
@@ -341,6 +546,7 @@ const handleSubmit = async () => {
             <FormControl
               fullWidth
             >
+            <div className="InputLabel">Select Journalist</div>
               <Select1
                 value={StudentData?.journalistreview?.firstjournalistreview?.senttojournalist ?? ''}
                 label="Sent to Journalist"
@@ -439,6 +645,7 @@ const handleSubmit = async () => {
             <FormControl
               fullWidth
             >
+            <div className="InputLabel">Select Journalist</div>
               <Select1
                 value={StudentData?.journalistreview?.secondjournalistreview?.senttojournalist ?? ''}
                 label="Sent to Journalist"
