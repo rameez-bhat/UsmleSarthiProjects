@@ -10,9 +10,24 @@ const OnBoardingHtml = ({ MatchValues, HandleOnBoardingChange, errors}) => (
 
 
   <Grid container spacing={2}>
+   <Grid item xs={6}>
+                <FormControl fullWidth>
+                  <div>On Boarding Email Sent</div>
+                  <Select
+                    value={MatchValues['OnBoarding']?.['OnBoardingEmailSent'] ?? 'no'}
+                    label="Orientation Meet With Pawan"
+                    required
+                    onChange={(event) => HandleOnBoardingChange(event,'OnBoardingEmailSent',true)}
+                  >
+                    <MenuItem value='yes'>Yes</MenuItem>
+                    <MenuItem value='no'>No</MenuItem>
+                  </Select>
+                  {errors.OrientationMeetWithPawan && <span class="validationerror">{errors.OrientationMeetWithPawan}</span>}
+                </FormControl>
+              </Grid>
               <Grid item xs={6}>
                 <FormControl fullWidth>
-                  <InputLabel id="plan-label">Kind of Student</InputLabel>
+                  <div id="plan-label">Kind of Student</div>
                   <Select
                     value={MatchValues['OnBoarding']?.['Onboard_kindofstudent']?.['Value'] ?? ''}
                     label="Kind of Student"
@@ -27,8 +42,9 @@ const OnBoardingHtml = ({ MatchValues, HandleOnBoardingChange, errors}) => (
                 </FormControl>
               </Grid>
               <Grid item xs={6}>
+              <div >Notes Regarding Kind Of Student</div>
                   <TextField
-                    label="Notes Regarding Kind Of Student"
+        
                     variant="outlined"
                     fullWidth
                     value={MatchValues['OnBoarding']?.['Onboard_kindofstudentnotes']}
@@ -40,7 +56,7 @@ const OnBoardingHtml = ({ MatchValues, HandleOnBoardingChange, errors}) => (
                 </Grid>
               <Grid item xs={6}>
                 <FormControl fullWidth>
-                  <InputLabel id="plan-label">Email & WhatsApp Instructions</InputLabel>
+                   <div>Email & WhatsApp Instructions</div>
                   <Select
                     value={MatchValues['OnBoarding']?.['EmailWhatsAppInstructions']?.['Value'] ?? ''}
                     label="Email & WhatsApp Instructions"
@@ -56,8 +72,8 @@ const OnBoardingHtml = ({ MatchValues, HandleOnBoardingChange, errors}) => (
               </Grid>
               {MatchValues['OnBoarding']?.['EmailWhatsAppInstructions']?.['Value'] === 'Other' && (
                 <Grid item xs={6}>
+                <div>Email & WhatsApp Instructions Custom</div>
                   <TextField
-                    label="Email & WhatsApp Instructions Custom"
                     variant="outlined"
                     fullWidth
                     value={MatchValues['OnBoarding']?.['EmailWhatsAppInstructions']?.['Relation']?.['Other'] ?? ''}
@@ -70,7 +86,7 @@ const OnBoardingHtml = ({ MatchValues, HandleOnBoardingChange, errors}) => (
               )}
               <Grid item xs={6}>
                 <FormControl fullWidth>
-                  <InputLabel id="plan-label">Google Classroom Invitation</InputLabel>
+                  <div>Google Classroom Invitation</div>
                   <Select
                     value={MatchValues['OnBoarding']?.['GoogleClassroomInvitation']?.['Value'] ?? ''}
                     label="Google Classroom Invitation"
@@ -86,8 +102,8 @@ const OnBoardingHtml = ({ MatchValues, HandleOnBoardingChange, errors}) => (
               </Grid>
               {MatchValues['OnBoarding']?.['GoogleClassroomInvitation']?.['Value'] === 'Other' && (
                 <Grid item xs={6}>
+                <div>Google Classroom Invitation Custom</div>
                   <TextField
-                    label="Google Classroom Invitation Custom"
                     variant="outlined"
                     fullWidth
                     value={MatchValues['OnBoarding']?.['GoogleClassroomInvitation']?.['Relation']?.['Other'] ?? ''}
@@ -100,7 +116,7 @@ const OnBoardingHtml = ({ MatchValues, HandleOnBoardingChange, errors}) => (
               )}
               <Grid item xs={6}>
                 <FormControl fullWidth>
-                  <InputLabel id="plan-label">Residency Match Website Access</InputLabel>
+                  <div>Residency Match Website Access</div>
                   <Select
                     value={MatchValues['OnBoarding']?.['ResidencyMatchWebsiteAccess']?.['Value'] ?? ''}
                     label="Residency Match Website Access"
@@ -116,6 +132,7 @@ const OnBoardingHtml = ({ MatchValues, HandleOnBoardingChange, errors}) => (
               </Grid>
               {MatchValues['OnBoarding']?.['ResidencyMatchWebsiteAccess']?.['Value'] === 'Other' && (
                 <Grid item xs={6}>
+                <div>Residency Match Website Access Custom</div>
                   <TextField
                     label="Residency Match Website Access Custom"
                     variant="outlined"
@@ -131,7 +148,7 @@ const OnBoardingHtml = ({ MatchValues, HandleOnBoardingChange, errors}) => (
               {MatchValues['OnBoarding']?.['ResidencyMatchWebsiteAccess']?.['Value'] === 'Activated' && (
                <Grid item xs={6}>
                 <FormControl fullWidth>
-                  <InputLabel id="plan-label">Profile Status</InputLabel>
+                   <div>Profile Status</div>
                   <Select
                     value={MatchValues['OnBoarding']?.['ResidencyMatchWebsiteAccess']?.['Relation']?.['ProfileStatus'] ?? ''}
                     label="Profile Status"
@@ -147,7 +164,7 @@ const OnBoardingHtml = ({ MatchValues, HandleOnBoardingChange, errors}) => (
               )}
               <Grid item xs={6}>
                 <FormControl fullWidth>
-                  <InputLabel id="plan-label">Matchflix Access</InputLabel>
+                  <div>Matchflix Access</div>
                   <Select
                     value={MatchValues['OnBoarding']?.['MatchflixAccess']?.['Value'] ?? ''}
                     label="Matchflix Access"
@@ -164,6 +181,7 @@ const OnBoardingHtml = ({ MatchValues, HandleOnBoardingChange, errors}) => (
               </Grid>
               {MatchValues['OnBoarding']?.['MatchflixAccess']?.['Value'] === 'Other' && (
                 <Grid item xs={6}>
+                <div>Matchflix Access Custom</div>
                   <TextField
                     label="Matchflix Access Custom"
                     variant="outlined"
@@ -178,7 +196,7 @@ const OnBoardingHtml = ({ MatchValues, HandleOnBoardingChange, errors}) => (
               )}
                <Grid item xs={6}>
                 <FormControl fullWidth>
-                  <InputLabel id="plan-label">Contract</InputLabel>
+                   <div>Contract</div>
                   <Select
                     value={MatchValues['OnBoarding']?.['Contract']?.['Value'] ?? ''}
                     label="Contract"
@@ -195,8 +213,8 @@ const OnBoardingHtml = ({ MatchValues, HandleOnBoardingChange, errors}) => (
               </Grid>
               {MatchValues['OnBoarding']?.['Contract']?.['Value'] === 'Other' && (
                 <Grid item xs={6}>
+                 <div>Contract Custom</div>
                   <TextField
-                    label="Contract Custom"
                     variant="outlined"
                     fullWidth
                     value={MatchValues['OnBoarding']?.['Contract']?.['Relation']?.['Other'] ?? ''}
@@ -209,7 +227,7 @@ const OnBoardingHtml = ({ MatchValues, HandleOnBoardingChange, errors}) => (
               )}
               <Grid item xs={6}>
                 <FormControl fullWidth>
-                  <InputLabel id="plan-label">Closed Telegram Group</InputLabel>
+                  <div>Closed Telegram Group</div>
                   <Select
                     value={MatchValues['OnBoarding']?.['ClosedTelegramGroup']?.['Value'] ?? ''}
                     label="Closed Telegram Group"
@@ -226,8 +244,8 @@ const OnBoardingHtml = ({ MatchValues, HandleOnBoardingChange, errors}) => (
               </Grid>
               {MatchValues['OnBoarding']?.['ClosedTelegramGroup']?.['Value'] === 'Other' && (
                 <Grid item xs={6}>
+                <div>Closed Telegram Group Custom</div>
                   <TextField
-                    label="Closed Telegram Group Custom"
                     variant="outlined"
                     fullWidth
                     value={MatchValues['OnBoarding']?.['ClosedTelegramGroup']?.['Relation']?.['Other'] ?? ''}
@@ -240,7 +258,7 @@ const OnBoardingHtml = ({ MatchValues, HandleOnBoardingChange, errors}) => (
               )}
               <Grid item xs={6}>
                 <FormControl fullWidth>
-                  <InputLabel id="plan-label">Plan Specific Telegram Group</InputLabel>
+                  <div>Plan Specific Telegram Group</div>
                   <Select
                     value={MatchValues['OnBoarding']?.['PlanSpecificTelegramGroup']?.['Value'] ?? ''}
                     label="Plan Specific Telegram Group"
@@ -257,8 +275,8 @@ const OnBoardingHtml = ({ MatchValues, HandleOnBoardingChange, errors}) => (
               </Grid>
               {MatchValues['OnBoarding']?.['PlanSpecificTelegramGroup']?.['Value'] === 'Other' && (
                 <Grid item xs={6}>
+                <div>Plan Specific Telegram Group Custom</div>
                   <TextField
-                    label="Plan Specific Telegram Group Custom"
                     variant="outlined"
                     fullWidth
                     value={MatchValues['OnBoarding']?.['PlanSpecificTelegramGroup']?.['Relation']?.['Other'] ?? ''}
@@ -271,7 +289,7 @@ const OnBoardingHtml = ({ MatchValues, HandleOnBoardingChange, errors}) => (
               )}
                <Grid item xs={6}>
                 <FormControl fullWidth>
-                  <InputLabel id="plan-label">Orientation Meet With Admin Team</InputLabel>
+                <div>Orientation Meet With Admin Team</div>
                   <Select
                     value={MatchValues['OnBoarding']?.['OrientationMeetWithAdminTeam']?.['Value'] ?? ''}
                     label="Orientation Meet With Admin Team"
@@ -288,8 +306,8 @@ const OnBoardingHtml = ({ MatchValues, HandleOnBoardingChange, errors}) => (
               </Grid>
               {MatchValues['OnBoarding']?.['OrientationMeetWithAdminTeam']?.['Value'] === 'Other' && (
                 <Grid item xs={6}>
+                <div>Orientation Meet With Admin Team Custom</div>
                   <TextField
-                    label="Orientation Meet With Admin Team Custom"
                     variant="outlined"
                     fullWidth
                     value={MatchValues['OnBoarding']?.['OrientationMeetWithAdminTeam']?.['Relation']?.['Other']}
@@ -324,7 +342,7 @@ const OnBoardingHtml = ({ MatchValues, HandleOnBoardingChange, errors}) => (
               )}
               <Grid item xs={6}>
                 <FormControl fullWidth>
-                  <InputLabel id="plan-label">Orientation Meet With Pawan</InputLabel>
+                  <div>Orientation Meet With Pawan</div>
                   <Select
                     value={MatchValues['OnBoarding']?.['OrientationMeetWithPawan']?.['Value'] ?? ''}
                     label="Orientation Meet With Pawan"
@@ -341,8 +359,8 @@ const OnBoardingHtml = ({ MatchValues, HandleOnBoardingChange, errors}) => (
               </Grid>
               {MatchValues['OnBoarding']?.['OrientationMeetWithPawan']?.['Value'] === 'Other' && (
                 <Grid item xs={6}>
+                <div>Orientation Meet With Pawan Custom</div>
                   <TextField
-                    label="Orientation Meet With Pawan Custom"
                     variant="outlined"
                     fullWidth
                     value={MatchValues['OnBoarding']?.['OrientationMeetWithPawan']?.['Relation']?.['Other']}

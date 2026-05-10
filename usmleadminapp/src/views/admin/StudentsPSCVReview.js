@@ -740,6 +740,67 @@ const handleSubmit = async () => {
             </FormControl>
           </Grid>
           <Grid item xs={6}>
+          <Box sx={{display: "flex",alignItems: "center",border: "1px solid #ccc",borderRadius: 1}}>
+    <Typography variant="subtitle1" color="textSecondary" sx={{flexBasis: "40%",p: 1,borderRight: "1px solid #ccc"}}>Sent To Journalist Date:</Typography>
+
+    <Box sx={{ flexGrow: 1, p: 1 }}>
+      <DatePicker
+        value={StudentData?.journalistreview?.erasjournalistreview?.senttojournalistdate ? dayjs(StudentData?.journalistreview?.erasjournalistreview?.senttojournalistdate.toDate()): null}
+        onChange={(e) =>handleChangeStudentDetails(e,"senttojournalistdate","erasjournalistreview")}
+        format="DD/MM/YYYY"
+        slotProps={{
+          textField: {
+            fullWidth: true,
+            size: "small"
+          }
+        }}
+      />
+    </Box>
+  </Box>
+
+  {errors.EnrollmentDate && (
+    <span className="validationerror">{errors.EnrollmentDate}</span>
+  )}
+</Grid>
+          <Grid item xs={6}>
+            <FormControl
+              fullWidth
+            >
+            <div className="InputLabel">Select Journalist</div>
+              <Select1
+                value={StudentData?.journalistreview?.erasjournalistreview?.senttojournalist ?? ''}
+                label="Sent to Journalist"
+                options={panelistOptions}
+                onChange={(e) =>
+                  handleChangeStudentDetails(
+                    e,
+                    "senttojournalist","erasjournalistreview"
+                  )
+                }
+              >
+              </Select1>
+            </FormControl>
+          </Grid>
+          <Grid item xs={6}>
+  <Box sx={{display: "flex",alignItems: "center",border: "1px solid #ccc",borderRadius: 1}}>
+    <Typography variant="subtitle1" color="textSecondary" sx={{flexBasis: "40%",p: 1,borderRight: "1px solid #ccc"}}>Received From Journalist Date:</Typography>
+
+    <Box sx={{ flexGrow: 1, p: 1 }}>
+      <DatePicker
+        value={StudentData?.journalistreview?.erasjournalistreview?.receivedfromjournalistdate ? dayjs(StudentData?.journalistreview?.erasjournalistreview?.receivedfromjournalistdate.toDate()): null}
+        onChange={(e) =>handleChangeStudentDetails(e,"receivedfromjournalistdate","erasjournalistreview")}
+        format="DD/MM/YYYY"
+        slotProps={{
+          textField: {
+            fullWidth: true,
+            size: "small"
+          }
+        }}
+      />
+    </Box>
+  </Box>{errors.EnrollmentDate && (<span className="validationerror">{errors.EnrollmentDate}</span>)}
+  </Grid>
+          <Grid item xs={6}>
             <FormControl
               fullWidth
             >
@@ -777,7 +838,7 @@ const handleSubmit = async () => {
 	</div>
 	<div className="RotationAddedPayment MatchPayment" >
        	<div className="TitleDiv">
-            <Typography  sx={{ flexGrow: 1, backgroundColor: '#a4c2db', p: 1, borderRadius: 2 }}><b>Physician Review:</b>  </Typography>
+            <Typography  sx={{ flexGrow: 1, backgroundColor: '#a4c2db', p: 1, borderRadius: 2 }}><b>Mentor Review:</b>  </Typography>
         </div>
        <div className="VisaLetter">
   			<Grid container spacing={1} sx={{ p: 1 }}  alignItems="center">
@@ -801,7 +862,67 @@ const handleSubmit = async () => {
               </Select>
             </FormControl>
           </Grid>
-         
+         <Grid item xs={6}>
+          <Box sx={{display: "flex",alignItems: "center",border: "1px solid #ccc",borderRadius: 1}}>
+    <Typography variant="subtitle1" color="textSecondary" sx={{flexBasis: "40%",p: 1,borderRight: "1px solid #ccc"}}>Sent To Mentor Date:</Typography>
+
+    <Box sx={{ flexGrow: 1, p: 1 }}>
+      <DatePicker
+        value={StudentData?.journalistreview?.physicianjournalistreview?.senttojournalistdate ? dayjs(StudentData?.journalistreview?.physicianjournalistreview?.senttojournalistdate.toDate()): null}
+        onChange={(e) =>handleChangeStudentDetails(e,"senttojournalistdate","physicianjournalistreview")}
+        format="DD/MM/YYYY"
+        slotProps={{
+          textField: {
+            fullWidth: true,
+            size: "small"
+          }
+        }}
+      />
+    </Box>
+  </Box>
+
+  {errors.EnrollmentDate && (
+    <span className="validationerror">{errors.EnrollmentDate}</span>
+  )}
+</Grid>
+          <Grid item xs={6}>
+            <FormControl
+              fullWidth
+            >
+            <div className="InputLabel">Select Mentor</div>
+              <Select1
+                value={StudentData?.journalistreview?.physicianjournalistreview?.senttojournalist ?? ''}
+                label="Sent to Journalist"
+                options={panelistOptions}
+                onChange={(e) =>
+                  handleChangeStudentDetails(
+                    e,
+                    "senttojournalist","physicianjournalistreview"
+                  )
+                }
+              >
+              </Select1>
+            </FormControl>
+          </Grid>
+          <Grid item xs={6}>
+  <Box sx={{display: "flex",alignItems: "center",border: "1px solid #ccc",borderRadius: 1}}>
+    <Typography variant="subtitle1" color="textSecondary" sx={{flexBasis: "40%",p: 1,borderRight: "1px solid #ccc"}}>Received From Mentor Date:</Typography>
+
+    <Box sx={{ flexGrow: 1, p: 1 }}>
+      <DatePicker
+        value={StudentData?.journalistreview?.physicianjournalistreview?.receivedfromjournalistdate ? dayjs(StudentData?.journalistreview?.physicianjournalistreview?.receivedfromjournalistdate.toDate()): null}
+        onChange={(e) =>handleChangeStudentDetails(e,"receivedfromjournalistdate","physicianjournalistreview")}
+        format="DD/MM/YYYY"
+        slotProps={{
+          textField: {
+            fullWidth: true,
+            size: "small"
+          }
+        }}
+      />
+    </Box>
+  </Box>{errors.EnrollmentDate && (<span className="validationerror">{errors.EnrollmentDate}</span>)}
+  </Grid>
           <Grid item xs={6}>
               <div className="InputLabel">Notes</div>
                   <TextField

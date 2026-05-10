@@ -4,7 +4,13 @@ import { collection, getDocs } from "firebase/firestore";
 import { db } from "../../firebase";
 import "../../components/css/Journalist.css";
 import dayjs from "dayjs";
-
+const ServicesListReviews = {
+  firstjournalistreview: "First Journalist Review",
+  secondjournalistreview: "Second Journalist Review",
+  erasjournalistreview: "ERAS CV Review",
+  physicianjournalistreview: "Mentor Review",
+  mockInterview: "Mock Interviews",
+};
 const JournalistDetails = () => {
   const { mentorId } = useParams();
 
@@ -112,7 +118,7 @@ const JournalistDetails = () => {
         <div className="jd-services">
           {Object.entries(grouped).map(([k, v]) => (
             <div key={k} className="jd-service-row">
-              <span>{k}</span>
+              <span>{ServicesListReviews[k]}</span>
               <span>${v}</span>
             </div>
           ))}
@@ -136,7 +142,7 @@ const JournalistDetails = () => {
           {data.map((row, i) => (
             <tr key={i}>
               <td>{row.displayName}</td>
-              <td>{row.service}</td>
+              <td>{ServicesListReviews[row.service]}</td>
               <td className="amount">${row.amount}</td>
               <td>{dayjs(row.date).format("YYYY-MM-DD")}</td>
             </tr>

@@ -23,10 +23,13 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs from "dayjs";
 import { Timestamp } from "firebase/firestore";
 import JoditEditor from "jodit-react";
+import { doc, setDoc, updateDoc, deleteField,deleteDoc,increment } from "firebase/firestore";
+import { db } from "../../firebase";
 import { useLoading } from "../../layout/LoadingContext";
 let panelistOptions={}
 let groupedOptions;
 let groupedOptionsT;
+let panelistRealData={};
 export default function EditStudentMocksAdmin() {
   const { id } = useParams(); // user uid
   const {
@@ -38,10 +41,12 @@ export default function EditStudentMocksAdmin() {
   } = useLoading();
 
   const [studentData, setStudentData] = useState(null);
+  const [studentServices, setstudentServices] = useState(null);
   const [panelists, setPanelists] = useState([]);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(true);
   const [teamEmails, setTeamEmails] = useState([]);
+  const [studentDataOriginal, setStudentDataOriginal] = useState(null);
 
   /* ================= LOAD USER + PANELISTS ================= */
   useEffect(() => {
@@ -59,15 +64,26 @@ export default function EditStudentMocksAdmin() {
         id,
         0
       );
-
-      const ListOfPanelists = await FetchDataFromCollection(
+		const UserServicesSelected = await FetchDataFromCollection("UserServices", 20, "__name__", "==", id, 0);
+		console.log("UserServicesSelected---->",UserServicesSelected?.[0])
+        if(UserServicesSelected.length > 0)
+        {
+        	setstudentServices(UserServicesSelected?.[0] || [])
+        }
+      /*const ListOfPanelists = await FetchDataFromCollection(
         "Panelists",
         2000,
         null,
         null,
         null,
         0
-      );
+      );*/
+      const ListOfPanelistsData = await fetchAdminDataWithJoin("UsersRoles","Users",3000,null,"Role","==","Mentor");
+      let ListOfPanelists;
+      if(ListOfPanelistsData.data.length)
+    {
+        ListOfPanelists=ListOfPanelistsData.data
+    }
       const ListOfTeam = await fetchAdminDataWithJoin(
       "UsersRoles",
       "Users",
@@ -81,14 +97,18 @@ export default function EditStudentMocksAdmin() {
 groupedOptions = [
   {
     label: "Panelists",
-    options: Object.entries(ListOfPanelists).map(
-  ([email, objec]) => ({
+    options: Object.entries(ListOfPanelists).map(([email, objec]) => {
+  panelistRealData[objec.email] = objec;
+
+  return {
     value: objec.email,
-    label: objec.name,
-  }))
+    label: `${objec.displayName} (${objec.email})`
+  };
+})
   }
   
 ];
+
 groupedOptionsT = [
   {
     label: "Team",
@@ -98,7 +118,7 @@ groupedOptionsT = [
   }))
   } 
 ];
-
+		console.log("userDataSelected---->",userDataSelected)
       if (userDataSelected.length > 0) {
         const user = userDataSelected[0];
 
@@ -111,6 +131,7 @@ groupedOptionsT = [
         }
 
         setStudentData(user);
+        setStudentDataOriginal(JSON.parse(JSON.stringify(user)));
       }
     } catch (e) {
       console.error("Error loading data:", e);
@@ -118,7 +139,157 @@ groupedOptionsT = [
     hideLoading();
     setLoading(false);
   };
+  const syncMockEarnings = async (db, studentId, newData, oldData) => {
+  const newMocks = newData.studentMocks || [];
+  const oldMocks = oldData?.studentMocks || [];
 
+  const maxLen = Math.max(newMocks.length, oldMocks.length);
+
+  for (let i = 0; i < maxLen; i++) {
+    const newMock = newMocks[i];
+    const oldMock = oldMocks[i];
+
+    const serviceKey = `mock_${i}`;
+
+    const newMentorId =
+      panelistRealData?.[newMock?.mentorEmail]?.id;
+
+    const oldMentorId =
+      panelistRealData?.[oldMock?.mentorEmail]?.id;
+
+    const newActive =
+      newMock?.isTaken &&
+      newMock?.mentorEmail &&
+      newMock?.AssignMentorSelect === "panelist";
+
+    const oldActive =
+      oldMock?.isTaken &&
+      oldMock?.mentorEmail &&
+      oldMock?.AssignMentorSelect === "panelist";
+	  if(studentServices?.Match['Plan']?.Name && studentServices?.Match['Plan']?.Name=="Platinum")
+	  {
+		
+	  }
+    const newPrice = newActive
+      ? newMock?.MockTypePd === "yes"
+        ? 300
+        : 150
+      : 0;
+
+    const oldPrice = oldActive
+      ? oldMock?.MockTypePd === "yes"
+        ? 300
+        : 150
+      : 0;
+
+    // =========================
+    // 🔴 CASE 1: REMOVED / UNMARKED
+    // =========================
+    if (!newActive && oldActive && oldMentorId) {
+      await updateDoc(
+        doc(db, "Users", oldMentorId, "Earnings", studentId),
+        {
+          [`services.${serviceKey}`]: deleteField(),
+        }
+      );
+
+      continue;
+    }
+
+    // =========================
+    // 🔴 CASE 2: MENTOR CHANGED
+    // =========================
+    if (
+      newActive &&
+      oldActive &&
+      newMentorId !== oldMentorId
+    ) {
+      if (oldMentorId) {
+        await updateDoc(
+          doc(db, "Users", oldMentorId, "Earnings", studentId),
+          {
+            [`services.${serviceKey}`]: deleteField(),
+          }
+        );
+      }
+
+      if (newMentorId) {
+        await setDoc(
+          doc(db, "Users", newMentorId, "Earnings", studentId),
+          {
+            studentId,
+            email: newData.email,
+            displayName: newData.displayName,
+            ['services']: {[serviceKey]:
+    		{
+              service: "mockInterview",
+              type: newMock.MockTypePd,
+              amount: newPrice,
+              updatedAt: new Date(),
+              createdAt: new Date(),
+            }},
+          },
+          { merge: true }
+        );
+      }
+
+      continue;
+    }
+
+    // =========================
+    // 🔴 CASE 3: NEW MOCK COMPLETED
+    // =========================
+    if (newActive && !oldActive && newMentorId) {
+      await setDoc(
+        doc(db, "Users", newMentorId, "Earnings", studentId),
+        {
+          studentId,
+          email: newData.email,
+          displayName: newData.displayName,
+          ['services']: {[serviceKey]:
+    		{
+            service: "mockInterview",
+            type: newMock.MockTypePd,
+            amount: newPrice,
+            updatedAt: new Date(),
+            createdAt: new Date(),
+          }},
+        },
+        { merge: true }
+      );
+
+      continue;
+    }
+
+    // =========================
+    // 🔴 CASE 4: UPDATED (TYPE CHANGE)
+    // =========================
+    if (
+      newActive &&
+      oldActive &&
+      newMentorId === oldMentorId &&
+      newPrice !== oldPrice
+    ) {
+      await setDoc(
+        doc(db, "Users", newMentorId, "Earnings", studentId),
+        {
+          ['services']: {[serviceKey]:
+    		{
+            service: "mockInterview",
+            type: newMock.MockTypePd,
+            amount: newPrice,
+            updatedAt: new Date(),
+          }},
+        },
+        { merge: true }
+      );
+    }
+
+    // =========================
+    // 🔴 CASE 5: NO CHANGE → DO NOTHING
+    // =========================
+  }
+};
   /* ============ AUTO SYNC MOCK COUNT ============ */
   useEffect(() => {
     if (!studentData) return;
@@ -214,6 +385,7 @@ groupedOptionsT = [
 
     showLoading();
     try {
+      await syncMockEarnings(db, id, studentData, studentDataOriginal);
       await handleUpdate("Users", id, {
         studentMocks: studentData.studentMocks,
         studentMocksConfig: studentData.studentMocksConfig,
@@ -375,7 +547,22 @@ groupedOptionsT = [
                           {errors[`date_${index}`]}
                         </Typography>
                       )}
-                      
+                      <Grid item xs={6} sx={{ mt: 2 }}>
+              <FormControl fullWidth>
+                <InputLabel id="meeting-label">Mock With PD</InputLabel>
+                <Select
+                  value={mock.MockTypePd || 'no'}
+                  label="Mock With PD"
+                  required
+                   onChange={(e) =>updateMock(index, "MockTypePd", e.target.value)}
+                >
+                  <MenuItem value="no">No</MenuItem>
+                  <MenuItem value="yes">Yes</MenuItem>
+                </Select>
+                {errors[`MockTypePd_${index}`] && (<Typography color="error" mt={1}>{errors[`MockTypePd_${index}`]}</Typography>)}
+              </FormControl>
+              
+            </Grid>
                       <Grid item xs={6} sx={{ mt: 2 }}>
               <FormControl fullWidth>
                 <InputLabel id="meeting-label">Select Mentor</InputLabel>
