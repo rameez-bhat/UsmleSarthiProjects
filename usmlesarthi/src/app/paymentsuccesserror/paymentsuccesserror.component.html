@@ -75,7 +75,7 @@
       <p><strong>Email ID:</strong> {{studentEmail}}</p>
       <p *ngIf="TotalInstallementsPaid==1"><strong>Amount Paid:</strong> ${{Amount / 100}}</p>
       <p *ngIf="TotalInstallementsPaid>1"><strong>Your Agreed To Pay Full Amount In :</strong> {{TotalInstallementsPaid}} Installements</p>
-      <p *ngIf="TotalInstallementsPaid>1"><strong>You Paid Your Installement No : {{InstallementNo}}</strong>  of : ${{(Amount / 100)/2}}</p>
+      <p *ngIf="TotalInstallementsPaid>1"><strong>You Paid Your Installement No : {{InstallementNo}}</strong>  of : ${{((Amount / 100)/TotalInstallementsPaid) | number:'1.2-2'}}</p>
       <p *ngIf="Amount-feePaidtoShow>0"><strong>Processing Charges 4% + $0.30 :</strong> ${{(Amount-feePaidtoShow) / 100}}</p>
       <p *ngIf="Amount-feePaidtoShow>0"><strong>Net Payment:</strong> ${{feePaidtoShow / 100}}</p>
     </div>
