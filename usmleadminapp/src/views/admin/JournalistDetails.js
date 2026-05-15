@@ -10,6 +10,7 @@ const ServicesListReviews = {
   erasjournalistreview: "ERAS CV Review",
   physicianjournalistreview: "Mentor Review",
   mockInterview: "Mock Interviews",
+  platinumMeeting: "Platinum Meeting"
 };
 const JournalistDetails = () => {
   const { mentorId } = useParams();

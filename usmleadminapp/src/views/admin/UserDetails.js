@@ -34,12 +34,15 @@ const DateFormatForAll="MM/DD/YYYY";
 import Research from "./Research";
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
+import { doc, setDoc, updateDoc, deleteField,deleteDoc,increment } from "firebase/firestore";
+import { db } from "../../firebase";
 let AlreadySavedPayment={};
 let NewPaymentadded={};
 let NewPaymentaddedForSeats={};
 let paymentSuccessURL="";
 let AlreadySavedPaymentMatch=[];
 let NewPaymentaddedMatch=[];
+let panelistRealData={};
 let AlreadySavedPaymentResearch={};
 let NewPaymentaddedResearch={};
 let paymentParams={};
@@ -61,6 +64,7 @@ dayjs.extend(timezone);
  	let newRotationsView={};
  	let ListOfPanelists=[];
  	let ChiefMentorlists=[];
+ 	let InitialMatchData={};
 const UserDetails = (LoginInUserMain) => {
 
 ActualUser=LoginInUserMain.ActualUser;
@@ -596,6 +600,14 @@ ActualUser=LoginInUserMain.ActualUser;
         {
           ListOfPanelists=ListOfPanelistsData.data
         }
+      let   panelistOptions = Object.entries(ListOfPanelists).map(([email, objec]) => {
+  panelistRealData[objec.email] = objec;
+
+  return {
+    value: objec.email,
+    label: `${objec.displayName} (${objec.email})`
+  };
+});
         if(ChiefMentorData.data.length)
         {
           ChiefMentorlists=ChiefMentorData.data
@@ -648,6 +660,7 @@ ActualUser=LoginInUserMain.ActualUser;
 
         		const convertedData = UserServicesSelected.map(doc => convertMatchObjectToArray(doc));
         		UserServicesSelected[0].Match=convertedData[0].Match;
+        		InitialMatchData = JSON.parse(JSON.stringify(UserServicesSelected[0].Match));
         	}
         	if(typeof UserServicesSelected[0]?.Research!=="undefined")
         	{
@@ -4586,7 +4599,166 @@ const HandleCommonNotesSectionChange = (event,name,Index) =>{
     hideLoading();
   }
 };
+const calculatePlatinumMeetingAmount = (durationMinutes) => {
+  if (!durationMinutes) return 0;
 
+  const hours = Number(durationMinutes) / 60;
+
+  return Math.round(hours * 100); // $100 per hour
+};
+const syncMentorEarnings = async ({
+  db,
+  studentId,
+  newData,
+  oldData
+}) => {
+  const newMeetings = newData?.Platinum?.Meetings || [];
+  const oldMeetings = oldData?.Platinum?.Meetings || [];
+console.log("newMeetings====>",newMeetings)
+console.log("oldMeetings====>",oldMeetings)
+console.log("newData====>",newData)
+console.log("oldData====>",oldData)
+  const newMentorEmail =
+    newData?.Platinum?.AssignedMentor?.value;
+
+  const oldMentorEmail =
+    oldData?.Platinum?.AssignedMentor?.value;
+
+  const newMentorId = panelistRealData?.[newMentorEmail]?.uid;
+  const oldMentorId = panelistRealData?.[oldMentorEmail]?.uid;
+
+  const maxLen = Math.max(newMeetings.length, oldMeetings.length);
+
+  for (let i = 0; i < maxLen; i++) {
+    const newMeeting = newMeetings[i] || null;
+    const oldMeeting = oldMeetings[i] || null;
+	console.log("newMeeting=====>",newMeeting)
+	console.log("oldMeeting=====>",oldMeeting)
+    const serviceKey = `platinum_meeting_${i}`;
+
+    const newCompleted =
+      newMeeting?.MeetingWithPhysicianMentor?.Value === "Completed";
+
+    const oldCompleted =
+      oldMeeting?.MeetingWithPhysicianMentor?.Value === "Completed";
+
+    const newDuration =
+      newMeeting?.MeetingWithPhysicianMentorDuration?.Value;
+
+    const oldDuration =
+      oldMeeting?.MeetingWithPhysicianMentorDuration?.Value;
+
+    const newAmount = newCompleted
+      ? calculatePlatinumMeetingAmount(newDuration)
+      : 0;
+
+    const oldAmount = oldCompleted
+      ? calculatePlatinumMeetingAmount(oldDuration)
+      : 0;
+    // =========================
+    // 🔴 CASE 1: REMOVED / NOT COMPLETED
+    // =========================
+    if (!newCompleted && oldCompleted && oldMentorId) {
+      await updateDoc(
+        doc(db, "Users", oldMentorId, "Earnings", studentId),
+        {
+          [`services.${serviceKey}`]: deleteField()
+        }
+      );
+      continue;
+    }
+
+    // =========================
+    // 🔴 CASE 2: NEWLY COMPLETED
+    // =========================
+    if (newCompleted && !oldCompleted && newMentorId) {
+      await setDoc(
+        doc(db, "Users", newMentorId, "Earnings", studentId),
+        {
+          studentId,
+          email: userData?.email,
+          displayName: userData?.displayName,
+
+          services: {[serviceKey]:{
+            service: "platinumMeeting",
+            amount: newAmount,
+            duration: newDuration || 0,
+            meetingDate:
+              newMeeting?.MeetingWithPhysicianMentor?.MeetingDate || null,
+            updatedAt: new Date(),
+            createdAt: new Date()
+          }
+        }},
+        { merge: true }
+      );
+      continue;
+    }
+
+    // =========================
+    // 🔴 CASE 3: MENTOR CHANGED
+    // =========================
+    if (newCompleted && oldCompleted && newMentorId !== oldMentorId) {
+      if (oldMentorId) {
+        await updateDoc(
+          doc(db, "Users", oldMentorId, "Earnings", studentId),
+          {
+            [`services.${serviceKey}`]: deleteField()
+          }
+        );
+      }
+
+      if (newMentorId) {
+        await setDoc(
+          doc(db, "Users", newMentorId, "Earnings", studentId),
+          {
+            studentId,
+            email: userData?.email,
+            displayName: userData?.displayName,
+
+            services: {[serviceKey]:{
+              service: "platinumMeeting",
+              amount: newAmount,
+              duration: newDuration || 0,
+              meetingDate:
+                newMeeting?.MeetingWithPhysicianMentor?.MeetingDate || null,
+              updatedAt: new Date(),
+              createdAt: new Date()
+            }
+          }},
+          { merge: true }
+        );
+      }
+
+      continue;
+    }
+
+    // =========================
+    // 🔴 CASE 4: UPDATED (DURATION CHANGE)
+    // =========================
+    if (
+      newCompleted &&
+      oldCompleted &&
+      newMentorId === oldMentorId &&
+      newAmount !== oldAmount &&
+      newMentorId
+    ) {
+      await setDoc(
+        doc(db, "Users", newMentorId, "Earnings", studentId),
+        {
+          services: {[serviceKey]:{
+            service: "platinumMeeting",
+            amount: newAmount,
+            duration: newDuration || 0,
+            meetingDate:
+              newMeeting?.MeetingWithPhysicianMentor?.MeetingDate || null,
+            updatedAt: new Date()
+          }
+        }},
+        { merge: true }
+      );
+    }
+  }
+};
 const handleUpdateForm = async () => {
 
   showLoading();
@@ -4704,6 +4876,13 @@ const handleUpdateForm = async () => {
     	}
   // Execute handleUpdate only after all promises in map have resolved
     await deleteFieldFromDocument("UserServices",id,"Match");
+    //await syncMentorEarnings(db,id,dataTobesend?.Match,InitialMatchData);
+    await syncMentorEarnings({
+  db,
+  studentId: id,
+  newData: dataTobesend?.Match,
+  oldData: InitialMatchData
+});
   handleUpdate("UserServices", id, dataTobesend).then(async (result) => {
     const conditionsArrayNote = [
       [{ name: "uid", condition: "==", value: id }],
@@ -4724,7 +4903,7 @@ const handleUpdateForm = async () => {
     if (NoteSectionDataObj.status === "success" && NoteSectionDataObj.data.length) {
       setNoteSectionData(NoteSectionDataObj.data);
     }
-
+	
     setOperationMessage(result.message);
     setOpen(true);
     hideLoading();
