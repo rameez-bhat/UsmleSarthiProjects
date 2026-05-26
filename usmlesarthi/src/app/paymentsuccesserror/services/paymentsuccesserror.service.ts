@@ -197,7 +197,8 @@ async UpdateDocumentByUID(uid: string,TableName: string,updateData: any): Promis
     
       const MatchPayment = {Payment0:{
         
-          Amount: functionParams['Amount']/100,
+          Amount:Number(
+            (((functionParams['Amount'] / 100) / functionParams['TotalInstallementsPaid']).toFixed(2))),
           ModeOfPayment: "Stripe" ,
           PaymentDate: timestampP,
           Discount:{Amount:"",Code:"",Notes:"",Value:"No"},

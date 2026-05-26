@@ -1,0 +1,134 @@
+const data = `SPREDU00280180,0,3068,0,296
+SPREDU00280181,0,4524,0,0
+SPREDU00280203,0,4396,0,0
+SPREDU00280278,0,3244,0,0
+SPREDU00280309,0,4444,0,0
+SPREDU00280417,0,2980,0,288
+SPREDU00290021,0,3492,0,340
+SPREDU00330007,0,3492,0,340
+SPREDU00330009,0,3492,0,340
+SPREDU00330013,0,3492,0,340
+SPREDU00330014,0,3492,0,340
+SPREDU00350015,0,3492,0,340
+SPREDU00450033,0,2808,0,0
+SPREDU00450038,0,3700,0,360
+SPREDU00480001,0,3492,0,340
+SPREDU00480008,0,3600,0,340
+SPREDU00480009,0,3492,0,340
+SPREDU00540006,0,4028,0,0
+SPREDU00570008,0,5836,0,0
+TMGEDU00010401,0,4028,0,0
+URIEDU00020115,0,4028,0,0
+URIEDU00350010,0,5668,0,0
+ROHEDU00100020,0,2696,0,256
+SPREDU00190546,0,3492,0,340
+SPREDU00330015,0,2512,0,236
+SPREDU00190735,0,2444,0,232`;
+
+const obj = {};
+
+data.split('\n').forEach(line => {
+  const [key, HRA,DA,TA,NPS] = line.split(',');
+  obj[key] = {"HRA":HRA,"DA":DA,"TA":TA,"NPS":NPS};
+});
+
+console.log(obj);
+
+const keys = Object.keys(obj);
+let i = 0;
+function selectOptionByPartialText(partialText) {
+  var select = document.getElementById('ctl00_ContentPlaceHolder1_ddlemployee');
+  console.log("select---->",select)
+  for (var i = 0; i < select.options.length; i++) {
+    if (select.options[i].text.includes(partialText)) {
+      select.selectedIndex = i;
+      break;
+    }
+  }
+}
+function deselectSelectedOption() {
+  var select = document.getElementById('ctl00_ContentPlaceHolder1_ddlemployee');
+  $("ContentPlaceHolder1_ddlDDo").find("option[selected]").removeAttr("selected");
+  select.selectedIndex = -1; // Deselect the selected option
+}
+
+async function loopWithDelayRelease() {
+  if (i < keys.length) {
+    const key = keys[i];
+console.log("Cpis ID=",key)
+    deselectSelectedOption();
+    selectOptionByPartialText(key);
+    $("#ctl00_ContentPlaceHolder1_btnSubmit").click();
+
+    const waitForIdle = async () => {
+      while ($("#ctl00_ContentPlaceHolder1_UpdateProgress1").css("display") !== "none") {
+        await sleep(500);
+      }
+    };
+	await sleep(600);
+    await waitForIdle();
+    console.log("obj[key]['DA']---->",obj[key]['DA'])
+    console.log("obj[key]---->",obj[key])
+    $("#ctl00_ContentPlaceHolder1_April-2026-DA-11").val(Number(obj[key]['DA']));
+    $("#ctl00_ContentPlaceHolder1_April-2026-DA-11").trigger('change');
+    /*if (typeof __doPostBack === 'function') {
+            __doPostBack($("#ctl00_ContentPlaceHolder1_September-2025-DA-62").attr('name'), '');
+    }*/
+    
+    //await sleep(600);
+   // await waitForIdle();
+
+   // $("#ctl00_ContentPlaceHolder1_September-2025-HRA-62").val(Number(obj[key]['HRA']));
+    
+  	// $("#ctl00_ContentPlaceHolder1_September-2025-HRA-62").trigger('change');
+   /* if (typeof __doPostBack === 'function') {
+            __doPostBack($("#ctl00_ContentPlaceHolder1_September-2025-HRA-62").attr('name'), '');
+    }*/
+   // await sleep(600);
+    //await waitForIdle();
+
+    //$("[id='ctl00_ContentPlaceHolder1_September-2025-TA LEVEL UPTO 8  2106-62']").val(Number(obj[key]['TA']));
+    // $("[id='ctl00_ContentPlaceHolder1_September-2025-TA LEVEL UPTO 8  2106-62']").trigger('change');
+   /* if (typeof __doPostBack === 'function') {
+            __doPostBack( $("[id='ctl00_ContentPlaceHolder1_September-2025-TA LEVEL UPTO 8  2106-62']").attr('name'), '');
+    }*/
+    await sleep(600);
+    await waitForIdle();
+
+    let npsfound = false;
+    console.log('$("#ctl00_ContentPlaceHolder1_April-2026-NPS SUB-11")--->',$("[id='ctl00_ContentPlaceHolder1_April-2026-NPS SUB-11']"))
+    if ($("[id='ctl00_ContentPlaceHolder1_April-2026-NPS SUB-11']").length > 0) {
+      npsfound = true;
+       $("[id='ctl00_ContentPlaceHolder1_April-2026-NPS SUB-11']").val(Number(obj[key]['NPS']));
+     
+     	 $("[id='ctl00_ContentPlaceHolder1_April-2026-NPS SUB-11']").trigger('change');
+    /*if (typeof __doPostBack === 'function') {
+            __doPostBack( $("[id='ctl00_ContentPlaceHolder1_September-2025-NPS SUB-62']").attr('name'), '');
+    }*/
+      await sleep(600);
+      await waitForIdle();
+    }
+
+    $("#ctl00_ContentPlaceHolder1_btnsvdue").click();
+    await sleep(600);
+    await waitForIdle();
+
+    i++;
+    loopWithDelayRelease();
+  }
+}
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+  const waitForIdle = async () => {
+      while ($("#ctl00_ContentPlaceHolder1_UpdateProgress1").css("display") !== "none") {
+        await sleep(500);
+      }
+    };
+window.alert = function(message) {
+    console.log("Alert blocked:", message);
+    return true;
+};
+
+loopWithDelayRelease()
+

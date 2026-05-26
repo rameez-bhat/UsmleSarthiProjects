@@ -273,6 +273,7 @@ style: `
     		{
       			docData.TotalInstallements = [docData.TotalInstallements];
     		}
+    		docData.TotalInstallements = docData.TotalInstallements.map(item => Number(item));
   		} 
   		else 
   		{
