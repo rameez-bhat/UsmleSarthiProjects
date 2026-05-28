@@ -22,7 +22,7 @@ const renderMeetings = () => {
   const renderPayments = (paymentObject) =>{
   return paymentObject?.['RotationPayment'].map((RotationPay, Paymentindex) => {
   return (
-      <div className="LoopPayment">
+      <div className="LoopPayment" key={Paymentindex}>
       <p><strong>Mode Of Payment :</strong> {RotationPay?.ModeOfPayment?.value}</p>
       <p><strong>Amount :</strong> ${RotationPay?.Amount}</p>
       <p><strong>Fee Type :</strong> {RotationPay?.FeeType}</p>
@@ -36,7 +36,7 @@ const renderMeetings = () => {
 
   return paymentObject?.['Payments'].map((researchPay, Paymentindex) => {
   return (
-      <div className="LoopPayment">
+      <div className="LoopPayment" key={Paymentindex}>
       <p><strong>Fee Type :</strong> {researchPay?.FeeType}</p>
       <p><strong>Mode Of Payment :</strong> {researchPay?.ModeOfPayment}</p>
       <p><strong>Payment Date :</strong> {researchPay?.['PaymentDate'] ? typeof researchPay?.PaymentDate==="string"?dayjs(researchPay?.['PaymentDate']).format(FormateString):dayjs(new Date(researchPay?.['PaymentDate']?.seconds*1000)).format(FormateString) : null}</p>
@@ -103,7 +103,14 @@ const renderResearch = () => {
         <p><strong>Plan:</strong>{UserServicesTaken?.['Match']?.['Plan']?.['Name']}</p>
         { (UserServicesTaken?.['Match']?.['Plan']?.['Name'] === 'Platinum' || UserServicesTaken?.['Match']?.['Plan']?.['Name'] === 'Platinum&HackensackCombo' || UserServicesTaken?.['Match']?.['Plan']?.['Name'] === 'B2RPlatinumCombo') && (
         	<>
-        		<p><strong>Mentor:</strong>{UserServicesTaken?.['Match']?.[UserServicesTaken?.['Match']?.['Plan']?.['Name']]?.['AssignedMentor']}</p>
+        		<p>
+  <strong>Mentor:</strong>
+  {
+    typeof UserServicesTaken?.['Match']?.[UserServicesTaken?.['Match']?.['Plan']?.['Name']]?.['AssignedMentor'] === "object"
+      ? UserServicesTaken?.['Match']?.[UserServicesTaken?.['Match']?.['Plan']?.['Name']]?.['AssignedMentor']?.label
+      : UserServicesTaken?.['Match']?.[UserServicesTaken?.['Match']?.['Plan']?.['Name']]?.['AssignedMentor']
+  }
+</p>
         		<p><strong>Mentor Assigned On:</strong>{ UserServicesTaken?.['Match']?.[UserServicesTaken?.['Match']?.['Plan']?.['Name']]?.['DateOfMentorAssigned']?formatDate(UserServicesTaken?.['Match']?.[UserServicesTaken?.['Match']?.['Plan']?.['Name']]?.['DateOfMentorAssigned'],"YYYY"):null}</p>
         		{ typeof UserServicesTaken?.['Match']?.[UserServicesTaken?.['Match']?.['Plan']?.['Name']]?.['MentorChanged']!=="undefined" && (
         	<>

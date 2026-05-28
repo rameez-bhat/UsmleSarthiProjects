@@ -11,3 +11,4 @@ node_modules/
 **/environment.ts
 # env
 .env
+firebase-debug.log
