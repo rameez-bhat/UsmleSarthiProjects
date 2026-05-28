@@ -131,8 +131,8 @@ export class UserService {
     const user = usersData[role.uid];
 
     uniqueMap[id] = {
-      ...role,
-      ...(user || {})
+      ...(user || {}),
+      ...role
     };
   });
 
@@ -161,6 +161,7 @@ export class UserService {
   }
   async changeRole(dataObject)
   {
+    console.log("dataObject====>",dataObject)
     let docRef = await this.firestore.doc(`UsersRoles/${dataObject.uid}`).update({
       Role:dataObject.newRole,
     })

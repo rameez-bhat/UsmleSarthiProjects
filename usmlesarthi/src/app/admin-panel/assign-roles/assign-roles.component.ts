@@ -205,6 +205,7 @@ this.Step2ScoreKeys = Object.entries(this.Step2ScoreDropDown).map(([key, value])
       for (let i in this.usersList) {
         this.usersList[i].newRole = "";
       }
+      console.log("this.usersList====>",this.usersList)
       this.loading = false;
       this.ngZone.run(() => {
       this.loading = false;
@@ -321,6 +322,7 @@ this.Step2ScoreKeys = Object.entries(this.Step2ScoreDropDown).map(([key, value])
       return;
     }
     try {
+      console.log("userData====>",userData)
       await this.dbService.changeRole(userData);
       this.toastr.success("Role has been changed");
       userData.Role = userData.newRole;
