@@ -1617,6 +1617,20 @@ const handleSubmit = async () => {
                 </div>
                </Grid>
                <Grid item xs={6}>
+              <div className="">
+                <div className="InputLabel">Enrollment Admin In Touch</div>
+                <Select1
+                value={StudentData.EnrollmentAdminInTouch}
+        variant="outlined"
+        options={AdminOptionsList}
+        placeholder="Enrollment Admin In Touch"
+        onChange={(event) => handleChangeStudentDetails(event,'EnrollmentAdminInTouch')}
+        isSearchable
+      />
+      	{errors.AdminInTouch  && <span className="validationerror">{errors.AdminInTouch }</span>}
+                </div>
+               </Grid>
+               <Grid item xs={6}>
               <div className="InputLabel" > </div>
                 <Box sx={{ display: 'flex', p: 0, borderRadius: 1 ,border:1}}>
                   <Typography variant="subtitle1" color="textSecondary" sx={{ flexGrow: 1,  p: 1, borderRadius: 1 }}>Year Of Graduation:</Typography>
