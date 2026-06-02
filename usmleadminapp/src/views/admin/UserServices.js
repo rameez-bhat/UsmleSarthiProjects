@@ -2,6 +2,8 @@ import React from 'react';
 import { Typography } from '@mui/material';
 
 import dayjs from 'dayjs';
+import utc from "dayjs/plugin/utc";
+dayjs.extend(utc);
 const FormateString="MM-DD-YYYY";
 const formatDate = (dateString) => dayjs(dateString).format('dddd, MMMM D, YYYY');
 const UserServices = ({ MatchValues, HandlePlatinumChange, HandlePlatinumMeetingsChange,MatchPlanListObject, UserServicesTaken,errors,rotationValues, plan, DeleteMeetings, AddMeetings }) => {
@@ -13,12 +15,29 @@ const renderMeetings = () => {
       <div className="PlatinumAddedPaymentBody" >
       <p><strong>Mode Of Payment:</strong> {paymentObject?.ModeOfPayment}</p>
       <p><strong>Amount:</strong> ${paymentObject?.Amount}</p>
-      <p><strong>Date Of Payment:</strong> {paymentObject?.['PaymentDate'] ? typeof paymentObject?.PaymentDate==="string"?dayjs(paymentObject?.['PaymentDate']).format(FormateString):dayjs(new Date(paymentObject?.['PaymentDate']?.seconds*1000)).format(FormateString) : null}</p>
+      <p><strong>Date Of Payment:</strong> {formatUTC(paymentObject?.PaymentDate)}</p>
       </div>
       </>
       );
     });
   };
+  const formatUTC = (value, format = FormateString) => {
+  if (!value) return null;
+
+  if (typeof value === "string") {
+    return dayjs.utc(value).format(format);
+  }
+
+  if (value?.seconds) {
+    return dayjs.utc(value.seconds * 1000).format(format);
+  }
+
+  if (value?.toDate) {
+    return dayjs.utc(value.toDate()).format(format);
+  }
+
+  return null;
+};
   const renderPayments = (paymentObject) =>{
   return paymentObject?.['RotationPayment'].map((RotationPay, Paymentindex) => {
   return (
@@ -39,7 +58,7 @@ const renderMeetings = () => {
       <div className="LoopPayment" key={Paymentindex}>
       <p><strong>Fee Type :</strong> {researchPay?.FeeType}</p>
       <p><strong>Mode Of Payment :</strong> {researchPay?.ModeOfPayment}</p>
-      <p><strong>Payment Date :</strong> {researchPay?.['PaymentDate'] ? typeof researchPay?.PaymentDate==="string"?dayjs(researchPay?.['PaymentDate']).format(FormateString):dayjs(new Date(researchPay?.['PaymentDate']?.seconds*1000)).format(FormateString) : null}</p>
+      <p><strong>Payment Date :</strong> {formatUTC(researchPay?.PaymentDate)}</p>
       <p><strong>Amount:</strong> ${researchPay?.Amount}</p>
       {/*<p><strong>Note :</strong> {researchPay?.RotationPaymentNotes}</p>*/}
       </div>)
@@ -52,9 +71,9 @@ const renderMeetingsRotations = () => {
          return (
       <>
       <div className="PlatinumAddedPaymentBody" >
-      <p><strong>Enrollment Date:</strong> {/*paymentObject?.['EnrollmentDate']?dayjs(paymentObject['EnrollmentDate'].toDate()):null*/}{paymentObject?.['EnrollmentDate'] ? typeof paymentObject?.EnrollmentDate==="string"?dayjs(paymentObject?.['EnrollmentDate']).format(FormateString):dayjs(new Date(paymentObject?.['EnrollmentDate']?.seconds*1000)).format(FormateString) : null}</p>
+      <p><strong>Enrollment Date:</strong> {formatUTC(paymentObject?.EnrollmentDate)}</p>
       <p><strong>Location Code:</strong> {paymentObject?.LocationCode?.label}</p>
-      <p><strong>Start Date:</strong>  {paymentObject?.['StartDate'] ? typeof paymentObject?.StartDate==="string"?dayjs(paymentObject?.['StartDate']).format(FormateString):dayjs(new Date(paymentObject?.['StartDate']?.seconds*1000)).format(FormateString) : null}</p>
+      <p><strong>Start Date:</strong> {formatUTC(paymentObject?.StartDate)}</p>
       <p><strong>Status:</strong> {paymentObject?.RotationStatus?.label}</p>
       {renderPayments(paymentObject)}
 
@@ -69,9 +88,9 @@ const renderResearch = () => {
          return (
       <>
       <div className="PlatinumAddedPaymentBody" >
-      <p><strong>Enrollment Date:</strong> { research?.EnrollmentDate?dayjs(research?.EnrollmentDate?.toDate()).format('DD-MM-YYYY'):null}</p>
+      <p><strong>Enrollment Date:</strong> {formatUTC(research?.EnrollmentDate, 'DD-MM-YYYY')}</p>
       <p><strong>Course Name:</strong> {research?.CourseName}</p>
-      <p><strong>Start Date:</strong> { research?.StartDate? research?.StartDate.toDate().research?.EnrollmentDate():null}</p>
+      <p><strong>Start Date:</strong> {formatUTC(research?.StartDate)}</p>
       <p><strong>Publication Type:</strong> {research?.PublicationType}</p>
       <p><strong>Research Status:</strong> {research?.ResearchStatus}</p>
       <p><strong>Topic:</strong> {research?.Topic}</p>
@@ -99,7 +118,7 @@ const renderResearch = () => {
         )}
         { UserServicesTaken?.['Match']?.['EnrollmentDate']&& (
         <>
-        <p><strong>Enrollment Date:</strong>{formatDate(UserServicesTaken?.['Match']?.['EnrollmentDate']?.toDate().toISOString())}{UserServicesTaken?.['Match']?.['EnrollmentDate'] ? typeof UserServicesTaken?.['Match']?.['EnrollmentDate']==="string"?dayjs(UserServicesTaken?.['Match']?.['EnrollmentDate']).format(FormateString):dayjs(new Date(UserServicesTaken?.['Match']?.['EnrollmentDate']?.seconds*1000)).format(FormateString) : null}</p>
+        <p><strong>Enrollment Date:</strong> {formatUTC(UserServicesTaken?.['Match']?.['EnrollmentDate'])}</p>
         <p><strong>Plan:</strong>{UserServicesTaken?.['Match']?.['Plan']?.['Name']}</p>
         { (UserServicesTaken?.['Match']?.['Plan']?.['Name'] === 'Platinum' || UserServicesTaken?.['Match']?.['Plan']?.['Name'] === 'Platinum&HackensackCombo' || UserServicesTaken?.['Match']?.['Plan']?.['Name'] === 'B2RPlatinumCombo') && (
         	<>
@@ -111,7 +130,11 @@ const renderResearch = () => {
       : UserServicesTaken?.['Match']?.[UserServicesTaken?.['Match']?.['Plan']?.['Name']]?.['AssignedMentor']
   }
 </p>
-        		<p><strong>Mentor Assigned On:</strong>{ UserServicesTaken?.['Match']?.[UserServicesTaken?.['Match']?.['Plan']?.['Name']]?.['DateOfMentorAssigned']?formatDate(UserServicesTaken?.['Match']?.[UserServicesTaken?.['Match']?.['Plan']?.['Name']]?.['DateOfMentorAssigned'],"YYYY"):null}</p>
+        		<p><strong>Mentor Assigned On:</strong> {formatUTC(
+UserServicesTaken?.['Match']?.[
+UserServicesTaken?.['Match']?.['Plan']?.['Name']
+]?.['DateOfMentorAssigned']
+)}</p>
         		{ typeof UserServicesTaken?.['Match']?.[UserServicesTaken?.['Match']?.['Plan']?.['Name']]?.['MentorChanged']!=="undefined" && (
         	<>
         		<p><strong>New Mentor:</strong>{UserServicesTaken?.['Match']?.[UserServicesTaken?.['Match']?.['Plan']?.['Name']]?.['MentorChanged']?.['Relation']?.['PreviousMentorName']}</p>
