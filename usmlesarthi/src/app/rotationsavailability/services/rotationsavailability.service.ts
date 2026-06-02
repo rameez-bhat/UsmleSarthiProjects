@@ -24,12 +24,21 @@ export class RotationsService {
     return this.rotations;
   }
   async getSavedStripeSession(useremail,timestamp) {
-    const sessiondata = {};
+    /*const sessiondata = {};
     let docsRef = await this.firestore.collection("StripeSessions", ref => ref.where("customer_email", "==", useremail).where("createdAt", ">=", timestamp)).get().toPromise();
     for (let doc of docsRef.docs){
       let data = doc.data();
       data.id = doc.id;
       sessiondata[data.id] = data;
+    }
+    return sessiondata;*/
+    const sessiondata = {};
+    let docsRef = await this.firestore.collection("StripeSessions", ref => ref.where("customer_email", "==", useremail).where("createdAt", ">=", timestamp)).get().toPromise();
+    for (let doc of docsRef.docs){
+      let data = doc.data();
+      data.id = doc.id;
+      //sessiondata[data.id] = data;
+      await doc.ref.delete();
     }
     return sessiondata;
   }
