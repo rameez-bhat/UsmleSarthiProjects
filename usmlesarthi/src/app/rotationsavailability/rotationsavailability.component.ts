@@ -1051,12 +1051,12 @@ this.BookingSelectedDateEnq = {
           {
             
             
-            /*if(this.auth.userData.Role=="Admin")
+            if(this.auth.userData.Role=="Admin")
             {
               AllowTesting="yes";
               stripe= await loadStripe(environment.firebaseConfig.STRIPE_PUBLIC_KEY_TESTING);
             }
-            else*/
+            else
             {
               stripe= await loadStripe(environment.firebaseConfig.STRIPE_PUBLIC_KEY_LIVE);
             }
