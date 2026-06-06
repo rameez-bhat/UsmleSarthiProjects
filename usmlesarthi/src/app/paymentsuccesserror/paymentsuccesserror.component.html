@@ -139,7 +139,7 @@
     <div class="mt-4">
       <p><strong>Location Code:</strong> {{rotationCode}}</p>
       <p><strong>Email ID:</strong> {{studentEmail}}</p>
-      <p><strong>Amount Paid:</strong> ${{Amount / 100}}</p>
+      <p><strong>Amount Paid:</strong> ${{((Amount / 100)/TotalInstallementsPaid) | number:'1.2-2'}}</p>
     </div>
     <p>has been successfully completed.
   </p>
