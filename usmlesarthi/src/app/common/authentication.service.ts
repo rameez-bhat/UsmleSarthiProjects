@@ -298,12 +298,12 @@ console.log("updateData--->",updateData)
       //this.setProfileData(this.userData);
     } else {
       this.userData = {
-        ...userRoleDocRef.data(),
         ...{
           uid: user.uid,
           emailVerified: user.emailVerified
         },
-        ...docRef.data()
+        ...docRef.data(),
+        ...userRoleDocRef.data(),
       };
     }
     let extraDocRef = results[2];
@@ -311,8 +311,8 @@ console.log("updateData--->",updateData)
       this.userData.extraUsersData = false;
     } else {
       this.userData = {
-        ...extraDocRef.data(),
         ...this.userData,
+         ...extraDocRef.data(),
       };
       this.userData.extraUsersData = true;
     }
