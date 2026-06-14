@@ -267,13 +267,21 @@ async UpdateDocumentByUID(uid: string,TableName: string,updateData: any): Promis
           await this.UpdateDocumentByUID(functionParams['PromotorDiscountFromParam'].Promotoruid,"Users",PromotorObjectToUpdate);
         }
       }
-      await this.firestore
+      /*await this.firestore
   .collection("StripeSessions")
   .doc(functionParams['sessionId'])
   .delete()
   .then(() => {
     console.log("✅ Document successfully deleted!");
-  })
+  })*/
+ await this.firestore
+  .collection("StripeSessions")
+  .doc(functionParams['sessionId'])
+  .update({
+    processed: true,
+    processedAt: new Date(),
+    processedBy: "frontend"
+  });
   }
   async updateAddRotation(uid,emailid,rotationcode,rotationstartDate,amt,sessionId,PaymentType,FeeType,TotalInstallements,InstallementNo,PromotionDataDiscountAmount,PromotionDataDiscountText,PromotorDiscountFromParam) {
     this.rotations = {};
@@ -504,13 +512,21 @@ async UpdateDocumentByUID(uid: string,TableName: string,updateData: any): Promis
     { merge: true }
   );
     }
-    await this.firestore
+    /*await this.firestore
   .collection("StripeSessions")
   .doc(sessionId)
   .delete()
   .then(() => {
     console.log("✅ Document successfully deleted!");
-  })
+  })*/
+ await this.firestore
+  .collection("StripeSessions")
+  .doc(sessionId)
+  .update({
+    processed: true,
+    processedAt: new Date(),
+    processedBy: "frontend"
+  });
   .catch((error) => {
     console.error("❌ Error deleting document: ", error);
   });

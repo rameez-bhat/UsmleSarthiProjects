@@ -296,11 +296,11 @@ export class PaymentSuccessErrorComponent implements OnInit {
             let result=await this.verifyPayment(this.sessionId,this.AllowTesting);
             if(this.studentUID.trim()!="" && result['data'] && result['data']['payment_status'] && result['data']['payment_status']=="paid")
             {
-              const res= await this.dbService.updateAddRotation(this.studentUID,this.studentEmail, this.rotationCode,this.BookingSelectedDate,this.Amount,this.sessionId,this.PaymentType,this.FeeType,this.TotalInstallementsPaid,this.InstallementNo,this.PromotionDataDiscountAmount,this.PromotionDataDiscountText,this.PromotorDiscountFromParam);
+              //const res= await this.dbService.updateAddRotation(this.studentUID,this.studentEmail, this.rotationCode,this.BookingSelectedDate,this.Amount,this.sessionId,this.PaymentType,this.FeeType,this.TotalInstallementsPaid,this.InstallementNo,this.PromotionDataDiscountAmount,this.PromotionDataDiscountText,this.PromotorDiscountFromParam);
             }
             else if(this.studentEmail.trim()!="" && result['data'] && result['data']['payment_status'] && result['data']['payment_status']=="paid")
             {
-              const res= await this.dbService.updateGuestPayment(this.studentUID,this.studentEmail, this.rotationCode,this.BookingSelectedDate,this.Amount,this.sessionId,this.PaymentType,this.FeeType,this.TotalInstallementsPaid,this.InstallementNo,this.PromotionDataDiscountAmount,this.PromotionDataDiscountText);
+              //const res= await this.dbService.updateGuestPayment(this.studentUID,this.studentEmail, this.rotationCode,this.BookingSelectedDate,this.Amount,this.sessionId,this.PaymentType,this.FeeType,this.TotalInstallementsPaid,this.InstallementNo,this.PromotionDataDiscountAmount,this.PromotionDataDiscountText);
             }
             const WhereConditions = [
               { columnName: "email", condition: "==", value: this.studentEmail },
@@ -335,11 +335,11 @@ export class PaymentSuccessErrorComponent implements OnInit {
             let result=await this.verifyPayment(this.sessionId,this.AllowTesting);
             if(this.studentUID.trim()!="" && result['data'] && result['data']['payment_status'] && result['data']['payment_status']=="paid")
             {
-              const res= await this.dbService.updateAddMatch(this.SendFullArrayToFunction);
+              //const res= await this.dbService.updateAddMatch(this.SendFullArrayToFunction);
             }
             else if(this.studentEmail.trim()!="" && result['data'] && result['data']['payment_status'] && result['data']['payment_status']=="paid")
             {
-              const res= await this.dbService.updateGuestPayment(this.studentUID,this.studentEmail, this.rotationCode,this.BookingSelectedDate,this.Amount,this.sessionId,this.PaymentType,this.FeeType,this.TotalInstallementsPaid,this.InstallementNo,this.PromotionDataDiscountAmount,this.PromotionDataDiscountText);
+              //const res= await this.dbService.updateGuestPayment(this.studentUID,this.studentEmail, this.rotationCode,this.BookingSelectedDate,this.Amount,this.sessionId,this.PaymentType,this.FeeType,this.TotalInstallementsPaid,this.InstallementNo,this.PromotionDataDiscountAmount,this.PromotionDataDiscountText);
             }
             clearInterval(interval);
           }
