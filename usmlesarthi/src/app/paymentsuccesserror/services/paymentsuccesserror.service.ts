@@ -518,7 +518,10 @@ async UpdateDocumentByUID(uid: string,TableName: string,updateData: any): Promis
   .delete()
   .then(() => {
     console.log("✅ Document successfully deleted!");
-  })*/
+  }) .catch((error) => {
+    console.error("❌ Error deleting document: ", error);
+  });
+    */
  await this.firestore
   .collection("StripeSessions")
   .doc(sessionId)
@@ -527,9 +530,7 @@ async UpdateDocumentByUID(uid: string,TableName: string,updateData: any): Promis
     processedAt: new Date(),
     processedBy: "frontend"
   });
-  .catch((error) => {
-    console.error("❌ Error deleting document: ", error);
-  });
+ 
     return this.rotations;
   }
   async SendEmail(MailObject)
