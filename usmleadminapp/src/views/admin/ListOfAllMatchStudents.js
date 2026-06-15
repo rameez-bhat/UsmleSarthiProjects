@@ -19,6 +19,13 @@ import {
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import { Timestamp } from "firebase/firestore";
+
+import Checkbox from "@mui/material/Checkbox";
+import ListItemText from "@mui/material/ListItemText";
+
+
+
+
 import { useLoading } from "../../layout/LoadingContext";
 const MatchPlanStatus = {
 
@@ -121,13 +128,32 @@ const buildConditions = () => {
   }
 
   // Plan
-  if (filters.Plan) {
+  /*if (filters.Plan) {
     baseConditions.push({
       name: "Match.Plan.Name",
       condition: "==",
       value: filters.Plan
     });
+  }*/
+  if (filters.Plan) {
+  const plans = Array.isArray(filters.Plan)
+    ? filters.Plan
+    : [filters.Plan];
+
+  if (plans.length === 1) {
+    baseConditions.push({
+      name: "Match.Plan.Name",
+      condition: "==",
+      value: plans[0],
+    });
+  } else if (plans.length > 1) {
+    baseConditions.push({
+      name: "Match.Plan.Name",
+      condition: "in",
+      value: plans,
+    });
   }
+}
 
   // Enrollment
   if (filters.enrollmentFrom && filters.enrollmentTo) {
@@ -422,25 +448,78 @@ const resetSingleFilter = async (key) => {
         </Typography>
 
         <Grid container spacing={2}>
-        <Grid item xs={12} md={3}>
-            <TextField
-              select
-              fullWidth
-              label="Plan"
-              value={filters.Plan || ""}
-              onChange={(e) =>
-                setFilters((prev) => ({
-                  ...prev,
-                  Plan: e.target.value
-                }))
-              }
-            >
-              {Object.entries(MatchPlanListObject).map(([key, value]) => (
-                      <MenuItem key={key} value={value.Pid}>{value.Name}</MenuItem>
-                    ))}
-                    <MenuItem value={'Custom'}>Custom</MenuItem>
-            </TextField>
-            {filters.Plan && (
+       <Grid item xs={12} md={3}>
+  <TextField
+    select
+    fullWidth
+    label="Plan"
+    value={
+      Array.isArray(filters.Plan)
+        ? filters.Plan
+        : filters.Plan
+        ? [filters.Plan]
+        : []
+    }
+    onChange={(e) =>
+      setFilters((prev) => ({
+        ...prev,
+        Plan: e.target.value,
+      }))
+    }
+    SelectProps={{
+      multiple: true,
+      renderValue: (selected) =>
+        (Array.isArray(selected) ? selected : [selected])
+          .map((pid) => {
+            if (pid === "Custom") return "Custom";
+
+            const plan = Object.values(
+              MatchPlanListObject || {}
+            ).find((p) => p.Pid === pid);
+
+            return plan?.Name || pid;
+          })
+          .join(", "),
+    }}
+  >
+    {Object.entries(MatchPlanListObject || {}).map(
+      ([key, value]) => (
+        <MenuItem key={key} value={value.Pid}>
+          <Checkbox
+            checked={
+              (
+                Array.isArray(filters.Plan)
+                  ? filters.Plan
+                  : filters.Plan
+                  ? [filters.Plan]
+                  : []
+              ).indexOf(value.Pid) > -1
+            }
+          />
+          <ListItemText primary={value.Name} />
+        </MenuItem>
+      )
+    )}
+
+    <MenuItem value="Custom">
+      <Checkbox
+        checked={
+          (
+            Array.isArray(filters.Plan)
+              ? filters.Plan
+              : filters.Plan
+              ? [filters.Plan]
+              : []
+          ).indexOf("Custom") > -1
+        }
+      />
+      <ListItemText primary="Custom" />
+    </MenuItem>
+  </TextField>
+
+  {(Array.isArray(filters.Plan)
+    ? filters.Plan.length > 0
+    : !!filters.Plan) && (
     <Button
       size="small"
       color="error"
@@ -449,7 +528,7 @@ const resetSingleFilter = async (key) => {
       Clear
     </Button>
   )}
-          </Grid>
+</Grid>
           <Grid item xs={12} md={3}>
   <TextField
     select
