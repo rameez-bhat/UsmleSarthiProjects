@@ -96,7 +96,7 @@ const readableDate = date.toLocaleString();
     	}
     	else
     	{
-    	  result =await SelectWithComplexConditions("GuestUserPaymentsList",conditionsArray,"");
+    	  result =await SelectWithComplexConditions("GuestUserPaymentsList",conditionsArray,"","paymentdate","desc");
     	}
 		
 		console.log("result====>",result)
@@ -116,6 +116,41 @@ const readableDate = date.toLocaleString();
 const handleCancel = () => {
     setOpen(false);
   };
+  const handleDeletePayment = async (row) => {
+  try {
+    showLoading();
+
+    if (stripePayment) {
+      await DatabaseName
+        .collection("GuestUserPayments")
+        .doc(row.email)
+        .collection("Payments")
+        .doc(
+          `${row.rotationcode}___${row.rotationstartDate}___${row.paymentdate}`
+        )
+        .delete();
+    } else {
+      await DatabaseName
+        .collection("GuestUserPaymentsList")
+        .doc(row.email)
+        .delete();
+    }
+
+    setAllPaymentData((prev) =>
+      prev.filter((item) => item !== row)
+    );
+
+    setOperationMessage("Payment deleted successfully");
+    setOpen(true);
+
+  } catch (error) {
+    console.error(error);
+    setOperationMessage("Error deleting payment");
+    setOpen(true);
+  }
+
+  hideLoading();
+};
 const showLoader = () => {
    let elements =document.getElementsByClassName('LoadingDiv');
     for (let i = 0; i < elements.length; i++) {
@@ -151,6 +186,7 @@ const hideLoader = () => {
             <TableCell >Location Code</TableCell>
             <TableCell>Payment Date</TableCell>
             <TableCell>Rotation Start Date</TableCell>
+            <TableCell>Action</TableCell>
 {stripePayment && (
 <TableCell>Amount Paid</TableCell>
 )}
@@ -188,6 +224,24 @@ const hideLoader = () => {
                   <TableCell>{rotation.rotationcode || 'NA'}</TableCell>
                   <TableCell>{rotation.paymentdate || 'N/A'}</TableCell>
                   <TableCell>{rotation.rotationstartDate || 'N/A'}</TableCell>
+                  <TableCell>
+  <Button
+    variant="contained"
+    color="error"
+    size="small"
+    onClick={() => {
+      if (
+        window.confirm(
+          `Delete payment for ${rotation.email}?`
+        )
+      ) {
+        handleDeletePayment(rotation);
+      }
+    }}
+  >
+    Delete
+  </Button>
+</TableCell>
                   {stripePayment && (
 <TableCell>${rotation.amount/100 || 'N/A'}</TableCell>
 )}

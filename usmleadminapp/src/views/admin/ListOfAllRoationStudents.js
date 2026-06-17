@@ -6,12 +6,14 @@ import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward'; // Import sorting
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import { useLoading } from '../../layout/LoadingContext';
 import RotationTable from "./SpeedFast/RotationTable";
+const { RangePicker } = DatePicker;
 
 import {
   Box,
   Button,
   Select,
   InputLabel,
+  Typography,	
   MenuItem,
   Grid,
   TextField,
@@ -36,18 +38,27 @@ let CompareStartDate;
 let innerStartDate;
 let innerEndDate;
 let innerDynamicField;
+let AdminOptionsList=[];
+let SetMainFilters;
+const mainCollectionName = 'UsersRoles';
+  	const joinCollectionName = 'Users';
 let CompareEndDate;
  const dateFormat = "MM/DD/YYYY";
+ const FilterContractStatusOption = {"Sent":"Sent","Signed":"Signed","Hold":"Hold","Not Signed":"Not Signed"};
+ const FilterVisaLetterStatusOption = {"Letter Requested":"Letter Requested","On Hold":"On Hold","Letter Complete and Sent":"Letter Complete and Sent"};
+ const FilterRotationStatusOption = {"Connected with physician":"Connected with physician","Rotation started":"Rotation started","Rotation completed":"Rotation completed","Rotation postponed":"Rotation postponed","No Reply from Student":"No Reply from Student","Rotation canceled.":"Rotation canceled.","Not connected with physician":"Not connected with physician"};
+ const FilterRotationReviewOption ={"No Reply":"No Reply","Video review submitted":"Video review submitted","Written review submitted":"Written review submitted","Done Instagram takeover":"Done Instagram takeover",
+  "Done Interview with Pawan":"Done Interview with Pawan","Request not sent yet":"Request not sent yet","Request sent":"Request sent"}
  let LocationCodeDoctorsName={};
 let FilterChangingOption={};
 const UserDetails = () => {
   	const { did } = useParams();
-  	const { showLoading, hideLoading, API_KEY,FetchDataFromCollection,DatabaseName,SelectWithComplexConditions,Timestamp,handleUpdate } = useLoading();
+  	const { showLoading, hideLoading, API_KEY,FetchDataFromCollection,DatabaseName,SelectWithComplexConditions,Timestamp,handleUpdate,fetchAdminDataWithJoin } = useLoading();
 	const [OperationMessage, setOperationMessage] = useState('');
 	const [AllPaymentData, setAllPaymentData] = useState([]);
 	const [errors, setErrors] = useState({});
 	const [open, setOpen] = useState(false);
-	const [filters, setFilters] = useState({ id: 'RotationStartDate', name: '' });
+	const [filters, setFilters] = useState({});
 	const [FiltersType, setFiltersType] = useState(filters.id);
 	const [startDate, setStartDate] = useState(dayjs().subtract(1, 'month').set('hour', 0).set('minute', 0).set('second', 1).set('millisecond', 0));
 
@@ -88,36 +99,14 @@ let updateDatabase=true;
        const EnrollmentDateR=new Date(rotation?.EnrollmentDate?.seconds * 1000);
        const ContractSignedDateFetch=new Date(rotation?.ContractSignedDate?.seconds * 1000);rotation.StartDate
 
-      if (filters.id === "RotationStartDate" && !(StartDateR > CompareStartDate && StartDateR <= CompareEndDate)) {
-        return [];
-      }
-      if (filters.id === "RotationEnrollmentDate" && !(EnrollmentDateR > CompareStartDate && EnrollmentDateR <= CompareEndDate)) {
-        return [];
-      }
-      if (filters.id === "ContractStatus" && (rotation.ContractStatus?.label!==DynamicField) ||( filters.id === "ContractStatus" && !(ContractSignedDateFetch > CompareStartDate && ContractSignedDateFetch <= CompareEndDate))) {
-        return [];
-      }
-      if ((filters.id === "Connected" && (rotation.RotationStatus?.label!=="Connected with physician")) || ( filters.id === "Connected" && !(StartDateR > CompareStartDate && StartDateR <= CompareEndDate))) {
-        return [];
-      }
-      if ((filters.id === "NConnected" && (rotation.RotationStatus?.label!=="Not connected with physician")) || ( filters.id === "NConnected" && !(StartDateR > CompareStartDate && StartDateR <= CompareEndDate))) {
-        return [];
-      }
-      if (filters.id === "LocationCodeC" && (rotation.LocationCode?.label!==DynamicField)) {
-        return [];
-      }
-      if (filters.id === "LocationCodeNC" && (rotation.LocationCode?.label!==DynamicField)) {
-        return [];
-      }
-      if (filters.id === "VisaLetterStatus" && (rotation?.RotationVisaSection?.Letter0?.VisaLetterStatus?.label!==DynamicField && rotation?.RotationVisaSection?.Letter1?.VisaLetterStatus?.label!==DynamicField)) {
-        return [];
-      }
-      if (filters.id === "RotationStatus" && (rotation.RotationStatus?.label!==DynamicField)) {
-        return [];
-      }
-      if (filters.id === "RotationReview" && (rotation.RotationReview?.label!==DynamicField)) {
-        return [];
-      }
+   
+       if (SetMainFilters.EnrollmentAdminInTouch) {
+       if(!user?.profile?.EnrollmentAdminInTouch?.value || SetMainFilters.EnrollmentAdminInTouch!=user?.profile?.EnrollmentAdminInTouch?.value)
+       {
+       	return [];
+       }
+       
+       }
       //let fieldrow="RotationData.Rotations."+rotationKey+".RotationStatus.label"
       /*let fieldrow={}
       fieldrow["RotationData"]={};
@@ -186,6 +175,7 @@ let updateDatabase=true;
           VisaLetterStatus:rotation.VisaLetterStatus?.label,
           ContractStatus:rotation.ContractStatus?.label,
           ContractSignedDate:rotation?.ContractSignedDate,
+          EnrollmentAdminInTouch:user?.profile?.EnrollmentAdminInTouch,
           RotationVisa:RotationVisa1,
           RotationVisaSection:rotation?.RotationVisaSection,
           HousingCode:HousingCode1,
@@ -282,10 +272,7 @@ function convertISTMidnightToUTC(date, isStart = true) {
   		let dataTobesend = {};
   		dataTobesend['uid'] = uid;
   		dataTobesend['RotationData'] = {"Rotations":{"Rotation0":{[name]:event.target.value}}};
-  		console.log("event----->",event.target.value)
-  		console.log("name----->",name)
-  		console.log("uid----->",uid)
-  		console.log("dataTobesend----->",dataTobesend)
+
   		 handleUpdate("UserServices", uid, dataTobesend).then((result) => {
       setOperationMessage(result.message);
 
@@ -345,37 +332,14 @@ function convertISTMidnightToUTC(date, isStart = true) {
 
   };
    const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-    if(name==="id")
-    {
-    	setFilterField(value)
-
-    }
-    console.log("value=====>",value)
-     if(value==="ContractStatus" || value==="VisaLetterStatus" || value==="RotationStatus" || value==="RotationReview" || value === "ContractStatusWithEnrollementDate")
-    {
-    	if(value === "ContractStatus" || value === "ContractStatusWithEnrollementDate")
-    	{
-    		FilterChangingOption = {"Sent":"Sent","Signed":"Signed","Hold":"Hold","Not Signed":"Not Signed"};
-    	}
-    	else if(value === "VisaLetterStatus")
-    	{
-    		FilterChangingOption = {"Letter Requested":"Letter Requested","On Hold":"On Hold","Letter Complete and Sent":"Letter Complete and Sent"};
-    	}
-    	else if(value === "RotationStatus")
-    	{
-    		FilterChangingOption = {"Connected with physician":"Connected with physician","Rotation started":"Rotation started","Rotation completed":"Rotation completed","Rotation postponed":"Rotation postponed","No Reply from Student":"No Reply from Student","Rotation canceled.":"Rotation canceled.","Not connected with physician":"Not connected with physician"};
-    	}
-    	else
-    	{
-    		FilterChangingOption ={"No Reply":"No Reply","Video review submitted":"Video review submitted","Written review submitted":"Written review submitted","Done Instagram takeover":"Done Instagram takeover",
-  "Done Interview with Pawan":"Done Interview with Pawan","Request not sent yet":"Request not sent yet","Request sent":"Request sent"}
-    	}
-    }
-  FilterNameset=name;
-    //if(name=="id" || name=="condition")
-   setFilters({ ...filters, [name]: value });
-  };
+   const { name, value } = e.target;
+console.log("name=====>",name)
+console.log("value=====>",value)
+  setFilters(prev => ({
+    ...prev,
+    [name]: value,
+  }));
+   };
     const handleDynamicChange = (e)=>
   {
   	const { name, value } = e.target;
@@ -394,643 +358,167 @@ function convertISTMidnightToUTC(date, isStart = true) {
     	innerEndDate=startDate;
     	innerDynamicField=DynamicField;
     	fitlersSelected = await FetchDataFromCollection("SavedFilters", 20, "filtertype", "==", "listofallrotationstudents", 0);
+    	console.log("fitlersSelected===>",fitlersSelected)
     	if(fitlersSelected.length)
 		  {
-		    setStartDate(dayjs(fitlersSelected[0].startDate.toDate()))
-		    setEndDate(dayjs(fitlersSelected[0].endDate.toDate()))
-		    Cond=fitlersSelected[0].Cond;
-		    setDynamicField(fitlersSelected[0].DynamicField)
-		    setFilterField(Cond)
-		    innerStartDate=fitlersSelected[0].startDate;
-    	  innerEndDate=fitlersSelected[0].endDate;
-    	  innerDynamicField=fitlersSelected[0].DynamicField;
-    	  let SeetNameAswell=false;
-		    if(Cond==="ContractStatus" || Cond==="VisaLetterStatus" || Cond==="RotationStatus" || Cond==="RotationReview" || Cond==="ContractStatusWithEnrollementDate")
-        {
-    	    if(Cond === "ContractStatus" || Cond==="ContractStatusWithEnrollementDate")
-    	    {
-    		    FilterChangingOption = {"Sent":"Sent","Signed":"Signed","Hold":"Hold","Not Signed":"Not Signed"};
-    	    }
-    	    else if(Cond === "VisaLetterStatus")
-    	    {
-    		    FilterChangingOption = {"Letter Requested":"Letter Requested","On Hold":"On Hold","Letter Complete and Sent":"Letter Complete and Sent"};
-    	    }
-    	    else if(Cond === "RotationStatus")
-    	    {
-    		    FilterChangingOption = {"Connected with physician":"Connected with physician","Rotation completed":"Rotation completed","Rotation postponed":"Rotation postponed","No Reply from Student":"No Reply from Student","Rotation canceled.":"Rotation canceled.","Not connected with physician":"Not connected with physician"};
-    	    }
-    	    else
-    	    {
-    		    FilterChangingOption ={"No Reply":"No Reply","Video review submitted":"Video review submitted","Written review submitted":"Written review submitted","Done Instagram takeover":"Done Instagram takeover",
-            "Done Interview with Pawan":"Done Interview with Pawan","Request not sent yet":"Request not sent yet","Request sent":"Request sent"}
-    	    }
-    	    SeetNameAswell=true;
+		  	 let savedFilters = {
+    ...fitlersSelected[0]
+  };
 
-        }
-        if(SeetNameAswell)
-        {
-          setFilters({ id:Cond, name: fitlersSelected[0].filtername });
-        }
-        else
-        {
-          setFilters({...filters,id:Cond})
-        }
+  // Enrollment Date
+  if (
+    savedFilters.enrollmentDate &&
+    savedFilters.enrollmentDate.length === 2
+  ) {
+    savedFilters.enrollmentDate = [
+      dayjs(
+        savedFilters.enrollmentDate[0].toDate()
+      ),
+      dayjs(
+        savedFilters.enrollmentDate[1].toDate()
+      ),
+    ];
+  }
 
+  // Rotation Start Date
+  if (
+    savedFilters.rotationStartDate &&
+    savedFilters.rotationStartDate.length === 2
+  ) {
+    savedFilters.rotationStartDate = [
+      dayjs(
+        savedFilters.rotationStartDate[0].toDate()
+      ),
+      dayjs(
+        savedFilters.rotationStartDate[1].toDate()
+      ),
+    ];
+  }
+		  	setFilters(savedFilters);
+		  	SetMainFilters=savedFilters;
+    	  	const adminOptions = await fetchAdminDataWithJoin(mainCollectionName,joinCollectionName,30,null,"Role","==","Admin");
+
+   adminOptions.data.map((item) => {
+    AdminOptionsList.push({label:item.displayName,value:item.id});
+    return "h";
+    })
+		
 		  }
-    	console.log("fitlersSelected---->",fitlersSelected)
-    	console.log("startDate.toDate()-->",startDate.toDate())
-    	console.log("endDate.toDate()-->",endDate.toDate())
-    	console.log("Cond-->",Cond)
-    	console.log("DynamicField---->",DynamicField)
+
     	const startDate1 = convertISTMidnightToUTC(innerStartDate, true);
       const endDate1 = convertISTMidnightToUTC(innerEndDate, false);
 
-      console.log("startDate1-->",startDate1)
-    	console.log("endDate1-->",endDate1)
+
       CompareStartDate=startDate1;
       CompareEndDate=endDate1;
-      console.log("-------------->",CompareStartDate)
+
     	const DateTimestampStart=Timestamp.fromDate(startDate1);
     	const DateTimestampEnd=Timestamp.fromDate(endDate1);
 		setStartDateView(startDate)
 		setEndDateView(endDate)
     	loadFilterOptions();
-    	let conditionsArray;
+    	let conditionsArray=[];
     	let feeTypeArray;
     	setFiltersType(filters.id)
     	let OrderColumn="";
-    	let orderDirection=""
+    	let orderDirection="";
     	//setFilterField(filters.id)
-    	if(Cond==="RotationFeeDate")
+    	for (let i = 0; i <= 5; i++) 
     	{
 
-    		feeTypeArray=["rotation fee installment","rotation full payment"]
-    		setconditionType(feeTypeArray);
-    		conditionsArray =
-    		[
-  				[
-    				{ name: "RotationData.Rotations.Rotation0.LocationCode.label", condition: "!=", value: '' },
-    				{ name: "RotationData.Rotations.Rotation0.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation0.StartDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-    				{ name: "RotationData.Rotations.Rotation1.LocationCode.label", condition: "!=", value: '' },
-    				{ name: "RotationData.Rotations.Rotation1.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation1.StartDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-    				{ name: "RotationData.Rotations.Rotation2.LocationCode.label", condition: "!=", value: '' },
-    				{ name: "RotationData.Rotations.Rotation2.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation2.StartDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-    				{ name: "RotationData.Rotations.Rotation3.LocationCode.label", condition: "==", value: '' },
-    				{ name: "RotationData.Rotations.Rotation3.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation3.StartDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-    				{ name: "RotationData.Rotations.Rotation4.LocationCode.label", condition: "==", value: '' },
-    				{ name: "RotationData.Rotations.Rotation4.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation4.StartDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-    				{ name: "RotationData.Rotations.Rotation5.LocationCode.label", condition: "==", value: '' },
-    				{ name: "RotationData.Rotations.Rotation5.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation5.StartDate", condition: "<=", value: DateTimestampEnd }
-  				]
-			];
-    	}
-    	if(Cond==="RotationStatus")
-    	{
+    		 let currentConditions = [];
 
-    		feeTypeArray=["rotation fee installment","rotation full payment"]
-    		setconditionType(feeTypeArray);
-    		conditionsArray =
-    		[
-  				[
-    				{ name: "RotationData.Rotations.Rotation0.RotationStatus.label", condition: "==", value: innerDynamicField },
-    				{ name: "RotationData.Rotations.Rotation0.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation0.StartDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-    				{ name: "RotationData.Rotations.Rotation1.RotationStatus.label", condition: "==", value: innerDynamicField },
-    				{ name: "RotationData.Rotations.Rotation1.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation1.StartDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-    				{ name: "RotationData.Rotations.Rotation2.RotationStatus.label", condition: "==", value: innerDynamicField },
-    				{ name: "RotationData.Rotations.Rotation2.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation2.StartDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-    				{ name: "RotationData.Rotations.Rotation3.RotationStatus.label", condition: "==", value: innerDynamicField },
-    				{ name: "RotationData.Rotations.Rotation3.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation3.StartDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-    				{ name: "RotationData.Rotations.Rotation4.RotationStatus.label", condition: "==", value: innerDynamicField },
-    				{ name: "RotationData.Rotations.Rotation4.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation4.StartDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-    				{ name: "RotationData.Rotations.Rotation5.RotationStatus.label", condition: "==", value: innerDynamicField },
-    				{ name: "RotationData.Rotations.Rotation5.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation5.StartDate", condition: "<=", value: DateTimestampEnd }
-  				]
-			];
-    	}
-    	if(Cond==="RotationReview")
-    	{
+ 
 
-    		feeTypeArray=["rotation fee installment","rotation full payment"]
-    		setconditionType(feeTypeArray);
-    		conditionsArray =
-    		[
-  				[
-    				{ name: "RotationData.Rotations.Rotation0.RotationReview.label", condition: "!=", value: '' },
-    				{ name: "RotationData.Rotations.Rotation0.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation0.StartDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-    				{ name: "RotationData.Rotations.Rotation1.RotationReview.label", condition: "!=", value: '' },
-    				{ name: "RotationData.Rotations.Rotation1.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation1.StartDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-    				{ name: "RotationData.Rotations.Rotation2.RotationReview.label", condition: "!=", value: '' },
-    				{ name: "RotationData.Rotations.Rotation2.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation2.StartDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-    				{ name: "RotationData.Rotations.Rotation3.RotationReview.label", condition: "!=", value: '' },
-    				{ name: "RotationData.Rotations.Rotation3.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation3.StartDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-    				{ name: "RotationData.Rotations.Rotation4.RotationReview.label", condition: "!=", value: '' },
-    				{ name: "RotationData.Rotations.Rotation4.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation4.StartDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-    				{ name: "RotationData.Rotations.Rotation5.RotationReview.label", condition: "!=", value: '' },
-    				{ name: "RotationData.Rotations.Rotation5.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation5.StartDate", condition: "<=", value: DateTimestampEnd }
-  				]
-			];
-    	}
-    	else if(Cond==="ApplicationFeeDate")
-    	{
-    		feeTypeArray=["application fee"]
-    		setconditionType(["application fee"]);
-    		conditionsArray =
-    		[
-  				[
-    				{ name: "RotationData.Rotations.Rotation0.RotationPayment.Payment0.FeeType", condition: "in", value: feeTypeArray },
-    				{ name: "RotationData.Rotations.Rotation0.RotationPayment.Payment0.PaymentDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation0.RotationPayment.Payment0.PaymentDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-    				{ name: "RotationData.Rotations.Rotation0.RotationPayment.Payment1.FeeType", condition: "in", value: feeTypeArray },
-    				{ name: "RotationData.Rotations.Rotation0.RotationPayment.Payment1.PaymentDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation0.RotationPayment.Payment1.PaymentDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-    				{ name: "RotationData.Rotations.Rotation0.RotationPayment.Payment2.FeeType", condition: "in", value: feeTypeArray },
-    				{ name: "RotationData.Rotations.Rotation0.RotationPayment.Payment2.PaymentDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation0.RotationPayment.Payment2.PaymentDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-    				{ name: "RotationData.Rotations.Rotation0.RotationPayment.Payment3.FeeType", condition: "in", value: feeTypeArray },
-    				{ name: "RotationData.Rotations.Rotation0.RotationPayment.Payment3.PaymentDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation0.RotationPayment.Payment3.PaymentDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-    				{ name: "RotationData.Rotations.Rotation1.RotationPayment.Payment0.FeeType", condition: "in", value: feeTypeArray },
-    				{ name: "RotationData.Rotations.Rotation1.RotationPayment.Payment0.PaymentDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation1.RotationPayment.Payment0.PaymentDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-    				{ name: "RotationData.Rotations.Rotation1.RotationPayment.Payment1.FeeType", condition: "in", value: feeTypeArray },
-    				{ name: "RotationData.Rotations.Rotation1.RotationPayment.Payment1.PaymentDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation1.RotationPayment.Payment1.PaymentDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-    				{ name: "RotationData.Rotations.Rotation1.RotationPayment.Payment2.FeeType", condition: "in", value: feeTypeArray },
-    				{ name: "RotationData.Rotations.Rotation1.RotationPayment.Payment2.PaymentDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation1.RotationPayment.Payment2.PaymentDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-    				{ name: "RotationData.Rotations.Rotation1.RotationPayment.Payment3.FeeType", condition: "in", value: feeTypeArray },
-    				{ name: "RotationData.Rotations.Rotation1.RotationPayment.Payment3.PaymentDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation1.RotationPayment.Payment3.PaymentDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-    				{ name: "RotationData.Rotations.Rotation2.RotationPayment.Payment0.FeeType", condition: "in", value: feeTypeArray },
-    				{ name: "RotationData.Rotations.Rotation2.RotationPayment.Payment0.PaymentDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation2.RotationPayment.Payment0.PaymentDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-    				{ name: "RotationData.Rotations.Rotation2.RotationPayment.Payment1.FeeType", condition: "in", value: feeTypeArray },
-    				{ name: "RotationData.Rotations.Rotation2.RotationPayment.Payment1.PaymentDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation2.RotationPayment.Payment1.PaymentDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-    				{ name: "RotationData.Rotations.Rotation2.RotationPayment.Payment2.FeeType", condition: "in", value: feeTypeArray },
-    				{ name: "RotationData.Rotations.Rotation2.RotationPayment.Payment2.PaymentDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation2.RotationPayment.Payment2.PaymentDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-    				{ name: "RotationData.Rotations.Rotation2.RotationPayment.Payment3.FeeType", condition: "in", value: feeTypeArray },
-    				{ name: "RotationData.Rotations.Rotation2.RotationPayment.Payment3.PaymentDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation2.RotationPayment.Payment3.PaymentDate", condition: "<=", value: DateTimestampEnd }
-  				],
-			];
-    	}
-    	else if(Cond==="RotationStartDate")
-    	{
-    		feeTypeArray=["application fee"]
-    		setconditionType(["application fee"]);
-    		conditionsArray =
-    		[
-  				[
-    				{ name: "RotationData.Rotations.Rotation0.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation0.StartDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-    				{ name: "RotationData.Rotations.Rotation1.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation1.StartDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-    				{ name: "RotationData.Rotations.Rotation2.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation2.StartDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-    				{ name: "RotationData.Rotations.Rotation3.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation3.StartDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-    				{ name: "RotationData.Rotations.Rotation4.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation4.StartDate", condition: "<=", value: DateTimestampEnd }
-  				],
+  if (
+    SetMainFilters.rotationStartDate &&
+    SetMainFilters.rotationStartDate.length === 2
+  ) {
+    currentConditions.push({
+      name: `RotationData.Rotations.Rotation${i}.StartDate`,
+      condition: ">=",
+      value: Timestamp.fromDate(convertISTMidnightToUTC(SetMainFilters.rotationStartDate[0]))
+    });
 
-			];
-    	}
-    	else if(Cond==="RotationEnrollmentDate")
-    	{
-    		feeTypeArray=["application fee"]
-    		setconditionType(["application fee"]);
-    		conditionsArray =
-    		[
-  				[
-    				{ name: "RotationData.Rotations.Rotation0.EnrollmentDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation0.EnrollmentDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-    				{ name: "RotationData.Rotations.Rotation1.EnrollmentDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation1.EnrollmentDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-    				{ name: "RotationData.Rotations.Rotation2.EnrollmentDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation2.EnrollmentDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-    				{ name: "RotationData.Rotations.Rotation3.EnrollmentDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation3.EnrollmentDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-    				{ name: "RotationData.Rotations.Rotation4.EnrollmentDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation4.EnrollmentDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-    				{ name: "RotationData.Rotations.Rotation5.EnrollmentDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation5.EnrollmentDate", condition: "<=", value: DateTimestampEnd }
-  				]
+    currentConditions.push({
+      name: `RotationData.Rotations.Rotation${i}.StartDate`,
+      condition: "<=",
+      value: Timestamp.fromDate(convertISTMidnightToUTC(SetMainFilters.rotationStartDate[1]))
+    });
+  }
 
-			];
-    	}
-    	else if(Cond==="RefundRequestDate")
-    	{
-    		conditionsArray =
-    		[
-  				[
-    				{ name: "RotationData.Rotations.Rotation0.RefundData.RefundRequestDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation0.RefundData.RefundRequestDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-  					{ name: "RotationData.Rotations.Rotation1.RefundData.RefundRequestDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation1.RefundData.RefundRequestDate", condition: "<=", value: DateTimestampEnd }
-  				],
+  if (
+    SetMainFilters.enrollmentDate &&
+    SetMainFilters.enrollmentDate.length === 2
+  ) {
+    currentConditions.push({
+      name: `RotationData.Rotations.Rotation${i}.EnrollmentDate`,
+      condition: ">=",
+      value: Timestamp.fromDate(convertISTMidnightToUTC(SetMainFilters.enrollmentDate[0]))
+    });
 
-  				[
-  					{ name: "RotationData.Rotations.Rotation2.RefundData.RefundRequestDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation2.RefundData.RefundRequestDate", condition: "<=", value: DateTimestampEnd }
-  				]
-			];
-    	}
-    	else if(Cond==="RefundDate")
-    	{
-    		conditionsArray =
-    		[
-  				[
-    				{ name: "RotationData.Rotations.Rotation0.RefundData.RefundRequestDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation0.RefundData.RefundRequestDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-  					{ name: "RotationData.Rotations.Rotation1.RefundData.RefundRequestDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation1.RefundData.RefundRequestDate", condition: "<=", value: DateTimestampEnd }
-  				],
+    currentConditions.push({
+      name: `RotationData.Rotations.Rotation${i}.EnrollmentDate`,
+      condition: "<=",
+      value:  Timestamp.fromDate(convertISTMidnightToUTC(SetMainFilters.enrollmentDate[1]))
+    });
+  }
 
-  				[
-  					{ name: "RotationData.Rotations.Rotation2.RefundData.RefundRequestDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation2.RefundData.RefundRequestDate", condition: "<=", value: DateTimestampEnd }
-  				]
-			];
-    	}
-    	else if(Cond==="VisaLetterStatus")
-    	{
-    		conditionsArray =
-    		[
-  				[
-  					{ name: "RotationData.Rotations.Rotation0.RotationVisaSection.Letter0.VisaLetterStatus.label", condition: "==", value: innerDynamicField },
-    				{ name: "RotationData.Rotations.Rotation0.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation0.StartDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-  					{ name: "RotationData.Rotations.Rotation0.RotationVisaSection.Letter1.VisaLetterStatus.label", condition: "==", value: innerDynamicField },
-    				{ name: "RotationData.Rotations.Rotation0.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation0.StartDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-  					{ name: "RotationData.Rotations.Rotation1.RotationVisaSection.Letter0.VisaLetterStatus.label", condition: "==", value: innerDynamicField },
-  					{ name: "RotationData.Rotations.Rotation1.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation1.StartDate", condition: "<=", value: DateTimestampEnd }
-  				],
-          [
-  					{ name: "RotationData.Rotations.Rotation1.RotationVisaSection.Letter1.VisaLetterStatus.label", condition: "==", value: innerDynamicField },
-  					{ name: "RotationData.Rotations.Rotation1.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation1.StartDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-  					{ name: "RotationData.Rotations.Rotation2.RotationVisaSection.Letter0.VisaLetterStatus.label", condition: "==", value: innerDynamicField },
-  					{ name: "RotationData.Rotations.Rotation2.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation2.StartDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-  					{ name: "RotationData.Rotations.Rotation2.RotationVisaSection.Letter1.VisaLetterStatus.label", condition: "==", value: innerDynamicField },
-  					{ name: "RotationData.Rotations.Rotation2.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation2.StartDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-  					{ name: "RotationData.Rotations.Rotation3.RotationVisaSection.Letter0.VisaLetterStatus.label", condition: "==", value: innerDynamicField },
-  					{ name: "RotationData.Rotations.Rotation3.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation3.StartDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-  					{ name: "RotationData.Rotations.Rotation3.RotationVisaSection.Letter1.VisaLetterStatus.label", condition: "==", value: innerDynamicField },
-  					{ name: "RotationData.Rotations.Rotation3.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation3.StartDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-  					{ name: "RotationData.Rotations.Rotation4.RotationVisaSection.Letter0.VisaLetterStatus.label", condition: "==", value: innerDynamicField },
-  					{ name: "RotationData.Rotations.Rotation4.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation4.StartDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-  					{ name: "RotationData.Rotations.Rotation4.RotationVisaSection.Letter1.VisaLetterStatus.label", condition: "==", value: innerDynamicField },
-  					{ name: "RotationData.Rotations.Rotation4.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation4.StartDate", condition: "<=", value: DateTimestampEnd }
-  				]
-			];
-    	}
-    	else if(Cond==="LocationCodeC")
-    	{
-    		conditionsArray =
-    		[
-  				[
-  					{ name: "RotationData.Rotations.Rotation0.LocationCode.label", condition: "==", value: innerDynamicField },
-  					{ name: "RotationData.Rotations.Rotation0.RotationStatus.label", condition: "==", value: "Connected with physician" },
-    				{ name: "RotationData.Rotations.Rotation0.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation0.StartDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-  					{ name: "RotationData.Rotations.Rotation1.LocationCode.label", condition: "==", value: innerDynamicField },
-  					{ name: "RotationData.Rotations.Rotation1.RotationStatus.label", condition: "==", value: "Connected with physician" },
-  					{ name: "RotationData.Rotations.Rotation1.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation1.StartDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-  					{ name: "RotationData.Rotations.Rotation2.LocationCode.label", condition: "==", value: innerDynamicField },
-  					{ name: "RotationData.Rotations.Rotation2.RotationStatus.label", condition: "==", value: "Connected with physician" },
-  					{ name: "RotationData.Rotations.Rotation2.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation2.StartDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-  					{ name: "RotationData.Rotations.Rotation3.LocationCode.label", condition: "==", value: innerDynamicField },
-  					{ name: "RotationData.Rotations.Rotation3.RotationStatus.label", condition: "==", value: "Connected with physician" },
-  					{ name: "RotationData.Rotations.Rotation3.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation3.StartDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-  					{ name: "RotationData.Rotations.Rotation4.LocationCode.label", condition: "==", value: innerDynamicField },
-  					{ name: "RotationData.Rotations.Rotation4.RotationStatus.label", condition: "==", value: "Connected with physician" },
-  					{ name: "RotationData.Rotations.Rotation4.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation4.StartDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-  					{ name: "RotationData.Rotations.Rotation5.LocationCode.label", condition: "==", value: innerDynamicField },
-  					{ name: "RotationData.Rotations.Rotation5.RotationStatus.label", condition: "==", value: "Connected with physician" },
-  					{ name: "RotationData.Rotations.Rotation5.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation5.StartDate", condition: "<=", value: DateTimestampEnd }
-  				]
-			];
-    	}
-    	else if(Cond==="LocationCodeNC")
-    	{
-    		conditionsArray =
-    		[
-  				[
-  					{ name: "RotationData.Rotations.Rotation0.LocationCode.label", condition: "==", value: innerDynamicField },
-  					{ name: "RotationData.Rotations.Rotation0.RotationStatus.label", condition: "==", value: "Not connected with physician" },
-    				{ name: "RotationData.Rotations.Rotation0.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation0.StartDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-  					{ name: "RotationData.Rotations.Rotation1.LocationCode.label", condition: "==", value: innerDynamicField },
-  					{ name: "RotationData.Rotations.Rotation1.RotationStatus.label", condition: "==", value: "Not connected with physician" },
-  					{ name: "RotationData.Rotations.Rotation1.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation1.StartDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-  					{ name: "RotationData.Rotations.Rotation2.LocationCode.label", condition: "==", value: innerDynamicField },
-  					{ name: "RotationData.Rotations.Rotation2.RotationStatus.label", condition: "==", value: "Not connected with physician" },
-  					{ name: "RotationData.Rotations.Rotation2.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation2.StartDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-  					{ name: "RotationData.Rotations.Rotation3.LocationCode.label", condition: "==", value: innerDynamicField },
-  					{ name: "RotationData.Rotations.Rotation3.RotationStatus.label", condition: "==", value: "Not connected with physician" },
-  					{ name: "RotationData.Rotations.Rotation3.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation3.StartDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-  					{ name: "RotationData.Rotations.Rotation4.LocationCode.label", condition: "==", value: innerDynamicField },
-  					{ name: "RotationData.Rotations.Rotation4.RotationStatus.label", condition: "==", value: "Not connected with physician" },
-  					{ name: "RotationData.Rotations.Rotation4.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation4.StartDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-  					{ name: "RotationData.Rotations.Rotation5.LocationCode.label", condition: "==", value: innerDynamicField },
-  					{ name: "RotationData.Rotations.Rotation5.RotationStatus.label", condition: "==", value: "Not connected with physician" },
-  					{ name: "RotationData.Rotations.Rotation5.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation5.StartDate", condition: "<=", value: DateTimestampEnd }
-  				]
-			];
-    	}
-    	else if(Cond==="Connected")
-    	{
-    		conditionsArray =
-    		[
-  				[
-  					{ name: "RotationData.Rotations.Rotation0.RotationStatus.label", condition: "==", value: "Connected with physician" },
-    				{ name: "RotationData.Rotations.Rotation0.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation0.StartDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-  					{ name: "RotationData.Rotations.Rotation1.RotationStatus.label", condition: "==", value: "Connected with physician" },
-  					{ name: "RotationData.Rotations.Rotation1.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation1.StartDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-  					{ name: "RotationData.Rotations.Rotation2.RotationStatus.label", condition: "==", value: "Connected with physician" },
-  					{ name: "RotationData.Rotations.Rotation2.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation2.StartDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-  					{ name: "RotationData.Rotations.Rotation3.RotationStatus.label", condition: "==", value: "Connected with physician" },
-  					{ name: "RotationData.Rotations.Rotation3.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation3.StartDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-  					{ name: "RotationData.Rotations.Rotation4.RotationStatus.label", condition: "==", value: "Connected with physician" },
-  					{ name: "RotationData.Rotations.Rotation4.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation4.StartDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-  					{ name: "RotationData.Rotations.Rotation5.RotationStatus.label", condition: "==", value: "Connected with physician" },
-  					{ name: "RotationData.Rotations.Rotation5.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation5.StartDate", condition: "<=", value: DateTimestampEnd }
-  				]
-			];
-    	}
-    	else if(Cond==="NConnected")
-    	{
-    		conditionsArray =
-    		[
-  				[
-  					{ name: "RotationData.Rotations.Rotation0.RotationStatus.label", condition: "==", value: "Not connected with physician" },
-    				{ name: "RotationData.Rotations.Rotation0.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation0.StartDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-  					{ name: "RotationData.Rotations.Rotation1.RotationStatus.label", condition: "==", value: "Not connected with physician" },
-  					{ name: "RotationData.Rotations.Rotation1.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation1.StartDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-  					{ name: "RotationData.Rotations.Rotation2.RotationStatus.label", condition: "==", value: "Not connected with physician" },
-  					{ name: "RotationData.Rotations.Rotation2.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation2.StartDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-  					{ name: "RotationData.Rotations.Rotation3.RotationStatus.label", condition: "==", value: "Not connected with physician" },
-  					{ name: "RotationData.Rotations.Rotation3.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation3.StartDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-  					{ name: "RotationData.Rotations.Rotation4.RotationStatus.label", condition: "==", value: "Not connected with physician" },
-  					{ name: "RotationData.Rotations.Rotation4.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation4.StartDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-  					{ name: "RotationData.Rotations.Rotation5.RotationStatus.label", condition: "==", value: "Not connected with physician" },
-  					{ name: "RotationData.Rotations.Rotation5.StartDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation5.StartDate", condition: "<=", value: DateTimestampEnd }
-  				]
-			];
-    	}
-    	else if(Cond==="ContractStatus")
-    	{
+  if (SetMainFilters.contractstatus) {
+    currentConditions.push({
+      name: `RotationData.Rotations.Rotation${i}.ContractStatus.label`,
+      condition: "==",
+      value: SetMainFilters.contractstatus
+    });
+  }
 
-    		conditionsArray =
-    		[
-  				[
-  					{ name: "RotationData.Rotations.Rotation0.ContractStatus.label", condition: "==", value: innerDynamicField },
-    				{ name: "RotationData.Rotations.Rotation0.ContractSignedDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation0.ContractSignedDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-  					{ name: "RotationData.Rotations.Rotation1.ContractStatus.label", condition: "==", value: innerDynamicField },
-  					{ name: "RotationData.Rotations.Rotation1.ContractSignedDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation1.ContractSignedDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-  					{ name: "RotationData.Rotations.Rotation2.ContractStatus.label", condition: "==", value: innerDynamicField },
-  					{ name: "RotationData.Rotations.Rotation2.ContractSignedDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation2.ContractSignedDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-  					{ name: "RotationData.Rotations.Rotation3.ContractStatus.label", condition: "==", value: innerDynamicField },
-  					{ name: "RotationData.Rotations.Rotation3.ContractSignedDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation3.ContractSignedDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-  					{ name: "RotationData.Rotations.Rotation4.ContractStatus.label", condition: "==", value: innerDynamicField },
-  					{ name: "RotationData.Rotations.Rotation4.ContractSignedDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation4.ContractSignedDate", condition: "<=", value: DateTimestampEnd }
-  				]
-			];
+  if (SetMainFilters.rotationstatus) {
+    currentConditions.push({
+      name: `RotationData.Rotations.Rotation${i}.RotationStatus.label`,
+      condition: "==",
+      value: SetMainFilters.rotationstatus
+    });
+  }
 
-			console.log("conditionsArray====>",conditionsArray)
-    	}
-    	else if(Cond==="ContractStatusWithEnrollementDate")
-    	{
+  if (SetMainFilters.rotationreview) {
+    currentConditions.push({
+      name: `RotationData.Rotations.Rotation${i}.RotationReview`,
+      condition: "==",
+      value: SetMainFilters.rotationreview
+    });
+  }
 
-    		conditionsArray =
-    		[
-  				[
-  					{ name: "RotationData.Rotations.Rotation0.ContractStatus.label", condition: "==", value: innerDynamicField },
-    				{ name: "RotationData.Rotations.Rotation0.EnrollmentDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation0.EnrollmentDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-  					{ name: "RotationData.Rotations.Rotation1.ContractStatus.label", condition: "==", value: innerDynamicField },
-  					{ name: "RotationData.Rotations.Rotation1.EnrollmentDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation1.EnrollmentDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-  					{ name: "RotationData.Rotations.Rotation2.ContractStatus.label", condition: "==", value: innerDynamicField },
-  					{ name: "RotationData.Rotations.Rotation2.EnrollmentDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation2.EnrollmentDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-  					{ name: "RotationData.Rotations.Rotation3.ContractStatus.label", condition: "==", value: innerDynamicField },
-  					{ name: "RotationData.Rotations.Rotation3.EnrollmentDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation3.EnrollmentDate", condition: "<=", value: DateTimestampEnd }
-  				],
-  				[
-  					{ name: "RotationData.Rotations.Rotation4.ContractStatus.label", condition: "==", value: innerDynamicField },
-  					{ name: "RotationData.Rotations.Rotation4.EnrollmentDate", condition: ">=", value: DateTimestampStart },
-    				{ name: "RotationData.Rotations.Rotation4.EnrollmentDate", condition: "<=", value: DateTimestampEnd }
-  				]
-			];
+  if (SetMainFilters.locationcode) {
+    currentConditions.push({
+      name: `RotationData.Rotations.Rotation${i}.LocationCode.label`,
+      condition: "==",
+      value: SetMainFilters.locationcode
+    });
+  }
+  if (SetMainFilters.PhysicianCheckPoint) {
+    currentConditions.push({
+      name: `RotationData.Rotations.Rotation${i}.PhysicianCheckPoint`,
+      condition: "==",
+      value: SetMainFilters.PhysicianCheckPoint
+    });
+  }
+if (SetMainFilters.StudentCheckPoint) {
+    currentConditions.push({
+      name: `RotationData.Rotations.Rotation${i}.StudentCheckPoint`,
+      condition: "==",
+      value: SetMainFilters.StudentCheckPoint
+    });
+  }
 
-			console.log("conditionsArray====>",conditionsArray)
-    	}
-    	console.log("conditionsArray---->",conditionsArray)
+
+
+  conditionsArray.push(currentConditions);
+  }
+  console.log("conditionsArray===>",conditionsArray)
+
+    	
 		result =await SelectWithComplexConditions("UserServices",conditionsArray,"Users");
 		let resultDoctors =await SelectWithComplexConditions("RotationDoctors",[[{name:"DoctorInfo.adminName",condition:"!=",value:"Temperory"}]]);
-		console.log("resultDoctors---->",resultDoctors)
-		console.log("result---->",result)
 		hideLoader()
 		hideLoading()
 		if(resultDoctors.status==="success")
@@ -1137,7 +625,188 @@ const formatDateForExcel = (d) => {
   }
   return "";
 };
+ const FilterData = async () => {
 
+  let conditions = [];
+  const filtersToSave = {
+  ...filters,
+};
+
+if (
+  filtersToSave.enrollmentDate &&
+  filtersToSave.enrollmentDate.length === 2
+) {
+  filtersToSave.enrollmentDate = [
+    Timestamp.fromDate(
+      filtersToSave.enrollmentDate[0].toDate()
+    ),
+    Timestamp.fromDate(
+      filtersToSave.enrollmentDate[1].toDate()
+    ),
+  ];
+}
+if (
+  filtersToSave.rotationStartDate &&
+  filtersToSave.rotationStartDate.length === 2
+) {
+  filtersToSave.rotationStartDate = [
+    Timestamp.fromDate(
+      filtersToSave.rotationStartDate[0].toDate()
+    ),
+    Timestamp.fromDate(
+      filtersToSave.rotationStartDate[1].toDate()
+    ),
+  ];
+}
+console.log("filters----->",filters)
+  // Rotation Start Date
+  if (
+    filters.rotationStartDate &&
+    filters.rotationStartDate.length === 2
+  ) {
+    conditions.push([
+      {
+        name: "StartDate",
+        condition: ">=",
+        value: filters.rotationStartDate[0].toDate(),
+      },
+      {
+        name: "StartDate",
+        condition: "<=",
+        value: filters.rotationStartDate[1].toDate(),
+      },
+    ]);
+  }
+
+  // Enrollment Date
+  if (
+    filters.enrollmentDate &&
+    filters.enrollmentDate.length === 2
+  ) {
+    conditions.push([
+      {
+        name: "EnrollmentDate",
+        condition: ">=",
+        value: filters.enrollmentDate[0].toDate(),
+      },
+      {
+        name: "EnrollmentDate",
+        condition: "<=",
+        value: filters.enrollmentDate[1].toDate(),
+      },
+    ]);
+  }
+
+  // Contract Status
+  if (filters.contractstatus) {
+    conditions.push([
+      {
+        name: "ContractStatus.label",
+        condition: "==",
+        value: filters.contractstatus,
+      },
+    ]);
+  }
+
+  // Visa Letter Status
+  if (filters.visaletterstatus) {
+    conditions.push([
+      {
+        name: "RotationVisaSection.Letter0.VisaLetterStatus.label",
+        condition: "==",
+        value: filters.visaletterstatus,
+      },
+    ]);
+  }
+
+  // Rotation Status
+  if (filters.rotationstatus) {
+    conditions.push([
+      {
+        name: "RotationStatus.label",
+        condition: "==",
+        value: filters.rotationstatus,
+      },
+    ]);
+  }
+
+  // Rotation Review
+  if (filters.rotationreview) {
+    conditions.push([
+      {
+        name: "RotationReview.label",
+        condition: "==",
+        value: filters.rotationreview,
+      },
+    ]);
+  }
+
+  // Location Code
+  if (filters.locationcode) {
+    conditions.push([
+      {
+        name: "LocationCode.label",
+        condition: "==",
+        value: filters.locationcode,
+      },
+    ]);
+  }
+
+  // Enrollment Admin In Touch
+  if (filters.EnrollmentAdminInTouch) {
+    conditions.push([
+      {
+        name: "EnrollmentAdminInTouch.label",
+        condition: "==",
+        value: filters.EnrollmentAdminInTouch,
+      },
+    ]);
+  }
+
+  // Physician Check Point
+  if (filters.PhysicianCheckPoint) {
+    conditions.push([
+      {
+        name: "PhysicianCheckPoint",
+        condition: "==",
+        value: filters.PhysicianCheckPoint,
+      },
+    ]);
+  }
+
+  // Student Check Point
+  if (filters.StudentCheckPoint) {
+    conditions.push([
+      {
+        name: "StudentCheckPoint",
+        condition: "==",
+        value: filters.StudentCheckPoint,
+      },
+    ]);
+  }
+
+ // setFiltersReady(true);
+filtersToSave['filtertype']="listofallrotationstudents";
+filtersToSave['id']="listofallrotationstudents";
+  const ress=await handleUpdate(
+    "SavedFilters",
+    "listofallrotationstudents",
+    filtersToSave
+  );
+console.log("ress---->",ress)
+  console.log(
+    "Rotation Filters Applied:",
+    conditions
+  );
+
+  fetchUserData();
+};
+const clearFilter = (filterName) => {
+  setFilters((prev) => ({
+    ...prev,
+    [filterName]: Array.isArray(prev[filterName]) ? [] : "",
+  }));
+};
 const buildVisaLettersString = (rotation) => {
   const section = rotation?.RotationVisaSection || {};
   const parts = [];
@@ -1239,119 +908,298 @@ const hideLoader = () => {
 
     {/* FILTER BAR + DATE PICKERS */}
     <Box>
-      <Box sx={{ mb: 4, display: "flex", gap: 4 }}>
+     <Paper sx={{ p: 3, mb: 4 }}>
+        <Typography variant="h6" mb={2}>
+          Filters
+        </Typography>
 
-        {/* Filter Dropdown */}
-        <FormControl sx={{ minWidth: 220 }}>
-          <InputLabel id="id-filter-label">Select Filter</InputLabel>
-          <Select
-            labelId="id-filter-label"
-            id="id-filter"
-            name="id"
-            value={filters.id}
-            label="Select Filter"
-            onChange={handleFilterChange}
-          >
-            {Object.entries(idOptions).map(([key, value]) => (
-              <MenuItem key={key} value={key}>
-                {value}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+       <Grid container spacing={2} sx={{ mb: 4 }}>
 
-        {/* DATE PICKERS */}
-        <div className="date-range-container">
-          <div className="date-range-picker">
-            <DatePicker
-              selected={startDate}
-              value={startDate}
-              onChange={(date) => {
-                const adjusted = date
-                  .set("hour", 23)
-                  .set("minute", 59)
-                  .set("second", 1)
-                  .set("millisecond", 0);
-                setStartDate(adjusted);
-              }}
-              selectsStart
-              startDate={startDate}
-              endDate={endDate}
-              format={dateFormat}
-              showYearDropdown
-              showMonthDropdown
-              placeholderText="Start Date"
-            />
+  {/* Filter Type */}
+  <Grid item xs={12} md={6}>
+   <InputLabel>Rotation Start Date</InputLabel>
+  <RangePicker
+    style={{ width: "100%" }}
+    
+    label="Rotation Start Date"
+    value={filters.rotationStartDate}
+    format={dateFormat}
+    onChange={(dates) => {
+      if (!dates) return;
 
-            <DatePicker
-              selected={endDate}
-              value={endDate}
-              onChange={(date) => {
-                const adjusted = date
-                  .set("hour", 23)
-                  .set("minute", 59)
-                  .set("second", 1)
-                  .set("millisecond", 0);
-                setEndDate(adjusted);
-              }}
-              selectsEnd
-              startDate={startDate}
-              endDate={endDate}
-              minDate={startDate}
-              format={dateFormat}
-              showYearDropdown
-              showMonthDropdown
-              placeholderText="End Date"
-            />
-          </div>
-        </div>
+      const start = dates[0]
+        .set("hour", 0)
+        .set("minute", 0)
+        .set("second", 1)
+        .set("millisecond", 0);
 
-        {/* DYNAMIC FILTER FIELD */}
-        {(filters.id !== "LocationCodeNC" &&
-        filters.id !== "LocationCodeC" &&
-        filters.id !== "ContractStatus" &&
-        filters.id !== "ContractStatusWithEnrollementDate" &&
-        filters.id !== "VisaLetterStatus" &&
-        filters.id !== "RotationStatus" &&
-        filters.id !== "RotationReview") ? (
-          <></>
-        ) : filters.id === "LocationCodeC" ||
-          filters.id === "LocationCodeNC" ? (
-          <FormControl sx={{ minWidth: 220 }}>
-            <TextField
-              label="Location Code"
-              variant="outlined"
+      const end = dates[1]
+        .set("hour", 23)
+        .set("minute", 59)
+        .set("second", 59)
+        .set("millisecond", 999);
+	 setFilters((prev) => ({
+        ...prev,
+        rotationStartDate: [start, end],
+      }));
+      setStartDate(start);
+      setEndDate(end);
+    }}
+    allowClear={false}
+  />
+  {filters.rotationStartDate && (
+    <Button
+      size="small"
+      color="error"
+      onClick={() => clearFilter("rotationStartDate")}
+      sx={{ mt: 1 }}
+    >
+      Clear
+    </Button>
+  )}
+</Grid>
+<Grid item xs={12} md={6}>
+   <InputLabel>Enrollment Date</InputLabel>
+  <RangePicker
+    style={{ width: "100%" }}
+    name="enrollmentDate"
+    label="Enrollment Date"
+    value={filters.enrollmentDate}
+    format={dateFormat}
+    onChange={(dates) => {
+      if (!dates) return;
+
+      const start = dates[0]
+        .set("hour", 0)
+        .set("minute", 0)
+        .set("second", 1)
+        .set("millisecond", 0);
+
+      const end = dates[1]
+        .set("hour", 23)
+        .set("minute", 59)
+        .set("second", 59)
+        .set("millisecond", 999);
+		 setFilters((prev) => ({
+        ...prev,
+        enrollmentDate: [start, end],
+      }));
+
+    }}
+    allowClear={false}
+  />
+   {filters.enrollmentDate && (
+    <Button
+      size="small"
+      color="error"
+      onClick={() => clearFilter("enrollmentDate")}
+      sx={{ mt: 1 }}
+    >
+      Clear
+    </Button>
+  )}
+</Grid>
+<Grid item xs={12} md={3}>
+    <FormControl fullWidth>
+      <InputLabel>Contract Status</InputLabel>
+      <Select
+        name="contractstatus"
+        value={filters.contractstatus}
+        label="Contract Status"
+        onChange={handleFilterChange}
+      >
+        {Object.entries(FilterContractStatusOption).map(([key, value]) => (
+          <MenuItem key={key} value={key}>
+            {value}
+          </MenuItem>
+        ))}
+      </Select>
+    </FormControl>
+      {filters.contractstatus && (
+    <Button
+      size="small"
+      color="error"
+      onClick={() => clearFilter("contractstatus")}
+      sx={{ mt: 1 }}
+    >
+      Clear
+    </Button>
+  )}
+  </Grid>
+  <Grid item xs={12} md={3}>
+    <FormControl fullWidth>
+      <InputLabel>Visa Letter Status</InputLabel>
+      <Select
+        name="visaletterstatus"
+        value={filters.visaletterstatus}
+        label="Visa Letter Status"
+        onChange={handleFilterChange}
+      >
+        {Object.entries(FilterVisaLetterStatusOption).map(([key, value]) => (
+          <MenuItem key={key} value={key}>
+            {value}
+          </MenuItem>
+        ))}
+      </Select>
+    </FormControl>
+    {filters.visaletterstatus && (
+    <Button
+      size="small"
+      color="error"
+      onClick={() => clearFilter("visaletterstatus")}
+      sx={{ mt: 1 }}
+    >
+      Clear
+    </Button>
+  )}
+  </Grid>
+   <Grid item xs={12} md={3}>
+    <FormControl fullWidth>
+      <InputLabel>Rotation Status</InputLabel>
+      <Select
+        name="id"
+        value={filters.rotationstatus}
+        label="Rotation Status"
+        onChange={handleFilterChange}
+      >
+        {Object.entries(FilterRotationStatusOption).map(([key, value]) => (
+          <MenuItem key={key} value={key}>
+            {value}
+          </MenuItem>
+        ))}
+      </Select>
+    </FormControl>
+    {filters.rotationstatus && (
+    <Button
+      size="small"
+      color="error"
+      onClick={() => clearFilter("rotationstatus")}
+      sx={{ mt: 1 }}
+    >
+      Clear
+    </Button>
+  )}
+  </Grid>
+
+   <Grid item xs={12} md={3}>
+    <FormControl fullWidth>
+      <InputLabel>Location Code</InputLabel>
+
+        <TextField
               fullWidth
-              value={DynamicField}
-              required
-              onChange={handleDynamicChange}
-              sx={{ my: 0, marginBottom: "4px" }}
+              value={filters.locationcode}
+             onChange={handleFilterChange}
             />
-          </FormControl>
-        ) : (
-          <FormControl sx={{ minWidth: 220 }}>
-            <InputLabel id="id-filter-label2">{filters.name}</InputLabel>
-            <Select
-              labelId="id-filter-label2"
-              value={DynamicField}
-              label={`Select ${filters.name}`}
-              onChange={handleDynamicChange}
-            >
-              <MenuItem value="">=Select=</MenuItem>
-              {Object.entries(FilterChangingOption).map(([key, value]) => (
-                <MenuItem key={key} value={key}>
-                  {value}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        )}
-
-        {/* APPLY FILTER BUTTON */}
-        <Button variant="contained" className="FilterButton" onClick={applyFilters}>
+    </FormControl>
+    {filters.locationcode && (
+    <Button
+      size="small"
+      color="error"
+      onClick={() => clearFilter("locationcode")}
+      sx={{ mt: 1 }}
+    >
+      Clear
+    </Button>
+  )}
+  </Grid>
+   
+  <Grid item xs={12} md={3}>
+  <FormControl fullWidth>
+    <InputLabel>Enrollment Admin In Touch</InputLabel>
+    <Select
+      name="EnrollmentAdminInTouch"
+      value={filters.EnrollmentAdminInTouch || ""}
+      label="Enrollment Admin In Touch"
+      onChange={handleFilterChange}
+    >
+      {AdminOptionsList?.map((option) => (
+        <MenuItem
+          key={option.value || option}
+          value={option.value || option}
+        >
+          {option.label || option}
+        </MenuItem>
+      ))}
+    </Select>
+  </FormControl>
+  {filters.EnrollmentAdminInTouch && (
+    <Button
+      size="small"
+      color="error"
+      onClick={() => clearFilter("EnrollmentAdminInTouch")}
+      sx={{ mt: 1 }}
+    >
+      Clear
+    </Button>
+  )}
+</Grid>
+ <Grid item xs={12} md={3}>
+  <FormControl fullWidth>
+    <InputLabel>Physican CP</InputLabel>
+    <Select
+      name="PhysicianCheckPoint"
+      value={filters.PhysicianCheckPoint || ""}
+      label="Physican CP"
+      onChange={handleFilterChange}
+    >
+      	<MenuItem value="">-Select-</MenuItem>
+    	<MenuItem value="Not sent">Not sent</MenuItem>
+        <MenuItem value="Waiting on Student">Waiting on Student</MenuItem>
+        <MenuItem value="Confirmed with Student">Confirmed with Student</MenuItem>
+        <MenuItem value="Rescheduled">Rescheduled</MenuItem>
+    </Select>
+  </FormControl>
+  {filters.PhysicianCheckPoint && (
+    <Button
+      size="small"
+      color="error"
+      onClick={() => clearFilter("PhysicianCheckPoint")}
+      sx={{ mt: 1 }}
+    >
+      Clear
+    </Button>
+  )}
+</Grid>
+<Grid item xs={12} md={3}>
+  <FormControl fullWidth>
+    <InputLabel>Student CP</InputLabel>
+    <Select
+      name="StudentCheckPoint"
+      value={filters.StudentCheckPoint || ""}
+      label="Student CP"
+      onChange={handleFilterChange}
+    >
+      	<MenuItem value="">-Select-</MenuItem>
+    	<MenuItem value="Not sent">Not sent</MenuItem>
+        <MenuItem value="Waiting on Student">Waiting on Student</MenuItem>
+        <MenuItem value="Confirmed with Student">Confirmed with Student</MenuItem>
+        <MenuItem value="Rescheduled">Rescheduled</MenuItem>
+    </Select>
+  </FormControl>
+  {filters.StudentCheckPoint && (
+    <Button
+      size="small"
+      color="error"
+      onClick={() => clearFilter("StudentCheckPoint")}
+      sx={{ mt: 1 }}
+    >
+      Clear
+    </Button>
+  )}
+</Grid>
+ <Grid item xs={12}>
+<Grid item xs={12} md={3}>
+  <FormControl fullWidth>
+<Button variant="contained" className="FilterButton" onClick={FilterData}>
           Apply Filters
         </Button>
-      </Box>
+
+</FormControl>
+</Grid>
+</Grid>
+</Grid>
+      </Paper>
+
     </Box>
 
     {/* TOTAL COUNT */}

@@ -22,6 +22,7 @@ const columns = [
   { key: "RotationReview", label: "Rotation Review", width: 180 },
   { key: "PhysicianCheckPoint", label: "Physician CP", width: 200 },
   { key: "StudentCheckPoint", label: "Student CP", width: 200 },
+  { key: "EnrollmentAdminInTouch", label: "Enrollment Admin", width: 200 },
 ];
 
 const RotationTable = ({

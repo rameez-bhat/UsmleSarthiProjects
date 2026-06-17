@@ -6111,7 +6111,7 @@ let lastRotationIndex =0;
                   	value={rotation['StudentCheckPoint']? rotation['StudentCheckPoint']:""}
                     label="Student CP"
                     required
-                    onChange={(event) => handleRotationChange(event,'PhysicianCheckPoint',index )}
+                    onChange={(event) => handleRotationChange(event,'StudentCheckPoint',index )}
                   >
                       <MenuItem value="">
                         -Select-

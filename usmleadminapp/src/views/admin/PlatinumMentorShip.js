@@ -293,11 +293,11 @@ const panelistOptions = [
     })
   }}
            
-                value={MatchValues['Platinum']?.['ChangedFromAssignedMentor']}
+                value={MatchValues['Platinum']?.['ChangedToAssignedMentor']}
 
         options={panelistOptionsOriginal}
-        placeholder="Changed From Mentor"
-        onChange={(event) => HandlePlatinumChange(event, 'ChangedFromAssignedMentor')}
+        placeholder="Changed To Mentor"
+        onChange={(event) => HandlePlatinumChange(event, 'ChangedToAssignedMentor')}
         isSearchable
         //isMulti
       />

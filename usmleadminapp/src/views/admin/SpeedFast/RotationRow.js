@@ -9,6 +9,7 @@ const RotationRow = ({
   CurrentData,
   HandleCheckPointChange,
 }) => {
+console.log("rotation===>",rotation)
   return (
     <>
       <TableCell sx={{ border: "1px solid black" }} width={120}>S{rotation.StudentUniqueId}</TableCell>
@@ -148,6 +149,7 @@ const RotationRow = ({
           </Select>
         </FormControl>
       </TableCell>
+      <TableCell sx={{ border: "1px solid black" }} width={200}>{rotation?.EnrollmentAdminInTouch?.label}</TableCell>
     </>
   );
 };
