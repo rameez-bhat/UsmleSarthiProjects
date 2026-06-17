@@ -390,6 +390,7 @@
                 <div class="info-row"><span>Email for Zelle:</span><span>pawankhera@usmlesarthi.com</span></div>
                 <div class="info-row"><span>Instructions:</span><span>Include the student's name in notes and send a screenshot to <b>enroll@usmlesarthi.com</b></span></div>
                 <!--<div class="info-row"><span>Rotation Fee:</span><span>${{ RotationFee }}</span></div>-->
+                <div class="info-row"><span>Location Code:</span><span>{{ rotationCode }}</span></div>
                 <div class="info-row"><span>Application Fee:</span><span>${{ ApplicationFee }}</span></div>
 
                 <div class="action-row">
@@ -406,6 +407,7 @@
                 <h4>💳 Stripe Payment Details</h4>
                 <div class="info-row"><span>Name:</span><span>MedSarthi LLC</span></div>
                 <!--<div class="info-row"><span>Note:</span><span><b>You Will Be Charged Application Fee + 4% Processing + $0.30</b></span></div>-->
+                <div class="info-row"><span>Location Code:</span><span>{{ rotationCode }}</span></div>
                 <div class="info-row"><span>Application Fee:</span><span>${{ ApplicationFee }}</span></div>
                 <div class="info-row"><span>Processing Fee(4%+$0.30):</span><span>${{ ((ApplicationFee*4/100)+0.30) | number:'1.2-2' }}</span></div>
                 <div class="info-row" *ngIf="PromotorDiscountsAmount"><span>Referral Discount:</span><span>${{PromotorDiscountsAmount}}</span></div>
@@ -443,6 +445,7 @@
                 <div class="info-row"><span>Bank Name</span><span>Bank of America</span></div>
                 <div class="info-row"><span>Account Number</span><span>4570-4639-8400</span></div>
                 <div class="info-row"><span>SWIFT Code</span><span>BOFAUS3N</span></div>
+                <div class="info-row"><span>Location Code:</span><span>{{ rotationCode }}</span></div>
                 <!--<div class="info-row"><span>Rotation Fee:</span><span>${{ RotationFee }}</span></div>-->
                 <div class="info-row"><span>Application Fee:</span><span>${{ ApplicationFee }}</span></div>
                 <div class="info-row"><span>Processing Fee(On Each Transaction):</span><span>$35</span></div>

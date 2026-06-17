@@ -212,6 +212,7 @@
               <div class="info-row"><span>Email:</span><span>pawankhera@usmlesarthi.com</span></div>
               <div class="info-row"><span>Instructions:</span><span>Include the student’s name in notes and email <b>enroll@usmlesarthi.com</b> with payment proof.</span></div>
               <div class="info-row"><span>Rotation Fee:</span><span>${{ RotationFee }}</span></div>
+              <div class="info-row"><span>Location Code:</span><span>{{ rotationCode }}</span></div>
               <div class="info-row" *ngIf="discountAmount"><span>Congratulations! You are eligible for a discount 👇</span></div>
               <div class="info-row" *ngIf="discountAmount"><span>Discount:</span><span>${{ discountAmount }}</span></div>
               <div class="info-row" *ngIf="PromotorDiscountsAmount"><span>Referral Discount:</span><span>${{PromotorDiscountsAmount}}</span></div>
@@ -237,6 +238,7 @@
               <h4>💳 Stripe Payment Details</h4>
               <div class="info-row"><span>Name:</span><span>MedSarthi LLC</span></div>
               <div class="info-row"><span>Rotation Fee:</span><span>${{ RotationFee }}</span></div>
+              <div class="info-row"><span>Location Code:</span><span>{{ rotationCode }}</span></div>
               <div class="info-row" *ngIf="discountAmount"><span>Congratulations! You are eligible for a discount 👇</span></div>
               <div class="info-row" *ngIf="discountAmount"><span>Discount:</span><span>${{ discountAmount }}</span></div>
               <div class="info-row"><span>Processing Fee:</span><span>${{ (((RotationFee)*4/100)+0.30) | number:'1.2-2' }}</span></div>
@@ -291,7 +293,8 @@
               <div class="info-row"><span>Bank Name:</span><span>Bank of America</span></div>
               <div class="info-row"><span>Account Number:</span><span>4570-4639-8400</span></div>
               <div class="info-row"><span>SWIFT Code:</span><span>BOFAUS3N</span></div>
-              <div class="info-row"><span>Rotation Fee:</span><span>${{ RotationFee }}</span></div>
+              <div class="info-row"><span>Rotation Fee:</span><span>{{ RotationFee }}</span></div>
+              <div class="info-row"><span>Location Code:</span><span>${{ rotationCode }}</span></div>
               <div class="info-row" *ngIf="discountAmount"><span>Congratulations! You are eligible for a discount 👇</span></div>
               <div class="info-row" *ngIf="discountAmount"><span>Discount:</span><span>${{ discountAmount }}</span></div>
               <div class="info-row"><span>Processing Fee:</span><span>$35</span></div>
