@@ -5,7 +5,7 @@ import { DatePicker} from "antd";
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward'; // Import sorting icons
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import { useLoading } from '../../layout/LoadingContext';
-import RotationTable from "./SpeedFast/RotationTable";
+import RotationTable from "./SpeedFast/RotationTableReport";
 const { RangePicker } = DatePicker;
 
 import {
@@ -95,9 +95,12 @@ let updateDatabase=true;
       const rotation = user.RotationData.Rotations[rotationKey];
 
 
-        const StartDateR=new Date(rotation?.StartDate?.seconds * 1000);
+       const StartDateR=new Date(rotation?.StartDate?.seconds * 1000);
        const EnrollmentDateR=new Date(rotation?.EnrollmentDate?.seconds * 1000);
-
+		const feeTypes = Object.values(rotation?.RotationPayment || {})
+  .map(payment => payment?.FeeType)
+  .filter(Boolean)
+  .join(", ");
    
        if (SetMainFilters?.EnrollmentAdminInTouch) {
        if(!user?.profile?.EnrollmentAdminInTouch?.value || SetMainFilters?.EnrollmentAdminInTouch!=user?.profile?.EnrollmentAdminInTouch?.value)
@@ -165,6 +168,7 @@ if (SetMainFilters?.StudentCheckPoint) {
       }
 
   }
+
 	let RotationVisa1='';
 	let HousingCode1='';
 	let VPD="";
@@ -220,6 +224,7 @@ if (SetMainFilters?.StudentCheckPoint) {
           ContractSignedDate:rotation?.ContractSignedDate,
           EnrollmentAdminInTouch:user?.profile?.EnrollmentAdminInTouch,
           RotationVisa:RotationVisa1,
+          RotationPaymentStatus:feeTypes,
           RotationVisaSection:rotation?.RotationVisaSection,
           HousingCode:HousingCode1,
           RotationStatus:RotationStatus,
@@ -400,7 +405,7 @@ console.log("value=====>",value)
     	innerStartDate=startDate;
     	innerEndDate=startDate;
     	innerDynamicField=DynamicField;
-    	fitlersSelected = await FetchDataFromCollection("SavedFilters", 20, "filtertype", "==", "listofallrotationstudents", 0);
+    	fitlersSelected = await FetchDataFromCollection("SavedFilters", 20, "filtertype", "==", "listofallrotationstudentsreport", 0);
     	console.log("fitlersSelected===>",fitlersSelected)
     	if(fitlersSelected.length)
 		  {
@@ -829,11 +834,11 @@ console.log("filters----->",filters)
   }
 
  // setFiltersReady(true);
-filtersToSave['filtertype']="listofallrotationstudents";
-filtersToSave['id']="listofallrotationstudents";
+filtersToSave['filtertype']="listofallrotationstudentsreport";
+filtersToSave['id']="listofallrotationstudentsreport";
   const ress=await handleUpdate(
     "SavedFilters",
-    "listofallrotationstudents",
+    "listofallrotationstudentsreport",
     filtersToSave
   );
 console.log("ress---->",ress)
@@ -879,26 +884,23 @@ const copyTableForExcel = async () => {
     "Student ID",
     "Name",
     "Email",
-    "Phone",
-    "Rotation Start Date",
+    "Enrollment Admin",
     "Enrollment Date",
+    "Location Code",
+    "Rotation Start Date",
     "Contract Status",
-    "Contract Signed Date",
-    "Visa Letter Status",
-    "Location Code / Doctor",
-    "Visa Letters",
-    "Housing Code",
-    "Rotation Status",
-    "Rotation Review",
+     "Payment Status",
     "Physician CP",
     "Student CP",
+     "Rotation Status",
+   
   ];
 
   const lines = [header.join("\t")]; // tab-separated
 
   sortedData.forEach((row) => {
     const phone = `${row.phoneCode || ""}${row.phoneNumber || ""}`;
-
+console.log("row======>",row)
     const locationDoctor =
       (typeof LocationCodeDoctorsName[row.LocationCode] !== "undefined" &&
         DoctorsDetails?.[LocationCodeDoctorsName[row.LocationCode]]?.DoctorInfo
@@ -910,20 +912,20 @@ const copyTableForExcel = async () => {
     const line = [
       row.StudentUniqueId ? `S${row.StudentUniqueId}` : "",
       row.displayName || "",
-      row.email || "",
-      String(phone),
+
+       row.email
+    ? `=HYPERLINK("https://manager.usmlesarthi.com/admin/userdetails/${row.uid}","${row.email}")`
+    : "",
+      row.EnrollmentAdminInTouch?.label || "",
+    	formatDateForExcel(row.EnrollmentDate),
+    	row.LocationCode || "",
       formatDateForExcel(row.StartDate),
-      formatDateForExcel(row.EnrollmentDate),
       row.ContractStatus || "",
-      formatDateForExcel(row.ContractSignedDate),
-      row.VisaLetterStatus || "",
-      `${locationDoctor ? `(${locationDoctor}) ` : ""}${row.LocationCode || ""}`,
-      visaLetters,
-      row.HousingCode || "",
-      row.RotationStatus || "",
-      row.RotationReview || "",
+      row.RotationPaymentStatus || "",
       row.PhysicianCheckPoint || "",
       row.StudentCheckPoint || "",
+      row.RotationStatus || "",
+      
     ];
 
     lines.push(line.join("\t"));

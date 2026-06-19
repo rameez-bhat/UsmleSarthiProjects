@@ -27,6 +27,7 @@ const GuestStripePayments = React.lazy(() => import('./views/admin/GuestStripePa
 const AddUnknownPayments = React.lazy(() => import('./views/admin/AddUnknownPayments'))
 const ListUnknownPayments = React.lazy(() => import('./views/admin/ListUnknownPayments'))
 const ListOfAllRoationStudents = React.lazy(() => import('./views/admin/ListOfAllRoationStudents'))
+const ListOfAllRoationStudentsReport = React.lazy(() => import('./views/admin/ListOfAllRoationStudentsReport'))
 const UnVerifiedPrograms = React.lazy(() => import('./views/admin/UnVerifiedPrograms'))
 const ListOfAllMatchStudents = React.lazy(() => import('./views/admin/ListOfAllMatchStudents'))
 const RotationQueries = React.lazy(() => import('./views/admin/RotationQueries'))
@@ -125,6 +126,7 @@ const routes = {"public":[
     //{ path: '/admin/listrotationstudents/:serializedObject?/:locationcodearray?', name: 'ListOfRoationStudents',exact: true, element: ListOfRoationStudents },
     { path: '/admin/listrotationstudents', name: 'ListOfRoationStudents', exact: true, element: ListOfRoationStudents },
     { path: '/admin/listofallrotationstudents/', name: 'ListOfAllRoationStudents',exact: true, element: ListOfAllRoationStudents },
+     { path: '/admin/listofallrotationstudentsreport/', name: 'ListOfAllRoationStudentsReport',exact: true, element: ListOfAllRoationStudentsReport },
     { path: '/admin/listofallmatchstudents/', name: 'ListOfAllMatchStudents',exact: true, element: ListOfAllMatchStudents },
     { path: '/admin/listofallresearchstudents/', name: 'ListOfAllResearchStudents',exact: true, element: ListOfAllResearchStudents },
     { path: '/admin/listofallservicestudents/', name: 'ListOfAllServiceStudents',exact: true, element: ListOfAllServiceStudents },

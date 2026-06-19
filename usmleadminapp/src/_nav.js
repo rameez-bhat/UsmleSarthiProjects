@@ -399,6 +399,12 @@ const getNavigation = (user) => {
             name: 'Rotation Students',
             to: '/admin/listofallrotationstudents',
           },
+         {
+            component: CNavItem,
+            icon: <CIcon icon={cilCash} customClassName="nav-icon" />,
+            name: 'Rotation Students Reports',
+            to: '/admin/listofallrotationstudentsreport',
+          },
           {
             component: CNavItem,
             icon: <CIcon icon={cilCash} customClassName="nav-icon" />,
