@@ -1,4 +1,4 @@
-import React, { useEffect, useState,useMemo } from 'react';
+import React, { useEffect, useState,useMemo, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import dayjs from 'dayjs';
 import { DatePicker} from "antd";
@@ -948,6 +948,7 @@ const hideLoader = () => {
       elements[i].classList.add('hidden'); // Example manipulation
     }
   };
+
   return (
   <CenteredBox>
 
@@ -1271,6 +1272,7 @@ const hideLoader = () => {
         requestSort={requestSort}
         containerHeight={700} // customize height
       />
+
 
       {/* COPY BUTTONS */}
       <div style={{ marginTop: "20px" }}>
