@@ -42,7 +42,7 @@ const MatchPlanStatus = {
   let MatchPlanLists = {};
 const UserDetails = () => {
   const { did } = useParams();
-  const { showLoading, hideLoading, SelectWithComplexConditions,FetchDataFromCollection,handleUpdate } = useLoading();
+  const { showLoading, hideLoading, SelectWithComplexConditions,FetchDataFromCollection,handleUpdate,SelectWithComplexConditionsJoin } = useLoading();
   const [MatchPlanListObject, setMatchPlanListObject] = useState({});
   const [filtersReady, setFiltersReady] = useState(false);
 
@@ -314,26 +314,92 @@ const buildConditions = () => {
     //loadData();
   }
   const loadData = async () => {
-    try {
-      showLoading();
-      const conditions = buildConditions();
-      console.log("conditions====>",conditions)
-      const result = await SelectWithComplexConditions(
-        "UserServices",
-        conditions,
-        "Users"
-      );
-    console.log("result====>",result)
-      if (result.status === "success") {
-        setData(result.data);
+  try {
+    showLoading();
+
+    const conditions = buildConditions();
+
+    const result = await SelectWithComplexConditions(
+      "UserServices",
+      conditions,
+      "Users"
+    );
+
+    if (result.status !== "success") return;
+
+    const users = result.data;
+
+    const usersWithCounts = await Promise.all(
+      users.map(async (user) => {
+        const noteConditions = [
+          [
+            {
+              name: "uid",
+              condition: "==",
+              value: user.uid,
+            },
+          ],
+        ];
+
+        const notes =
+          await SelectWithComplexConditionsJoin(
+            "UserCommonServiceNotes",
+            noteConditions,
+            "NotesDate",
+            "desc",
+            null,
+            "UsersRoles",
+            "uid",
+            "uid"
+          );
+        const counts = {};
+
+        if (Array.isArray(notes?.data)) {
+  notes.data.forEach((note) => {
+    const email = note?.AddedBy?.email || "Unknown";
+    const noteDate = note?.NotesDate || null;
+if(email==user?.profile?.email)
+{
+  return;
+}
+    if (!counts[email]) {
+      counts[email] = {
+        Count: 1,
+        NoteDate: noteDate,
+      };
+    } else {
+      counts[email].Count++;
+
+      // Keep the latest note date
+      if (
+        noteDate &&
+        (!counts[email].NoteDate ||
+          noteDate.seconds > counts[email].NoteDate.seconds)
+      ) {
+        counts[email].NoteDate = noteDate;
       }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setFiltersReady(false);
-      hideLoading();
     }
-  };
+  });
+}
+
+        return {
+          ...user,
+          NotesCount: counts,
+          TotalNotes: Array.isArray(notes?.data)
+            ? notes?.data?.length
+            : 0,
+        };
+      })
+    );
+    console.log("usersWithCounts==>",usersWithCounts)
+    setData(usersWithCounts);
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setFiltersReady(false);
+    hideLoading();
+  }
+};
   const formatSeason = (season) => {
   if (!season || isNaN(Number(season))) {
     return season;
@@ -1072,7 +1138,9 @@ const resetSingleFilter = async (key) => {
              <TableCell onClick={() => requestSort("PaymentDate")}>
                 Latest Payment Date
               </TableCell>
-
+              <TableCell onClick={() => requestSort('Status')}>
+                Notes {sortConfig.key === 'Status' && (sortConfig.direction === 'ascending' ? <ArrowUpwardIcon /> : <ArrowDownwardIcon />)}
+            </TableCell>
               <TableCell onClick={() => requestSort("PaymentAmount")}>
                 Total Payment Amount
               </TableCell>
@@ -1112,6 +1180,19 @@ const resetSingleFilter = async (key) => {
                     user?.Match?.Status?.Name}</TableCell>
                   <TableCell>{formatSeason(user?.Match?.Season)}</TableCell>
                   <TableCell>{convertDate(getLatestPaymentDate(user))}</TableCell>
+                   <TableCell>{user?.NotesCount
+    ? Object.entries(user.NotesCount)
+        .sort((a, b) => b[1].Count - a[1].Count)
+        .map(([email, info]) => (
+          <div key={email} style={{ marginBottom: 6 }}>
+            <strong>{email}</strong>:({info.Count})
+            <br />
+            {info.NoteDate
+              ? dayjs(info.NoteDate.toDate()).format("MM/DD/YYYY hh:mm A")
+              : "-"}
+          </div>
+        ))
+    : "-"}</TableCell>
                 <TableCell>₹ {getTotalPaymentAmount(user)}</TableCell>
               
               </TableRow>

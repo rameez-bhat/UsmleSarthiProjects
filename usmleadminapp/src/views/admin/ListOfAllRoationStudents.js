@@ -376,8 +376,6 @@ function convertISTMidnightToUTC(date, isStart = true) {
   };
    const handleFilterChange = (e) => {
    const { name, value } = e.target;
-console.log("name=====>",name)
-console.log("value=====>",value)
   setFilters(prev => ({
     ...prev,
     [name]: value,
@@ -471,7 +469,6 @@ console.log("value=====>",value)
 
     		 let currentConditions = [];
 
- 
 
   if (
     SetMainFilters?.rotationStartDate &&
@@ -1047,12 +1044,13 @@ const hideLoader = () => {
       <InputLabel>Contract Status</InputLabel>
       <Select
         name="contractstatus"
-        value={filters.contractstatus}
+        id="contractstatus"
+        value={filters.contractstatus || ''}
         label="Contract Status"
         onChange={handleFilterChange}
       >
         {Object.entries(FilterContractStatusOption).map(([key, value]) => (
-          <MenuItem key={key} value={key}>
+          <MenuItem key={key} value={value}>
             {value}
           </MenuItem>
         ))}
@@ -1074,12 +1072,13 @@ const hideLoader = () => {
       <InputLabel>Visa Letter Status</InputLabel>
       <Select
         name="visaletterstatus"
-        value={filters.visaletterstatus}
+        id="visaletterstatus"
+        value={filters.visaletterstatus || ''}
         label="Visa Letter Status"
         onChange={handleFilterChange}
       >
         {Object.entries(FilterVisaLetterStatusOption).map(([key, value]) => (
-          <MenuItem key={key} value={key}>
+          <MenuItem key={key} value={value}>
             {value}
           </MenuItem>
         ))}
@@ -1100,13 +1099,14 @@ const hideLoader = () => {
     <FormControl fullWidth>
       <InputLabel>Rotation Status</InputLabel>
       <Select
-        name="id"
-        value={filters.rotationstatus}
+        name="rotationstatus"
+        id="rotationstatus"
+        value={filters.rotationstatus || ''}
         label="Rotation Status"
         onChange={handleFilterChange}
       >
         {Object.entries(FilterRotationStatusOption).map(([key, value]) => (
-          <MenuItem key={key} value={key}>
+          <MenuItem key={key} value={value}>
             {value}
           </MenuItem>
         ))}
@@ -1129,8 +1129,9 @@ const hideLoader = () => {
       <InputLabel>Location Code</InputLabel>
 
         <TextField
+              name="locationcode"
               fullWidth
-              value={filters.locationcode}
+              value={filters.locationcode || ''}
              onChange={handleFilterChange}
             />
     </FormControl>

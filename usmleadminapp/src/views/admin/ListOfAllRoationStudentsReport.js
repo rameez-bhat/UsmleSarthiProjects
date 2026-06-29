@@ -1050,6 +1050,7 @@ const hideLoader = () => {
       <InputLabel>Contract Status</InputLabel>
       <Select
         name="contractstatus"
+        id="contractstatus"
         value={filters.contractstatus}
         label="Contract Status"
         onChange={handleFilterChange}
@@ -1077,6 +1078,7 @@ const hideLoader = () => {
       <InputLabel>Visa Letter Status</InputLabel>
       <Select
         name="visaletterstatus"
+        id="visaletterstatus"
         value={filters.visaletterstatus}
         label="Visa Letter Status"
         onChange={handleFilterChange}
@@ -1103,7 +1105,8 @@ const hideLoader = () => {
     <FormControl fullWidth>
       <InputLabel>Rotation Status</InputLabel>
       <Select
-        name="id"
+        name="rotationstatus"
+        id="rotationstatus"
         value={filters.rotationstatus}
         label="Rotation Status"
         onChange={handleFilterChange}
@@ -1132,6 +1135,8 @@ const hideLoader = () => {
       <InputLabel>Location Code</InputLabel>
 
         <TextField
+              name="locationcode"
+              id="locationcode"
               fullWidth
               value={filters.locationcode}
              onChange={handleFilterChange}

@@ -148,6 +148,139 @@ export class SarthiListComponent implements OnInit {
     }
 
   }
+exportProgramsToExcel() {
+
+  const exportData: any[] = [];
+
+  Object.values(
+    this.hospitalsDataByProgram[this.selectedPId] || {}
+  ).forEach((program: any) => {
+
+    const hospital =
+      this.hospitalsByProgram &&
+      this.hospitalsByProgram[this.selectedPId] &&
+      this.hospitalsByProgram[this.selectedPId][program.HId]
+        ? this.hospitalsByProgram[this.selectedPId][program.HId]
+        : {};
+
+    const row: any = {
+
+      // Basic
+      HospitalName: hospital.HName || '',
+      City: hospital.City || '',
+      State: hospital.State || '',
+      FriedaID: program.Frieda || '',
+
+      // Information from Frieda
+      TeachingSite: program.teachingSiteNew || '',
+      NRMP: program.Nrmp || '',
+      NRMPPrelim: program.NrmpPrelim || '',
+      NRMPCategorical: program.NrmpCategorical || '',
+      NRMPPrimaryCare: program.NrmpPriCase || '',
+      NRMPAdvance: program.NrmpAdvance || '',
+
+      USIMGPercentage: program.usImgPercentage || '',
+      DOPercentage: program.doPercentageNew || '',
+      CaribbeanIMGPercentage: program.imgpercentageCarribean || '',
+
+      IMGComments: Array.isArray(program.imgpercentageCommentsMerged)
+        ? program.imgpercentageCommentsMerged.join(' | ')
+        : (program.imgpercentageComments || ''),
+
+      FirstYearSpots: program.FirstYearSpots || '',
+      FirstYearSpotsPrelim: program.FirstYearSpotsPrelim || '',
+
+      // Score Information
+      PreferredStep1: program.Step1Req || '',
+      Step1Minimum: program.Step1ScoreLastYearMin || '',
+      Step1PassRequired: program.Step1AcceptN || '',
+      Step1AttemptsCondition: program.Step1Accept || '',
+
+      PreferredStep2: program.Step2Req || '',
+      Step2Minimum: program.Step2Min || '',
+      Step2PassRequired: program.Step2AcceptN || '',
+      Step2AttemptsCondition: program.Step2Accept || '',
+
+      Step3Requirement: program.Step3Accept || '',
+
+      USMLEComments: Array.isArray(program.USMLEExamCommentsMerged)
+        ? program.USMLEExamCommentsMerged.join(' | ')
+        : (program.USMLEExamComments || ''),
+
+      // Additional Information
+      ApplicationDeadline: program.AppDeadline || '',
+      LORRequired: program.LORNum || '',
+      HomeCountryLOR: program.LORReq || '',
+      SpanishRequired: program.SpanishReq || '',
+      USCERequiredMonths: program.USCEReq || '',
+      USCENotConsidered: program.USCENotCon || '',
+      USCERequired: program.USCEReqOrPref || '',
+      ECFMGRequired: program.ECFMGReq || '',
+      ResearchOpportunities: program.ResearchOpp || '',
+      ProgramPreference: program.ProgramPref || '',
+
+      ProgramDirector: program.programDirectorNew || '',
+      ContactPerson: program.personToContactNew || '',
+      Address: program.address || '',
+      Website: program.website || '',
+      ResidencyExplorerLink: program.reLink || '',
+      FriedaLink: program.friedaLink || ''
+    };
+
+    // Applicant Characteristics
+    if (program.yearlyData) {
+
+      Object.keys(program.yearlyData).forEach((year: any) => {
+
+        const y = program.yearlyData[year] || {};
+
+        row[year + '_ApplicantCount'] =
+          y.TotalApplicantsForTheYear || '';
+
+        row[year + '_InterviewInvites'] =
+          y.TotalAplicantsInvitedForTheYear || '';
+
+        row[year + '_GoldInterviewed'] =
+          y.GoldSentInterviewed || '';
+
+        row[year + '_SilverInterviewed'] =
+          y.SilverInterviewed || '';
+
+        row[year + '_DidNotSignalInterviewed'] =
+          y.DidnotInterviewed || '';
+
+        row[year + '_AlignedInterviewed'] =
+          y.AlignedInterviewed || '';
+
+        row[year + '_NotAlignedInterviewed'] =
+          y.NotalignedInterviewed || '';
+
+        row[year + '_NoPreferenceInterviewed'] =
+          y.NopreferenceInterviewed || '';
+      });
+    }
+
+    exportData.push(row);
+  });
+
+  const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(exportData);
+
+  const wb: XLSX.WorkBook = XLSX.utils.book_new();
+
+  XLSX.utils.book_append_sheet(wb, ws, 'Programs');
+
+  let fileName = 'Programs';
+
+  if (
+    this.programObject &&
+    this.programObject[this.selectedPId] &&
+    this.programObject[this.selectedPId].ProgramName
+  ) {
+    fileName = this.programObject[this.selectedPId].ProgramName;
+  }
+
+  XLSX.writeFile(wb, fileName + '.xlsx');
+}
   async takeMeToSpeciality() {
     try {
       this.loading = true;
