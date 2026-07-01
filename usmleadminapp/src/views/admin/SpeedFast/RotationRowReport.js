@@ -18,7 +18,7 @@ const RotationRow = ({
     minWidth: 120,
     width: 120,
     maxWidth: 120,
-    whiteSpace: "nowrap",
+
   }}
 >S{rotation.StudentUniqueId}</TableCell>
 
@@ -28,7 +28,7 @@ const RotationRow = ({
     minWidth: 120,
     width: 120,
     maxWidth: 120,
-    whiteSpace: "nowrap",
+
   }}
 >{rotation.displayName}</TableCell>
 
@@ -38,7 +38,7 @@ const RotationRow = ({
     minWidth: 120,
     width: 120,
     maxWidth: 120,
-    whiteSpace: "nowrap",
+
   }}
 >
         <a
@@ -59,18 +59,18 @@ const RotationRow = ({
       </TableCell>
 
  
-       <TableCell sx={{border: "1px solid black",minWidth: 120,width: 120,maxWidth: 120,whiteSpace: "nowrap",}}>
+       <TableCell sx={{border: "1px solid black",minWidth: 120,width: 120,maxWidth: 120,}}>
         {rotation.EnrollmentAdminInTouch?.label}
       </TableCell>
-      <TableCell sx={{border: "1px solid black",minWidth: 120,width: 120,maxWidth: 120,whiteSpace: "nowrap",}}>
+      <TableCell sx={{border: "1px solid black",minWidth: 120,width: 120,maxWidth: 120,}}>
         {rotation.EnrollmentDate
           ? dayjs(rotation.EnrollmentDate.toDate()).format("MM/DD/YYYY")
           : "-"}
       </TableCell>
-      <TableCell sx={{border: "1px solid black",minWidth: 120,width: 120,maxWidth: 120,whiteSpace: "nowrap",}}>
+      <TableCell sx={{border: "1px solid black",minWidth: 120,width: 120,maxWidth: 120,}}>
         {rotation.LocationCode}
       </TableCell>
-     <TableCell sx={{border: "1px solid black",minWidth: 120,width: 120,maxWidth: 120,whiteSpace: "nowrap",}}>
+     <TableCell sx={{border: "1px solid black",minWidth: 120,width: 120,maxWidth: 120,}}>
         {rotation.StartDate
           ? dayjs(rotation.StartDate.toDate()).format("MM/DD/YYYY")
           : "-"}
@@ -78,9 +78,9 @@ const RotationRow = ({
 
      
 
-     <TableCell sx={{border: "1px solid black",minWidth: 120,width: 120,maxWidth: 120,whiteSpace: "nowrap",}}>{rotation.ContractStatus}</TableCell>
-       <TableCell sx={{border: "1px solid black",minWidth: 120,width: 120,maxWidth: 120,whiteSpace: "nowrap",}}>{rotation?.RotationPaymentStatus}</TableCell>
-<TableCell sx={{border: "1px solid black",minWidth: 120,width: 120,maxWidth: 120,whiteSpace: "nowrap",}}>
+     <TableCell sx={{border: "1px solid black",minWidth: 120,width: 120,maxWidth: 120,}}>{rotation.ContractStatus}</TableCell>
+       <TableCell sx={{border: "1px solid black",minWidth: 120,width: 120,maxWidth: 120,}}>{rotation?.RotationPaymentStatus}</TableCell>
+<TableCell sx={{border: "1px solid black",minWidth: 120,width: 120,maxWidth: 120,}}>
         <FormControl fullWidth>
           <Select
             value={
@@ -101,7 +101,7 @@ const RotationRow = ({
         </FormControl>
       </TableCell>
 
-     <TableCell sx={{border: "1px solid black",minWidth: 120,width: 120,maxWidth: 120,whiteSpace: "nowrap",}}>
+     <TableCell sx={{border: "1px solid black",minWidth: 120,width: 120,maxWidth: 120,}}>
         <FormControl fullWidth>
           <Select
             value={
@@ -121,7 +121,7 @@ const RotationRow = ({
           </Select>
         </FormControl>
       </TableCell>
-<TableCell sx={{border: "1px solid black",minWidth: 120,width: 120,maxWidth: 120,whiteSpace: "nowrap",}}>{rotation?.RotationStatus}</TableCell>
+<TableCell sx={{border: "1px solid black",minWidth: 120,width: 120,maxWidth: 120,}}>{rotation?.RotationStatus}</TableCell>
 
     
     </>
