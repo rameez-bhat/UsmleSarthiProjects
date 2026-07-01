@@ -30,6 +30,7 @@ const ListOfAllRoationStudents = React.lazy(() => import('./views/admin/ListOfAl
 const ListOfAllRoationStudentsReport = React.lazy(() => import('./views/admin/ListOfAllRoationStudentsReport'))
 const UnVerifiedPrograms = React.lazy(() => import('./views/admin/UnVerifiedPrograms'))
 const ListOfAllMatchStudents = React.lazy(() => import('./views/admin/ListOfAllMatchStudents'))
+const ListOfAllMatchMentor = React.lazy(() => import('./views/admin/ListOfAllMatchMentor'))
 const RotationQueries = React.lazy(() => import('./views/admin/RotationQueries'))
 const AnsweredRotationQueries = React.lazy(() => import('./views/admin/AnsweredRotationQueries'))
 const MatchQueries = React.lazy(() => import('./views/admin/MatchQueries'))
@@ -128,6 +129,7 @@ const routes = {"public":[
     { path: '/admin/listofallrotationstudents/', name: 'ListOfAllRoationStudents',exact: true, element: ListOfAllRoationStudents },
      { path: '/admin/listofallrotationstudentsreport/', name: 'ListOfAllRoationStudentsReport',exact: true, element: ListOfAllRoationStudentsReport },
     { path: '/admin/listofallmatchstudents/', name: 'ListOfAllMatchStudents',exact: true, element: ListOfAllMatchStudents },
+    { path: '/admin/listofallmatchmentor/', name: 'ListOfAllMatchMentor',exact: true, element: ListOfAllMatchMentor },
     { path: '/admin/listofallresearchstudents/', name: 'ListOfAllResearchStudents',exact: true, element: ListOfAllResearchStudents },
     { path: '/admin/listofallservicestudents/', name: 'ListOfAllServiceStudents',exact: true, element: ListOfAllServiceStudents },
     { path: '/admin/crosssellfilter/', name: 'CrossSellFilter',exact: true, element: CrossSellFilter },
@@ -194,6 +196,7 @@ const routes = {"public":[
     { path: '/admin/listrotationstudents/:serializedObject/:locationcodearray', name: 'ListOfRoationStudents',exact: true, element: ListOfRoationStudents },
     { path: '/admin/listofallrotationstudents/', name: 'ListOfAllRoationStudents',exact: true, element: ListOfAllRoationStudents },
     { path: '/admin/listofallmatchstudents/', name: 'ListOfAllMatchStudents',exact: true, element: ListOfAllMatchStudents },
+    { path: '/admin/listofallmatchmentor/', name: 'ListOfAllMatchMentor',exact: true, element: ListOfAllMatchMentor },
     { path: '/admin/listofallresearchstudents/', name: 'ListOfAllResearchStudents',exact: true, element: ListOfAllResearchStudents },
     { path: '/admin/listofallservicestudents/', name: 'ListOfAllServiceStudents',exact: true, element: ListOfAllServiceStudents },
     { path: '/user/studentresourceview/:index', name: 'StudentResourceView',exact: true, element: StudentResourceView },
@@ -225,6 +228,7 @@ const routes = {"public":[
     { path: '/admin/listrotationstudents/:serializedObject/:locationcodearray', name: 'ListOfRoationStudents',exact: true, element: ListOfRoationStudents },
     { path: '/admin/listofallrotationstudents/', name: 'ListOfAllRoationStudents',exact: true, element: ListOfAllRoationStudents },
     { path: '/admin/listofallmatchstudents/', name: 'ListOfAllMatchStudents',exact: true, element: ListOfAllMatchStudents },
+    { path: '/admin/listofallmatchmentor/', name: 'ListOfAllMatchMentor',exact: true, element: ListOfAllMatchMentor },
     { path: '/admin/listofallresearchstudents/', name: 'ListOfAllResearchStudents',exact: true, element: ListOfAllResearchStudents },
     { path: '/admin/listofallservicestudents/', name: 'ListOfAllServiceStudents',exact: true, element: ListOfAllServiceStudents },
     { path: '/admin/listofallservicestudents/', name: 'ListOfAllServiceStudents',exact: true, element: ListOfAllServiceStudents },
@@ -256,6 +260,7 @@ const routes = {"public":[
     { path: '/admin/listunknownpayments/:PStartDate?/:PEndDate?', name: 'ListUnknownPayments',exact: true, element: ListUnknownPayments },
     { path: '/admin/listrotationstudents/:serializedObject/:locationcodearray', name: 'ListOfRoationStudents',exact: true, element: ListOfRoationStudents },
     { path: '/admin/listofallrotationstudents/', name: 'ListOfAllRoationStudents',exact: true, element: ListOfAllRoationStudents },
+    { path: '/admin/listofallmatchmentor/', name: 'ListOfAllMatchMentor',exact: true, element: ListOfAllMatchMentor },
     { path: '/admin/listofallmatchstudents/', name: 'ListOfAllMatchStudents',exact: true, element: ListOfAllMatchStudents },
     { path: '/admin/listofallresearchstudents/', name: 'ListOfAllResearchStudents',exact: true, element: ListOfAllResearchStudents },
     { path: '/user/studentresourceview/:index', name: 'Student Resource View',exact: true, element: StudentResourceView },
@@ -278,6 +283,7 @@ const routes = {"public":[
     { path: '/admin/listunknownpayments/:PStartDate?/:PEndDate?', name: 'ListUnknownPayments',exact: true, element: ListUnknownPayments },
     { path: '/admin/listrotationstudents/:serializedObject/:locationcodearray', name: 'ListOfRoationStudents',exact: true, element: ListOfRoationStudents },
     { path: '/admin/listofallrotationstudents/', name: 'ListOfAllRoationStudents',exact: true, element: ListOfAllRoationStudents },
+    { path: '/admin/listofallmatchmentor/', name: 'ListOfAllMatchMentor',exact: true, element: ListOfAllMatchMentor },
     { path: '/admin/listofallmatchstudents/', name: 'ListOfAllMatchStudents',exact: true, element: ListOfAllMatchStudents },
     { path: '/admin/listofallresearchstudents/', name: 'ListOfAllResearchStudents',exact: true, element: ListOfAllResearchStudents },
     { path: '/admin/listofallservicestudents/', name: 'ListOfAllServiceStudents',exact: true, element: ListOfAllServiceStudents },

@@ -414,6 +414,12 @@ const getNavigation = (user) => {
           {
             component: CNavItem,
             icon: <CIcon icon={cilCash} customClassName="nav-icon" />,
+            name: 'Match Mentor Report',
+            to: '/admin/listofallmatchmentor',
+          },
+          {
+            component: CNavItem,
+            icon: <CIcon icon={cilCash} customClassName="nav-icon" />,
             name: 'Research Students',
             to: '/admin/listofallresearchstudents',
           },

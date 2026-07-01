@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo, useRef, useEffect, forwardRef } from "react";
 import { TableVirtuoso } from "react-virtuoso";
 import RotationRow from "./RotationRowReport";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
@@ -26,11 +26,11 @@ const columns = [
   { key: "StudentCheckPoint", label: "Student CP", width: 200 },
   { key: "RotationStatus", label: "Rotation Status", width: 240 },
 ];
-
-const TOTAL_WIDTH = columns.reduce(
+const TABLE_WIDTH = columns.reduce((t, c) => t + c.width, 0);
+/*const TOTAL_WIDTH = columns.reduce(
   (sum, col) => sum + col.width,
   0
-);
+);*/
 
 const RotationTable = ({
   sortedData = [],
@@ -42,17 +42,30 @@ const RotationTable = ({
   requestSort,
   containerHeight = 700,
 }) => {
-const Scroller = React.forwardRef((props, ref) => (
-  <div
-    {...props}
-    ref={ref}
-    style={{
-      ...props.style,
-      overflowX: "auto",
-      overflowY: "auto",
-    }}
-  />
-));
+const topScrollRef = useRef(null);
+const tableContainerRef = useRef(null);
+useEffect(() => {
+  const top = topScrollRef.current;
+  const body = tableContainerRef.current;
+
+  if (!top || !body) return;
+
+  const topHandler = () => {
+    body.scrollLeft = top.scrollLeft;
+  };
+
+  const bodyHandler = () => {
+    top.scrollLeft = body.scrollLeft;
+  };
+
+  top.addEventListener("scroll", topHandler);
+  body.addEventListener("scroll", bodyHandler);
+
+  return () => {
+    top.removeEventListener("scroll", topHandler);
+    body.removeEventListener("scroll", bodyHandler);
+  };
+}, []);
   const SortIndicator = ({ columnKey }) => {
     if (sortConfig?.key !== columnKey) return null;
 
@@ -62,82 +75,101 @@ const Scroller = React.forwardRef((props, ref) => (
       <ArrowDownwardIcon fontSize="small" />
     );
   };
+const Scroller = forwardRef((props, ref) => (
+  <div
+    {...props}
+    ref={(el) => {
+      if (el) {
+        console.log("Scroller", el);
+        console.log("scrollWidth", el.scrollWidth);
+        console.log("clientWidth", el.clientWidth);
+        console.log("children", el.children);
+        
+      }
 
+      if (typeof ref === "function") ref(el);
+      else if (ref) ref.current = el;
+    }}
+  />
+));
   return (
-    <Box
+      <Box>
+      <Box ref={topScrollRef}
+    sx={{
+      overflowX: "auto",
+      overflowY: "hidden",
+      height: 18,
+      mb: 1,
+    }}
+    onScroll={(e) => {
+      if (tableContainerRef.current) {
+        tableContainerRef.current.scrollLeft = e.target.scrollLeft;
+      }
+    }}
+  >
+    <div style={{ width: TABLE_WIDTH, height: 1 }} />
+  </Box>
+  
+  <Box
+    ref={tableContainerRef}
+    sx={{
+      height: containerHeight,
+      overflow: "auto",
+    }}
+    onScroll={(e) => {
+      if (topScrollRef.current) {
+        topScrollRef.current.scrollLeft = e.target.scrollLeft;
+      }
+    }}
+  >
+    <Table
+      stickyHeader
       sx={{
-        width: "100%",
-        overflowX: "auto",
-        border: "1px solid #ddd",
+        minWidth: TABLE_WIDTH,
+        tableLayout: "fixed",
       }}
     >
-
-        <Box
-  sx={{
-    width: "100%",
-    overflowX: "auto",
-    overflowY: "hidden",
-  }}
->
-            <TableVirtuoso
-          style={{
-            height: containerHeight,
-            width: "100%",
-          }}
-          data={sortedData}
-          fixedHeaderContent={() => (
-            <TableRow>
-              {columns.map((col) => (
-                <TableCell
-                  key={col.key}
-                  onClick={() => requestSort(col.key)}
-                  sx={{
-                    minWidth: col.width,
-                    width: col.width,
-                    maxWidth: col.width,
-                    border: "1px solid black",
-                    fontWeight: "bold",
-                    cursor: "pointer",
-                    whiteSpace: "nowrap",
-                    backgroundColor: "#fff",
-                  }}
-                >
-                  {col.label}
-                  <SortIndicator columnKey={col.key} />
-                </TableCell>
-              ))}
-            </TableRow>
-          )}
-          itemContent={(index) => (
-            <RotationRow
-              rotation={sortedData[index]}
-              DoctorsDetails={DoctorsDetails}
-              LocationCodeDoctorsName={LocationCodeDoctorsName}
-              CurrentData={CurrentData}
-              HandleCheckPointChange={HandleCheckPointChange}
-            />
-          )}
-          components={{
-            Table: (props) => (
-              <Table
-                {...props}
-                stickyHeader
-                sx={{
-                  tableLayout: "fixed",
-                  width: TOTAL_WIDTH,
-                  minWidth: TOTAL_WIDTH,
-                }}
-              />
-            ),
-            TableHead,
-            TableRow,
-            TableCell,
-            TableBody,
-          }}
-        />
-      </Box>
-    </Box>
-  );
+      <TableHead>
+        <TableRow>
+          {columns.map((col) => (
+            <TableCell
+              key={col.key}
+              onClick={() => requestSort(col.key)}
+              sx={{
+                width: col.width,
+                minWidth: col.width,
+                maxWidth: col.width,
+                fontWeight: "bold",
+                cursor: "pointer",
+                border: "1px solid black",
+                backgroundColor: "#fff",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {col.label} <SortIndicator columnKey={col.key} />
+            </TableCell>
+          ))}
+        </TableRow>
+      </TableHead>
+  
+      <TableBody>
+        {sortedData.map((rotation) => (
+           <TableRow  key={rotation.id || rotation.uid}>
+          <RotationRow
+            key={`${rotation.uid}-${rotation.RotationKey}`}
+            rotation={rotation}
+            DoctorsDetails={DoctorsDetails}
+            LocationCodeDoctorsName={LocationCodeDoctorsName}
+            CurrentData={CurrentData}
+            HandleCheckPointChange={HandleCheckPointChange}
+          />
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  </Box>
+        </Box>
+    );
 };
 
 export default RotationTable;

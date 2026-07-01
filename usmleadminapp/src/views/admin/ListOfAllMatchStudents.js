@@ -381,14 +381,51 @@ if(email==user?.profile?.email)
     }
   });
 }
+// Mentor Meeting Summary
+const meetings = user?.Match?.Platinum?.Meetings || [];
 
-        return {
+let totalMentorMeetings = 0;
+let lastMeetingDate = null;
+
+meetings.forEach((meeting) => {
+  const mentorMeeting = meeting?.MeetingWithPhysicianMentor;
+
+  if (
+    mentorMeeting &&
+    mentorMeeting?.Value === "Completed"
+  ) {
+    totalMentorMeetings++;
+
+    if (mentorMeeting?.Relation?.MeetingDate) {
+      const meetingDate = new Date(mentorMeeting?.Relation?.MeetingDate);
+
+      if (!lastMeetingDate || meetingDate > lastMeetingDate) {
+        lastMeetingDate = meetingDate;
+      }
+    }
+  }
+});
+
+        /*return {
           ...user,
           NotesCount: counts,
           TotalNotes: Array.isArray(notes?.data)
             ? notes?.data?.length
             : 0,
-        };
+        };*/
+        return {
+  ...user,
+  NotesCount: counts,
+  TotalNotes: Array.isArray(notes?.data)
+    ? notes.data.length
+    : 0,
+
+  TotalMentorMeetings: totalMentorMeetings,
+  LastMentorMeetingDate: lastMeetingDate,
+};
+
+
+
       })
     );
     console.log("usersWithCounts==>",usersWithCounts)
@@ -482,7 +519,14 @@ const resetSingleFilter = async (key) => {
           aVal = getTotalPaymentAmount(a);
           bVal = getTotalPaymentAmount(b);
           break;
-
+        case "Notes":
+          aVal = a?.TotalNotes || 0;
+          bVal = b?.TotalNotes || 0;
+          break;
+        case "MentorMeetings":
+          aVal = a?.TotalMentorMeetings || 0;
+          bVal = b?.TotalMentorMeetings || 0;
+          break;
         case "email":
           aVal = a?.profile?.email || "";
           bVal = b?.profile?.email || "";
@@ -1138,9 +1182,34 @@ const resetSingleFilter = async (key) => {
              <TableCell onClick={() => requestSort("PaymentDate")}>
                 Latest Payment Date
               </TableCell>
-              <TableCell onClick={() => requestSort('Status')}>
-                Notes {sortConfig.key === 'Status' && (sortConfig.direction === 'ascending' ? <ArrowUpwardIcon /> : <ArrowDownwardIcon />)}
-            </TableCell>
+              <TableCell
+  onClick={() => requestSort("Notes")}
+  sx={{
+    whiteSpace: "nowrap",
+    width: "1%",
+  }}
+>
+  Notes
+  {sortConfig.key === "Notes" &&
+    (sortConfig.direction === "ascending"
+      ? <ArrowUpwardIcon fontSize="small" />
+      : <ArrowDownwardIcon fontSize="small" />)}
+</TableCell>
+
+<TableCell
+  onClick={() => requestSort("MentorMeetings")}
+  sx={{
+    whiteSpace: "nowrap",
+    width: "1%",
+  }}
+>
+  Mentor Meetings
+  {sortConfig.key === "MentorMeetings" &&
+    (sortConfig.direction === "ascending"
+      ? <ArrowUpwardIcon fontSize="small" />
+      : <ArrowDownwardIcon fontSize="small" />)}
+</TableCell>
+              
               <TableCell onClick={() => requestSort("PaymentAmount")}>
                 Total Payment Amount
               </TableCell>
@@ -1175,24 +1244,55 @@ const resetSingleFilter = async (key) => {
                   <TableCell>{user?.profile?.displayName}</TableCell>
                    <TableCell>{convertDate(user?.Match?.EnrollmentDate)}</TableCell>
                   <TableCell>{user?.Match?.Plan?.Relation?.Value ||
-                    MatchPlanLists?.[user?.Match?.Plan?.Name].Name}</TableCell>
+                    MatchPlanLists?.[user?.Match?.Plan?.Name]?.Name}</TableCell>
                     <TableCell>{user?.Match?.Status?.Relation?.Value ||
                     user?.Match?.Status?.Name}</TableCell>
                   <TableCell>{formatSeason(user?.Match?.Season)}</TableCell>
                   <TableCell>{convertDate(getLatestPaymentDate(user))}</TableCell>
-                   <TableCell>{user?.NotesCount
+                   <TableCell
+  sx={{
+    whiteSpace: "nowrap",
+    width: "1%",
+    verticalAlign: "top",
+  }}
+>
+  {user?.NotesCount
     ? Object.entries(user.NotesCount)
         .sort((a, b) => b[1].Count - a[1].Count)
         .map(([email, info]) => (
           <div key={email} style={{ marginBottom: 6 }}>
-            <strong>{email}</strong>:({info.Count})
+            <strong>{email}</strong>: ({info.Count})
             <br />
             {info.NoteDate
-              ? dayjs(info.NoteDate.toDate()).format("MM/DD/YYYY hh:mm A")
+              ? dayjs(info.NoteDate.toDate()).format("MM/DD/YYYY")
               : "-"}
           </div>
         ))
-    : "-"}</TableCell>
+    : "-"}
+</TableCell>
+
+<TableCell
+  sx={{
+    whiteSpace: "nowrap",
+    width: "1%",
+    verticalAlign: "top",
+  }}
+>
+  {user?.TotalMentorMeetings ? (
+    <>
+      <strong>
+        {user?.Match?.Platinum?.AssignedMentor?.label}
+        ({user.TotalMentorMeetings})
+      </strong>
+      <br />
+      {user.LastMentorMeetingDate
+        ? dayjs(user.LastMentorMeetingDate).format("MM/DD/YYYY")
+        : "-"}
+    </>
+  ) : (
+    "-"
+  )}
+</TableCell>
                 <TableCell>₹ {getTotalPaymentAmount(user)}</TableCell>
               
               </TableRow>

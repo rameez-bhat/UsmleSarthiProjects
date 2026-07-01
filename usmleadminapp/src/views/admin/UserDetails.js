@@ -765,9 +765,28 @@ ActualUser=LoginInUserMain.ActualUser;
 			{
 				if(typeof userDataSelected[0]["Services"]['Match']['Platinum']==="undefined")
 				{
-					userDataSelected[0]["Services"]['Match']['Platinum']={'Meetings':[]};
+					userDataSelected[0]["Services"]['Match']['Platinum']={'Meetings':{}};
 
 				}
+				else {
+
+        const platinum = userDataSelected[0]["Services"]["Match"]["Platinum"];
+
+        if (typeof platinum.Meetings === "undefined") {
+
+            platinum.Meetings = {};
+
+        } else if (Array.isArray(platinum.Meetings)) {
+
+            const meetingsMap = {};
+
+            platinum.Meetings.forEach((meeting, index) => {
+                meetingsMap[`Meeting${index}`] = meeting;
+            });
+
+            platinum.Meetings = meetingsMap;
+        }
+    }
 				setMatchValues(userDataSelected[0]["Services"]['Match']);
 			}
 
@@ -2477,6 +2496,33 @@ const AddMeetings = (MeetingIndex) =>{
     Platinum: newRotations,
   }));
   }
+  const AddMeetingsPlat = (MeetingIndex) => {
+  const newPlatinum = { ...(MatchValues?.Platinum || {}) };
+
+  if (!newPlatinum.Meetings) {
+    newPlatinum.Meetings = {};
+  }
+
+  const meetingKeys = Object.keys(newPlatinum.Meetings);
+
+  let maxIndex = -1;
+
+  meetingKeys.forEach((key) => {
+    const match = key.match(/^Meeting(\d+)$/);
+    if (match) {
+      maxIndex = Math.max(maxIndex, parseInt(match[1], 10));
+    }
+  });
+
+  const nextKey = `Meeting${maxIndex + 1}`;
+
+  newPlatinum.Meetings[nextKey] = {};
+
+  setMatchValues((prev) => ({
+    ...prev,
+    Platinum: newPlatinum,
+  }));
+};
 const DeleteMeetings =  (rotationindex)=>{
 	setMatchValues((prevValues) => {
     // Create a copy of the current rotations
@@ -2495,6 +2541,44 @@ const DeleteMeetings =  (rotationindex)=>{
   });
 
 }
+const DeleteMeetingsPlat = (meetingKey) => {
+
+    const keyToDelete =
+        typeof meetingKey === "string"
+            ? meetingKey
+            : `Meeting${meetingKey}`;
+
+    const newPlatinum = {
+        ...MatchValues.Platinum
+    };
+
+    const meetings = {
+        ...newPlatinum.Meetings
+    };
+
+    // Delete the selected meeting
+    delete meetings[keyToDelete];
+
+    // Rebuild sequentially
+    const reorderedMeetings = {};
+
+    Object.keys(meetings)
+        .sort((a, b) => {
+            const ai = parseInt(a.replace("Meeting", ""), 10);
+            const bi = parseInt(b.replace("Meeting", ""), 10);
+            return ai - bi;
+        })
+        .forEach((key, index) => {
+            reorderedMeetings[`Meeting${index}`] = meetings[key];
+        });
+
+    newPlatinum.Meetings = reorderedMeetings;
+
+    setMatchValues(prev => ({
+        ...prev,
+        Platinum: newPlatinum
+    }));
+};
 /*const DeleteRotation =  (rotationindex)=>{
 	setrotationValues( (prevValues) => {
     // Create a copy of the current rotations
@@ -3694,7 +3778,8 @@ const handleScroll = () => {
       setShowScrollDown(scrollHeight > clientHeight && scrollTop + clientHeight < scrollHeight);
     }
   };
-const HandleOnBoardingChange = (event,name,hasrelation=false,subname="") =>{
+const HandleOnBoardingChange = (event,name,hasrelation=false,subname="") =>
+{
 if (contentRef.current) {
       const { scrollTop, scrollHeight, clientHeight } = contentRef.current;
       setShowScrollDown(scrollHeight > clientHeight && scrollTop + clientHeight < scrollHeight);
@@ -3757,7 +3842,15 @@ let value;
   }
   else if(typeof event.$d!="undefined")
   {
-  	value=event.toLocaleString('en-GB', { timeZone: 'GMT' });
+  	//value=event.toLocaleString('en-GB', { timeZone: 'GMT' });
+  	if (dayjs.isDayjs(event))
+	{
+    	value = Timestamp.fromDate(event.toDate());
+	}
+	else if (event instanceof Date)
+	{
+    	value = Timestamp.fromDate(event);
+	}
   }
   else if(typeof event.label!="undefined")
   {
@@ -3808,6 +3901,76 @@ let value;
         'Platinum': newval1,
       }));
 }
+const HandlePlatinumMeetingsChangePlat = (
+  event,
+  name,
+  hasrelation = false,
+  subname = "",
+  meetingKeyConst
+) => {
+  let value;
+const meetingKey="Meeting"+meetingKeyConst;
+  if (event?.target) {
+    value = event.target.value;
+  } else if (dayjs.isDayjs(event)) {
+    value = Timestamp.fromDate(event.toDate());
+  } else if (event instanceof Date) {
+    value = Timestamp.fromDate(event);
+  } else if (event?.label !== undefined) {
+    value = event;
+  } else {
+    value = event;
+  }
+
+  const newPlatinum = {
+    ...(MatchValues?.Platinum || {})
+  };
+
+  if (!newPlatinum.Meetings) {
+    newPlatinum.Meetings = {};
+  }
+
+  const meetings = {
+    ...newPlatinum.Meetings
+  };
+
+  if (!meetings[meetingKey]) {
+    meetings[meetingKey] = {};
+  }
+
+  if (hasrelation && subname === "") {
+
+    if (!meetings[meetingKey][name]) {
+      meetings[meetingKey][name] = {};
+    }
+
+    meetings[meetingKey][name].Value = value;
+
+  } else if (hasrelation && subname !== "") {
+
+    if (!meetings[meetingKey][name]) {
+      meetings[meetingKey][name] = {};
+    }
+
+    if (!meetings[meetingKey][name].Relation) {
+      meetings[meetingKey][name].Relation = {};
+    }
+
+    meetings[meetingKey][name].Relation[subname] = value;
+
+  } else {
+
+    meetings[meetingKey][name] = value;
+
+  }
+
+  newPlatinum.Meetings = meetings;
+
+  setMatchValues((prev) => ({
+    ...prev,
+    Platinum: newPlatinum,
+  }));
+};
 const HandlePlatinumChange = (event,name,hasrelation=false,subname="") =>{
 let value;
 	if(typeof event.target!="undefined")
@@ -5330,9 +5493,9 @@ let lastRotationIndex =0;
             HandlePlatinumChange={HandlePlatinumChange}
             MatchPlanListObject={MatchPlanListObject}
             errors={errors}
-            DeleteMeetings={DeleteMeetings}
-            AddMeetings={AddMeetings}
-            HandlePlatinumMeetingsChange={HandlePlatinumMeetingsChange}
+            DeleteMeetings={DeleteMeetingsPlat}
+            AddMeetings={AddMeetingsPlat}
+            HandlePlatinumMeetingsChange={HandlePlatinumMeetingsChangePlat}
           />
           <ChiefMentorShip
             MatchValues={MatchValues}

@@ -1107,7 +1107,7 @@ const hideLoader = () => {
       <Select
         name="rotationstatus"
         id="rotationstatus"
-        value={filters.rotationstatus}
+        value={filters.rotationstatus || ''}
         label="Rotation Status"
         onChange={handleFilterChange}
       >

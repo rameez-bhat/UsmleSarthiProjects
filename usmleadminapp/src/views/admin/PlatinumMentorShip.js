@@ -24,8 +24,10 @@ const panelistOptions = [
   { value: "changed", label: "Mentor Changed" }
 ];
   const renderMeetings = () => {
-    return MatchValues?.Platinum?.Meetings.map((MeetingsObj, Paymentindex) => {
-      lastRotationIndex = Paymentindex;
+    const meetings = MatchValues?.Platinum?.Meetings || {};
+	return Object.entries(meetings).map(([meetingKey, MeetingsObj], Paymentindex) => 
+	{
+    	lastRotationIndex = Paymentindex;
       return (
         <div key={Paymentindex} className="PlatinumAddedMeetings">
           <Grid container spacing={2}>
@@ -63,7 +65,17 @@ const panelistOptions = [
                 <Box sx={{ display: 'flex', p: 0, borderRadius: 1 ,border:1}}>
                   <Typography variant="subtitle1" color="textSecondary" sx={{ flexGrow: 1,  p: 1, borderRadius: 1 }}>Meeting Date:</Typography>
                   <Typography variant="body1" sx={{  p: 1, borderRadius: 1 }}><DatePicker
-        defaultValue={MeetingsObj?.MeetingWithPhysicianMentor?.['Relation']?.['MeetingDate']?dayjs(MeetingsObj?.MeetingWithPhysicianMentor?.['Relation']?.['MeetingDate']):null}
+        defaultValue={
+  MeetingsObj?.MeetingWithPhysicianMentor?.Relation?.MeetingDate
+    ? (
+        typeof MeetingsObj.MeetingWithPhysicianMentor.Relation.MeetingDate === "string"
+          ? dayjs(MeetingsObj.MeetingWithPhysicianMentor.Relation.MeetingDate)
+          : dayjs(
+              MeetingsObj.MeetingWithPhysicianMentor.Relation.MeetingDate.toDate()
+            )
+      )
+    : null
+}
         onChange={(event) => HandlePlatinumMeetingsChange(event,'MeetingWithPhysicianMentor',true,"MeetingDate",Paymentindex)}
         dateFormat="dd/mm/yyyy" // Customize date format as needed
         scrollableYearDropdown  // Make year dropdown scrollable
@@ -98,7 +110,18 @@ const panelistOptions = [
                 <Box sx={{ display: 'flex', p: 0, borderRadius: 1 ,border:1}}>
                   <Typography variant="subtitle1" color="textSecondary" sx={{ flexGrow: 1,  p: 1, borderRadius: 1 }}>Next Notify Date:</Typography>
                   <Typography variant="body1" sx={{  p: 1, borderRadius: 1 }}><DatePicker
-        defaultValue={MeetingsObj?.MeetingNextNotifyDate ?dayjs(MeetingsObj?.MeetingNextNotifyDate):null}
+    
+        defaultValue={
+  MeetingsObj?.MeetingNextNotifyDate
+    ? (
+        typeof MeetingsObj?.MMeetingNextNotifyDate === "string"
+          ? dayjs(MeetingsObj?.MeetingNextNotifyDate)
+          : dayjs(
+              MeetingsObj?.MeetingNextNotifyDate.toDate()
+            )
+      )
+    : null
+}
         onChange={(event) => HandlePlatinumMeetingsChange(event,'MeetingNextNotifyDate',false,"",Paymentindex)}
         dateFormat="dd/mm/yyyy" // Customize date format as needed
         scrollableYearDropdown  // Make year dropdown scrollable
