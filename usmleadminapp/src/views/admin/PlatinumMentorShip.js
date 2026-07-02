@@ -111,14 +111,12 @@ const panelistOptions = [
                   <Typography variant="subtitle1" color="textSecondary" sx={{ flexGrow: 1,  p: 1, borderRadius: 1 }}>Next Notify Date:</Typography>
                   <Typography variant="body1" sx={{  p: 1, borderRadius: 1 }}><DatePicker
     
-        defaultValue={
+defaultValue={
   MeetingsObj?.MeetingNextNotifyDate
     ? (
-        typeof MeetingsObj?.MMeetingNextNotifyDate === "string"
-          ? dayjs(MeetingsObj?.MeetingNextNotifyDate)
-          : dayjs(
-              MeetingsObj?.MeetingNextNotifyDate.toDate()
-            )
+        typeof MeetingsObj.MeetingNextNotifyDate?.toDate === "function"
+          ? dayjs(MeetingsObj.MeetingNextNotifyDate.toDate())
+          : dayjs(MeetingsObj.MeetingNextNotifyDate)
       )
     : null
 }

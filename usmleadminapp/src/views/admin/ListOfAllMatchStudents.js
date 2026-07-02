@@ -382,18 +382,17 @@ if(email==user?.profile?.email)
   });
 }
 // Mentor Meeting Summary
-const meetings = user?.Match?.Platinum?.Meetings || [];
-
+let meetings = user?.Match?.Platinum?.Meetings || [];
+if (!Array.isArray(meetings) && typeof meetings === "object") {
+  meetings = Object.values(meetings);
+}
 let totalMentorMeetings = 0;
 let lastMeetingDate = null;
 
 meetings.forEach((meeting) => {
   const mentorMeeting = meeting?.MeetingWithPhysicianMentor;
 
-  if (
-    mentorMeeting &&
-    mentorMeeting?.Value === "Completed"
-  ) {
+if (mentorMeeting && mentorMeeting?.Value === "Completed") {
     totalMentorMeetings++;
 
     if (mentorMeeting?.Relation?.MeetingDate) {
@@ -1278,14 +1277,17 @@ const resetSingleFilter = async (key) => {
     verticalAlign: "top",
   }}
 >
-  {user?.TotalMentorMeetings ? (
+  {user?.TotalMentorMeetings > 0 ? (
     <>
       <strong>
-        {user?.Match?.Platinum?.AssignedMentor?.label}
+        {user?.Match?.Platinum?.AssignedMentor?.label === "Mentor Changed"
+          ? user?.Match?.Platinum?.ChangedFromAssignedMentor?.label+" To "+user?.Match?.Platinum?.ChangedToAssignedMentor?.label
+          : user?.Match?.Platinum?.AssignedMentor?.label}
+        {" "}
         ({user.TotalMentorMeetings})
       </strong>
       <br />
-      {user.LastMentorMeetingDate
+      {user?.LastMentorMeetingDate
         ? dayjs(user.LastMentorMeetingDate).format("MM/DD/YYYY")
         : "-"}
     </>
