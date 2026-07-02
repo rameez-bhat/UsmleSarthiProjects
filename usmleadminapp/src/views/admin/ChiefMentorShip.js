@@ -24,7 +24,9 @@ const panelistOptions = [
   //{ value: "changed", label: "Mentor Changed" }
 ];
   const renderMeetings = () => {
-    return MatchValues?.Platinum?.Meetings.map((MeetingsObj, Paymentindex) => {
+  const meetings = MatchValues?.Platinum?.Meetings || {};
+    //return MatchValues?.Platinum?.Meetings.map((MeetingsObj, Paymentindex) => {
+    return Object.entries(meetings).map(([meetingKey, MeetingsObj], Paymentindex) => {
       lastRotationIndex = Paymentindex;
       return (
         <div key={Paymentindex} className="PlatinumAddedMeetings">
