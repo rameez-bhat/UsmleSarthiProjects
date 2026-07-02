@@ -315,7 +315,6 @@ defaultValue={
   }}
            
                 value={MatchValues['Platinum']?.['ChangedToAssignedMentor']}
-
         options={panelistOptionsOriginal}
         placeholder="Changed To Mentor"
         onChange={(event) => HandlePlatinumChange(event, 'ChangedToAssignedMentor')}
