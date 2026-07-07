@@ -479,7 +479,7 @@ const dateFormat="MM/DD/YYYY";
   		variant="outlined"
       /></Typography>
                 </Box>
-                {errors.PaymentDate?.[index]?.[Paymentindex] && <span className="validationerror">{errors.PaymentDate?.[index]?.[Paymentindex]}</span>}
+                {errors.PaymentNotify?.[index]?.[Paymentindex] && <span className="validationerror">{errors.PaymentNotify?.[index]?.[Paymentindex]}</span>}
               </Grid>
         )}
             	 </Grid>
@@ -493,7 +493,7 @@ const dateFormat="MM/DD/YYYY";
               color="primary"
               onClick={() => AddRotationPayment(lastPaymentIndex+1,index,"Research")}
             >
-              Add Payment {lastPaymentIndex}-{lastRotationIndex}
+              Add Payment 
             </Button>
                 </Box>
                 </Grid>

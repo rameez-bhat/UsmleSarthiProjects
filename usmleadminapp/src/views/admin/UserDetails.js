@@ -1017,11 +1017,21 @@ const convertResearchObjectToArray = (rotationData) => {
   return rotationData;
 };
 const formatDateToString = (timestamp) => {
-  const date = new Date(timestamp.seconds * 1000); // Convert seconds to milliseconds
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-based
-  const year = date.getFullYear();
-  return `${day}${month}${year}`;
+console.log("timestamp===>",timestamp)
+	if(timestamp)
+	{
+		const date = new Date(timestamp.seconds * 1000); // Convert seconds to milliseconds
+  		const day = String(date.getDate()).padStart(2, '0');
+  		const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-based
+  		const year = date.getFullYear();
+  		return `${day}${month}${year}`;
+	}
+	else
+	{
+		return null;
+	}
+  
+  
 };
 const convertResearchArrayToObject = (rotationData) => {
 
@@ -4735,6 +4745,13 @@ const HandleCommonNotesSectionChange = (event,name,Index) =>{
   //dataTobesend['Research'] = { ...convertedDataForSaving };
 
   // Validate Research data before saving
+  if(!researchValues['Research'].length)
+  {
+  	setOperationMessage("Nothing To Be Added");
+    setOpen(true);
+    hideLoading();
+    return false;
+  }
   const validationErrors = validateResearch();
   console.log("validationErrors---->",validationErrors)
   seterrorsResearch(validationErrors);
