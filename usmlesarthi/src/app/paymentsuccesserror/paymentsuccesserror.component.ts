@@ -308,11 +308,23 @@ export class PaymentSuccessErrorComponent implements OnInit {
               ];
             this.dbService.deleteFromTableWithWhere("Enquiries",WhereConditions)
           }
-          this.SendEmail();
+          console.log("this.sessionId")
+         
+          if(this.sessionId)
+          {
+              this.SendEmail();
           await this.dbService.saveLocalStorageSession(this.sessionId)
+          }
+          
         }
         else if(this.PaymentType=="Match")
         {
+          /*console.log("this.sessionId")
+          let SessionStorate=[]
+          if(this.sessionId)
+          {
+              const SessionStorate= await this.dbService.getLocalStorageSession(this.sessionId);
+          }*/
           const SessionStorate= await this.dbService.getLocalStorageSession(this.sessionId);
           if (Object.keys(SessionStorate).length)  
           {
@@ -346,9 +358,12 @@ export class PaymentSuccessErrorComponent implements OnInit {
           }, 1000); 
             
           }
-         
+         if(this.sessionId)
+         {
           this.SendEmail();
           await this.dbService.saveLocalStorageSession(this.sessionId)
+         }
+          
         }
     } catch (err) {
       console.log(err.message);

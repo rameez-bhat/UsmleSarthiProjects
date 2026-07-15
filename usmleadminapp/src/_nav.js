@@ -654,6 +654,12 @@ const getNavigation = (user) => {
       icon: <CIcon icon={cilEco} customClassName="nav-icon" />,
       name: 'My Plan For Match',
       to: '/user/matchplans',
+    },
+    {
+      component: CNavItem,
+      icon: <CIcon icon={cilEco} customClassName="nav-icon" />,
+      name: 'PS/CV Reviews',
+      to: '/user/studentpscvreview',
     }
     ],
   }

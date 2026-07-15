@@ -86,6 +86,7 @@ const StudentResourceList = React.lazy(() => import('./views/users/StudentResour
 const StudentResourceView = React.lazy(() => import('./views/users/StudentResourceView'))
 const MockServices = React.lazy(() => import('./views/users/MockServices'))
 const MatchPlans = React.lazy(() => import('./views/users/MatchPlans'))
+const StudentPSCVReviewUser = React.lazy(() => import('./views/users/StudentsPSCVReview'))
 
 
 
@@ -203,6 +204,7 @@ const routes = {"public":[
     { path: '/user/studentresourcelist', name: 'StudentResourceList',exact: true, element: StudentResourceList },
     { path: '/user/mockservices/:id?', name: 'Student Mocks',exact: true, element: MockServices },
     { path: '/user/matchplans/:id?', name: 'Your Plan For Match',exact: true, element: MatchPlans },
+    { path: '/user/studentpscvreview/:id?', name: 'Student PSCV Review',exact: true, element: StudentPSCVReviewUser },
 ],
 "Student":[
 	{ path: '/user/updateuserprofile', name: 'ProfileUpdateStudent',exact: true, element: ProfileUpdateStudent },
@@ -236,6 +238,7 @@ const routes = {"public":[
     { path: '/user/studentresourcelist', name: 'StudentResourceList',exact: true, element: StudentResourceList },
     { path: '/user/mockservices/:id?', name: 'Student Mocks',exact: true, element: MockServices },
     { path: '/user/matchplans/:id?', name: 'Your Plan For Match',exact: true, element: MatchPlans },
+    { path: '/user/studentpscvreview/:id?', name: 'Student PSCV Review',exact: true, element: StudentPSCVReviewUser },
 ],
 "Silver":[
 	{ path: '/user/updateuserprofile', name: 'ProfileUpdateStudent',exact: true, element: ProfileUpdateStudent },
@@ -267,6 +270,7 @@ const routes = {"public":[
     { path: '/user/studentresourcelist', name: 'Student Resource List',exact: true, element: StudentResourceList },
     { path: '/user/mockservices/:id?', name: 'Student Mocks',exact: true, element: MockServices },
     { path: '/user/matchplans/:id?', name: 'Your Plan For Match',exact: true, element: MatchPlans },
+    { path: '/user/studentpscvreview/:id?', name: 'Student PSCV Review',exact: true, element: StudentPSCVReviewUser },
 
 ],
 "Mentor":[

@@ -653,7 +653,9 @@ const convertMatchArrayToObject = (matchData) => {
 </>
 )}
 
-{UserServicesTaken?.['Match']?.['Platinum']?.['Meetings']?.map((value, index) => (
+ {Array.isArray(UserServicesTaken?.Match?.Platinum?.Meetings)
+    ? UserServicesTaken.Match.Platinum.Meetings
+    : Object.values(UserServicesTaken?.Match?.Platinum?.Meetings || {}).map((value, index) => (
 
 <>
   <Grid item xs={6}>
