@@ -34,7 +34,8 @@ const UserTypeList = [
   { value: "Admin", label: "Admin" },
   { value: "Default", label: "Default" },
   { value: "Silver", label: "Silver" },
-  { value: "Mentor", label: "Mentor" }
+  { value: "Mentor", label: "Mentor" },
+  { value: "Journalist", label: "Journalist" }
 ];
  /* <Button
     variant="outlined"

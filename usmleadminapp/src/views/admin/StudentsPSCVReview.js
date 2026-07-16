@@ -111,6 +111,7 @@ const allCountries = countryData.map(country => ({
   };
 let AdminOptionsList=[];
 let panelistOptions={};
+let panelistOptionsJournalist={};
 let loopusce=0;
 let medicalSchoolOptionsList = [
       ...medicalSchoolOptions.map(college => ({ value: college, label: college })),
@@ -348,11 +349,16 @@ console.log("oldMentorId===>",oldMentorId)
   	const userDataSelected = await FetchDataFromCollection("Users", 20, "uid", "==", id, 0);
     const userDataSelectedAgent = await FetchDataFromCollection("AgentUserConnection", 20, "uid", "==", id, 0);
     const userDataSelectedInterviews = await FetchDataFromCollection("InterviewsInfo", 20, "UId", "==", id, 0);
-    const ListOfPanelistsData = await fetchAdminDataWithJoin("UsersRoles","Users",3000,null,"Role","==","Mentor");
-    console.log("ListOfPanelists====>",ListOfPanelistsData)
+    const ListOfPanelistsDataPhy = await fetchAdminDataWithJoin("UsersRoles","Users",3000,null,"Role","==","Mentor");
+    const ListOfPanelistsData = await fetchAdminDataWithJoin("UsersRoles","Users",3000,null,"Role","==","Journalist");
+   	let ListOfPanelistsPhysician={};
     if(ListOfPanelistsData.data.length)
     {
         ListOfPanelists=ListOfPanelistsData.data
+    }
+    if(ListOfPanelistsDataPhy.data.length)
+    {
+        ListOfPanelistsPhysician=ListOfPanelistsDataPhy.data
     }
     /*panelistOptions = Object.entries(ListOfPanelists).map(([email, objec]) => ({
   value: objec.email,
@@ -360,14 +366,36 @@ console.log("oldMentorId===>",oldMentorId)
   panelistRealData[objec.email]=objec;
 
 }));*/
-panelistOptions = Object.entries(ListOfPanelists).map(([email, objec]) => {
-  panelistRealData[objec.email] = objec;
+panelistOptions = Object.entries(ListOfPanelists)
+  .sort(([, a], [, b]) =>
+    (a.displayName || "").localeCompare(b.displayName || "", undefined, {
+      sensitivity: "base",
+    })
+  )
+  .map(([email, objec]) => {
+    panelistRealData[objec.email] = objec;
 
-  return {
-    value: objec.email,
-    label: `${objec.displayName} (${objec.email})`
-  };
-});
+    return {
+      value: objec.email,
+      label: `${objec.displayName} (${objec.email})`,
+    };
+  });
+  panelistOptionsJournalist = Object.entries(ListOfPanelistsPhysician)
+  .sort(([, a], [, b]) =>
+    (a.displayName || "").localeCompare(b.displayName || "", undefined, {
+      sensitivity: "base",
+    })
+  )
+  .map(([email, objec]) => {
+    //panelistRealData[objec.email] = objec;
+
+    return {
+      value: objec.email,
+      label: `${objec.displayName} (${objec.email})`,
+    };
+  });
+  
+  
     if(userDataSelectedInterviews.length > 0)
     {
         interviewData=userDataSelectedInterviews[0];
@@ -893,7 +921,7 @@ const handleSubmit = async () => {
               <Select1
                 value={StudentData?.journalistreview?.physicianjournalistreview?.senttojournalist ?? ''}
                 label="Sent to Journalist"
-                options={panelistOptions}
+                options={panelistOptionsJournalist}
                 onChange={(e) =>
                   handleChangeStudentDetails(
                     e,
