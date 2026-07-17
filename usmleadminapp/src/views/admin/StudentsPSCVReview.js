@@ -555,7 +555,7 @@ const handleSubmit = async () => {
       <DatePicker
         value={StudentData?.journalistreview?.firstjournalistreview?.senttojournalistdate ? dayjs(StudentData?.journalistreview?.firstjournalistreview?.senttojournalistdate.toDate()): null}
         onChange={(e) =>handleChangeStudentDetails(e,"senttojournalistdate","firstjournalistreview")}
-        format="DD/MM/YYYY"
+        format="MM/DD/YYYY"
         slotProps={{
           textField: {
             fullWidth: true,
@@ -597,7 +597,7 @@ const handleSubmit = async () => {
       <DatePicker
         value={StudentData?.journalistreview?.firstjournalistreview?.receivedfromjournalistdate ? dayjs(StudentData?.journalistreview?.firstjournalistreview?.receivedfromjournalistdate.toDate()): null}
         onChange={(e) =>handleChangeStudentDetails(e,"receivedfromjournalistdate","firstjournalistreview")}
-        format="DD/MM/YYYY"
+        format="MM/DD/YYYY"
         slotProps={{
           textField: {
             fullWidth: true,
@@ -657,7 +657,7 @@ const handleSubmit = async () => {
       <DatePicker
         value={StudentData?.journalistreview?.secondjournalistreview?.senttojournalistdate ? dayjs(StudentData?.journalistreview?.secondjournalistreview?.senttojournalistdate.toDate()): null}
         onChange={(e) =>handleChangeStudentDetails(e,"senttojournalistdate","secondjournalistreview")}
-        format="DD/MM/YYYY"
+        format="MM/DD/YYYY"
         slotProps={{
           textField: {
             fullWidth: true,
@@ -691,7 +691,7 @@ const handleSubmit = async () => {
       <DatePicker
         value={StudentData?.journalistreview?.secondjournalistreview?.receivedfromjournalistdate ? dayjs(StudentData?.journalistreview?.secondjournalistreview?.receivedfromjournalistdate.toDate()): null}
         onChange={(e) =>handleChangeStudentDetails(e,"receivedfromjournalistdate","secondjournalistreview")}
-        format="DD/MM/YYYY"
+        format="MM/DD/YYYY"
         slotProps={{
           textField: {
             fullWidth: true,
@@ -775,7 +775,7 @@ const handleSubmit = async () => {
       <DatePicker
         value={StudentData?.journalistreview?.erasjournalistreview?.senttojournalistdate ? dayjs(StudentData?.journalistreview?.erasjournalistreview?.senttojournalistdate.toDate()): null}
         onChange={(e) =>handleChangeStudentDetails(e,"senttojournalistdate","erasjournalistreview")}
-        format="DD/MM/YYYY"
+        format="MM/DD/YYYY"
         slotProps={{
           textField: {
             fullWidth: true,
@@ -817,7 +817,7 @@ const handleSubmit = async () => {
       <DatePicker
         value={StudentData?.journalistreview?.erasjournalistreview?.receivedfromjournalistdate ? dayjs(StudentData?.journalistreview?.erasjournalistreview?.receivedfromjournalistdate.toDate()): null}
         onChange={(e) =>handleChangeStudentDetails(e,"receivedfromjournalistdate","erasjournalistreview")}
-        format="DD/MM/YYYY"
+        format="MM/DD/YYYY"
         slotProps={{
           textField: {
             fullWidth: true,
@@ -898,7 +898,7 @@ const handleSubmit = async () => {
       <DatePicker
         value={StudentData?.journalistreview?.physicianjournalistreview?.senttojournalistdate ? dayjs(StudentData?.journalistreview?.physicianjournalistreview?.senttojournalistdate.toDate()): null}
         onChange={(e) =>handleChangeStudentDetails(e,"senttojournalistdate","physicianjournalistreview")}
-        format="DD/MM/YYYY"
+        format="MM/DD/YYYY"
         slotProps={{
           textField: {
             fullWidth: true,
@@ -940,7 +940,7 @@ const handleSubmit = async () => {
       <DatePicker
         value={StudentData?.journalistreview?.physicianjournalistreview?.receivedfromjournalistdate ? dayjs(StudentData?.journalistreview?.physicianjournalistreview?.receivedfromjournalistdate.toDate()): null}
         onChange={(e) =>handleChangeStudentDetails(e,"receivedfromjournalistdate","physicianjournalistreview")}
-        format="DD/MM/YYYY"
+        format="MM/DD/YYYY"
         slotProps={{
           textField: {
             fullWidth: true,
