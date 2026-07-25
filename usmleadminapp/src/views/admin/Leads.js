@@ -307,7 +307,7 @@ const groupedServices = allServices.reduce((acc, serrives) => {
     //console.log("UserFav--->",UserFav)
     //copyCollection("UserFav","UserFav",UserFav);
    //copyFieldToAnotherCollection("Users","UsersRoles","StudentUniqueId");
-   //updateOrAddFieldInCollection("Users","StudentUniqueId","The application fee does not guarantee your spot for your desired start date. To secure and confirm your rotation, full payment is required. We recommend completing your payment at least 30 days in advance. However, last-minute requests may be accommodated based on availability. Rotation schedules and start dates are subject to change, depending on availability.");
+   //updateOrAddFieldInCollection("HospitalProgramInfo","DisplayProgram",0);
     let result;
      console.log("fetchPaginatedDataWithJoin--->",direction)
      /*let WhereOrObjectJ=[{"name":"PId","condition":"==","value":"1"}];

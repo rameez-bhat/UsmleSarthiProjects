@@ -524,7 +524,7 @@ const copyFieldToAnotherCollection = async (sourceCollection, targetCollection, 
     console.error("❌ Error copying field:", error);
   }
 };
-const updateOrAddFieldInCollection = async (collectionName, fieldName, fieldValue) => {
+/*const updateOrAddFieldInCollection = async (collectionName, fieldName, fieldValue) => {
   try {
     const querySnapshot = await getDocs(collection(db, collectionName));
 let LoopId=1;
@@ -583,8 +583,8 @@ let LoopId=1;
   } catch (error) {
     console.error("❌ Error updating documents:", error);
   }
-};
-/*const updateOrAddFieldInCollection = async (collectionName, fieldName, fieldValue) => {
+};*/
+const updateOrAddFieldInCollection = async (collectionName, fieldName, fieldValue) => {
   try {
     const querySnapshot = await getDocs(collection(db, collectionName));
 let LoopId=1;
@@ -607,8 +607,8 @@ let LoopId=1;
           ? Timestamp.fromDate(new Date(data.updatedAt))
           : Timestamp.now();
       } else {
-        //updateData[fieldName] = fieldValue;
-         updateData[fieldName] = LoopId;
+        updateData[fieldName] = fieldValue;
+         //updateData[fieldName] = LoopId;
         LoopId++;
       }
 

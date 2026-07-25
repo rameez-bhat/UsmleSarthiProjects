@@ -122,6 +122,12 @@ const getNavigation = (user) => {
             icon: <CIcon icon={cilBabyCarriage} customClassName="nav-icon" />,
             name: 'List Rotations',
             to: '/admin/listofrotations',
+          },
+          {
+            component: CNavItem,
+            icon: <CIcon icon={cilBabyCarriage} customClassName="nav-icon" />,
+            name: 'Rotations Review',
+            to: '/admin/rotationreview',
           }
         ],
       },

@@ -503,7 +503,7 @@
 
               <mat-card-content>
                 <p class="review-title" *ngIf="review?.title && review.title !== 'nan'"><strong>{{ review.title }}</strong></p>
-                <p class="review-feedback">{{ review.feedback }}</p>
+               <div class="review-feedback" [innerHTML]="review.feedback"></div>
               </mat-card-content>
             </mat-card>
           </div>

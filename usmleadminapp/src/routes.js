@@ -46,6 +46,7 @@ const StudentResources = React.lazy(() => import('./views/admin/StudentResources
 const StudentPSCVReview = React.lazy(() => import('./views/admin/StudentsPSCVReview'))
 const StudentMocks = React.lazy(() => import('./views/admin/StudentMocks'))
 const StudentMatchPlans = React.lazy(() => import('./views/admin/StudentMatchPlans'))
+const RotationReview = React.lazy(() => import('./views/admin/RotationReview'))
 
 const EnquiresFilter = React.lazy(() => import('./views/admin/EnquiresFilter'))
 const UpdateUserPassword = React.lazy(() => import('./views/admin/UpdateUserPassword'))
@@ -128,7 +129,7 @@ const routes = {"public":[
     //{ path: '/admin/listrotationstudents/:serializedObject?/:locationcodearray?', name: 'ListOfRoationStudents',exact: true, element: ListOfRoationStudents },
     { path: '/admin/listrotationstudents', name: 'ListOfRoationStudents', exact: true, element: ListOfRoationStudents },
     { path: '/admin/listofallrotationstudents/', name: 'ListOfAllRoationStudents',exact: true, element: ListOfAllRoationStudents },
-     { path: '/admin/listofallrotationstudentsreport/', name: 'ListOfAllRoationStudentsReport',exact: true, element: ListOfAllRoationStudentsReport },
+    { path: '/admin/listofallrotationstudentsreport/', name: 'ListOfAllRoationStudentsReport',exact: true, element: ListOfAllRoationStudentsReport },
     { path: '/admin/listofallmatchstudents/', name: 'ListOfAllMatchStudents',exact: true, element: ListOfAllMatchStudents },
     { path: '/admin/listofallmatchmentor/', name: 'ListOfAllMatchMentor',exact: true, element: ListOfAllMatchMentor },
     { path: '/admin/listofallresearchstudents/', name: 'ListOfAllResearchStudents',exact: true, element: ListOfAllResearchStudents },
@@ -170,6 +171,7 @@ const routes = {"public":[
     { path: '/admin/addsinglelist', name: 'Add Programe',exact: true, element: AddSingleList },
     { path: '/admin/journalist', name: 'Journalist Details',exact: true, element: JournalistsList },
     { path: '/admin/journalist/:mentorId', name: 'Journalist Details',exact: true, element: JournalistsDetails },
+    { path: '/admin/rotationreview', name: 'Rotation Review',exact: true, element: RotationReview },
 ],
 "users":[
 	{ path: '/users/register', name: 'RegisterUser',exact: true, element: RegisterUser },

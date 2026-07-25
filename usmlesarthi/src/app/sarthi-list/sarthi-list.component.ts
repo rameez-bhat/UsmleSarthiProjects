@@ -897,9 +897,12 @@ private processDashboard() {
     let statesObj = [];
     let citiesObj = []
     this.shownList.forEach(hospital => {
-      statesObj[this.hospitalsByProgram[this.selectedPId][hospital.HId].State] = 1;
-      citiesObj[this.hospitalsByProgram[this.selectedPId][hospital.HId].City] = 1;
-    })
+    const hospitalData = this.hospitalsByProgram[this.selectedPId][hospital.HId];
+    if (!hospitalData) return;
+
+    hospitalData.State && (statesObj[hospitalData.State] = 1);
+    hospitalData.City && (citiesObj[hospitalData.City] = 1);
+});
     this.shownStates = Object.keys(statesObj);
     this.shownCities = Object.keys(citiesObj);
   }
@@ -1051,9 +1054,26 @@ percentageCondition = (field, toCheck) => {
     if (text)
       this.shownList = this.shownList.filter((item) => this.hospitalsByProgram[this.selectedPId][item.HId].HName.toLowerCase().includes(text));
     if (this.selectedCities.length)
-      this.shownList = this.shownList.filter((item) => this.selectedCities.includes(this.hospitalsByProgram[this.selectedPId][item.HId].City));
+    {
+      this.shownList = this.shownList.filter(item => {
+    const hospital = this.hospitalsByProgram[this.selectedPId][item.HId];
+    console.log("this.selectedPId===>",this.selectedPId)
+    console.log("item.HId===>",item.HId)
+        console.log("hospitalhospital===>",hospital)
+    return !hospital || !hospital.City || this.selectedCities.includes(hospital.City);
+});
+      //this.shownList = this.shownList.filter((item) => this.selectedCities.includes(this.hospitalsByProgram[this.selectedPId][item.HId]?.City));
+    }
     if (this.selectedStates.length)
-      this.shownList = this.shownList.filter((item) => this.selectedStates.includes(this.hospitalsByProgram[this.selectedPId][item.HId].State));
+    {
+        this.shownList = this.shownList.filter(item => {
+    const hospital = this.hospitalsByProgram[this.selectedPId][item.HId];
+
+    return !hospital || !hospital.State || this.selectedStates.includes(hospital.State);
+});
+      //this.shownList = this.shownList.filter((item) => this.selectedStates.includes(this.hospitalsByProgram[this.selectedPId][item.HId]?.State));
+    }
+      
     
     if (this.selectedVisas.length){
       

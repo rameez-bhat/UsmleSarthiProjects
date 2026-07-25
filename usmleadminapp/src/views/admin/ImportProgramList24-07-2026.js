@@ -86,53 +86,154 @@ function ImportExcel() {
   const { showLoading, hideLoading,updateWhereFieldEquals,handleUpdateOrCreateByConditions,DeleteDocumentWhere,removePidFromHospital,DeleteDocumentWhereMultiple,TooltipsPopovers,SelectWithComplexConditions,handleAdd,handleUpdateOrCreateByField, API_KEY,SelectWithWhereAnd,copyCollection,updateOrAddFieldInCollection,DatabaseName,getMaxStudentUniqueId,handleUpdate, FetchDataFromCollection,Timestamp } = useLoading();
 	 const [toast, addToast] = useState(0);
   const toaster = useRef();
-const shouldUpdate = (value) => {
-    if (value === null || value === undefined) return false;
 
-    ///const str = String(value).trim();
-
-    const str = String(value).trim().toLowerCase();
-
-    return (
-        str !== "" &&
-        str !== "not available" &&
-        !str.includes("coming in august") &&
-        str !== "n/a" &&
-        str !== "-"
-    );
-};
   const processDataToTable= async (row)=>
   {
   	
         //console.log("row-->",row)
-        //const codesArray = row['Location code'];
-        
-        let hospitalName=row['ProgramName']?.trim();
-        let HPId;
+        const codesArray = row['Location code'];
+        let hospitalName=row['Program Name']?.trim();
         if (!hospitalName) return null;
         let HospitalData = {
-        City:row['City'],
+        City:row['Program City'],
         HName:hospitalName,
         PIds:[PId],
-        State:row['State'],
+        State:row['Program State'],
         createdAt:Timestamp.fromDate(new Date()),
         updatedAt:Timestamp.fromDate(new Date()),
         };
         let HospitalProgramInfo = {
-        ...row,
   HId: PId,
   PId: PId,
   HPId: PId,
   createdAt: Timestamp.fromDate(new Date()),
   updatedAt: Timestamp.fromDate(new Date()),
 };
-//HospitalProgramInfo=row;
-if (row?.['Frieda']) {
-  HospitalProgramInfo['Frieda'] = String(row['Frieda']);
+
+console.log("row=---------->",row['FREIDA ID'])
+HospitalProgramInfo['Frieda']='';
+HospitalProgramInfo['teachingSiteNew']='';
+HospitalProgramInfo['ProgramType']='';
+HospitalProgramInfo['YOG']='';
+HospitalProgramInfo['Eras']='';
+HospitalProgramInfo['j1VisaNew']='';
+HospitalProgramInfo['h1VisaNew']='';
+HospitalProgramInfo['f1VisaNew']='';
+HospitalProgramInfo['Nrmp']='';
+HospitalProgramInfo['NrmpAdvance']='';
+HospitalProgramInfo['Step1ScoreLastYearMin']='';
+HospitalProgramInfo['Step1AcceptN']='';
+HospitalProgramInfo['Step1Req']='';
+HospitalProgramInfo['Step2Min']='';
+HospitalProgramInfo['Step2AcceptN']='';
+HospitalProgramInfo['Step2Req']='';
+HospitalProgramInfo['AppDeadline']='';
+HospitalProgramInfo['NumInterviews']='';
+HospitalProgramInfo['LORNum']='';
+HospitalProgramInfo['SpanishReq']='';
+HospitalProgramInfo['ResearchOpp']='';
+HospitalProgramInfo['personToContactNew']='';
+HospitalProgramInfo['programDirectorNew']='';
+HospitalProgramInfo['address']='';
+HospitalProgramInfo['website']='';
+
+HospitalProgramInfo['friedaLink']='';
+HospitalProgramInfo['NrmpPriCase']='';
+HospitalProgramInfo['NrmpPrelim']='';
+HospitalProgramInfo['NrmpCategorical']='';
+
+if (row?.['FREIDA ID']) {
+  HospitalProgramInfo['Frieda'] = String(row['FREIDA ID']);
+  //HospitalProgramInfo['imgpercentage'] = row['FREIDA ID'];
 }
-HospitalProgramInfo['yearlyData']={"2026":{"TotalAplicantsInvitedForTheYear":row['TotalAplicantsInvitedForTheYear'],"TotalApplicantsForTheYear":row['TotalApplicantsForTheYear']}};
-console.log("HospitalData----->",HospitalData)
-console.log("hospitalName----->",hospitalName)
+if (row?.['Primary Teaching Site']) {
+  HospitalProgramInfo['teachingSiteNew'] = row['Primary Teaching Site'];
+}
+if (row?.['Program best described as']) {
+  HospitalProgramInfo['ProgramType'] = row['Program best described as'];
+}
+else if (row?.['Information Program best described as']) {
+  HospitalProgramInfo['ProgramType'] = row['Information Program best described as'];
+}
+if (row?.['YOG']) {
+  HospitalProgramInfo['YOG'] = row['YOG'];
+}
+if (row?.['Participates in ERAS®']) {
+  HospitalProgramInfo['Eras'] = row['Participates in ERAS®'];
+}
+if (row?.['j1VisaNew']) {
+  HospitalProgramInfo['j1VisaNew'] = row['j1VisaNew'];
+}
+if (row?.['h1VisaNew']) {
+  HospitalProgramInfo['h1VisaNew'] = row['h1VisaNew'];
+}
+if (row?.['f1VisaNew']) {
+  HospitalProgramInfo['f1VisaNew'] = row['f1VisaNew'];
+}
+if (row?.['Participating in NRMP']) {
+  HospitalProgramInfo['Nrmp'] = row['Participating in NRMP'];
+}
+if (row?.['NRMP Number (Advance)']) {
+  HospitalProgramInfo['NrmpAdvance'] = row['NRMP Number (Advance)'];
+}
+if (row?.['step1_Minimum score']) {
+  HospitalProgramInfo['Step1ScoreLastYearMin'] = row['step1_Minimum score'];
+}
+if (row?.['step1_Applicants must have passed Step 1 to be considered']) {
+  HospitalProgramInfo['Step1AcceptN'] = row['step1_Applicants must have passed Step 1 to be considered'];
+}
+if (row?.['step1_Step 1 required']) {
+  HospitalProgramInfo['Step1Req'] = row['step1_Step 1 required'];
+}
+if (row?.['step2_Minimum score']) {
+  HospitalProgramInfo['Step2Min'] = row['step2_Minimum score'];
+}
+
+if (row?.['step2_Applicants must have passed Step 2 to be considered']) {
+  HospitalProgramInfo['Step2AcceptN'] = row['step2_Applicants must have passed Step 2 to be considered'];
+}
+if (row?.['step2_Step 2 required']) {
+  HospitalProgramInfo['Step2Req'] = row['step2_Step 2 required'];
+}
+if (row?.['AppInfo_Latest date for applications for 2026-2027']) {
+  HospitalProgramInfo['AppDeadline'] = row['AppInfo_Latest date for applications for 2026-2027'];
+}
+if (row?.['AppInfo_Interviews conducted last year for first year positions']) {
+  HospitalProgramInfo['NumInterviews'] = row['AppInfo_Interviews conducted last year for first year positions'];
+}
+if (row?.['AppInfo_Required letters of recommendation']) {
+  HospitalProgramInfo['LORNum'] = row['AppInfo_Required letters of recommendation'];
+}
+if (row?.['noneEnglish']) {
+  HospitalProgramInfo['SpanishReq'] = row['noneEnglish'];
+}
+if (row?.['nonaccredited']) {
+  HospitalProgramInfo['ResearchOpp'] = row['nonaccredited'];
+}
+if (row?.['Person to Contact']) {
+  HospitalProgramInfo['personToContactNew'] = row['Person to Contact'];
+}
+if (row?.['Program Director']) {
+  HospitalProgramInfo['programDirectorNew'] = row['Program Director'];
+}
+if (row?.['Prgaddress']) {
+  HospitalProgramInfo['address'] = row['Prgaddress'];
+}
+if (row?.['Web Address']) {
+  HospitalProgramInfo['website'] = row['Web Address'];
+}
+if (row?.['Program Link']) {
+  HospitalProgramInfo['friedaLink'] = row['Program Link'];
+}
+if (row?.['NRMP Number (Primary Care Categorial)']) {
+  HospitalProgramInfo['NrmpPriCase'] = row['NRMP Number (Primary Care Categorial)'];
+}
+if (row?.['NRMP Number (Categorial)']) {
+  HospitalProgramInfo['NrmpCategorical'] = row['NRMP Number (Categorial)'];
+}
+if (row?.['NRMP Number (Preliminary)']) {
+  HospitalProgramInfo['NrmpPrelim'] = row['NRMP Number (Preliminary)'];
+}
         HId = hospitalCache.get(hospitalName);
         if (!HId) 
         {
@@ -152,8 +253,6 @@ console.log("hospitalName----->",hospitalName)
       					...hospital,
       					PIds: updatedPIds,
       					HId: hospital.id,
-      					City:row['City'],
-      					State:row['State'],
       					updatedAt: Timestamp.fromDate(new Date()),
     					};
     				await handleUpdate("Hospital", hospital.id, updatedHospitalData);
@@ -165,8 +264,6 @@ console.log("hospitalName----->",hospitalName)
     				const updatedHospitalData = {
       					...hospital,
       					HId: hospital.id,
-      					City:row['City'],
-      					State:row['State'],
       					updatedAt: Timestamp.fromDate(new Date()),
     					};
     				await handleUpdate("Hospital", hospital.id, updatedHospitalData);
@@ -174,7 +271,6 @@ console.log("hospitalName----->",hospitalName)
   				}
 			}
     		HId=HospitalTableData[0]?.HId?HospitalTableData[0]?.HId:HospitalTableData[0]?.id;
-    		HPId=HospitalTableData[0]?.HPId?HospitalTableData[0]?.HPId:HospitalTableData[0]?.id;
     		//const HospitalProgrammData = await FetchDataFromCollection("HospitalProgram", 20, "HName", "==", hospitalName, 0);
     		let WhereOrObject=[{"name":"HId","condition":"==","value":HId},{"name":"PId","condition":"==","value":PId}];
     		
@@ -183,7 +279,7 @@ console.log("hospitalName----->",hospitalName)
     		//await removePidFromHospital(HId,PId);
     		  //console.log("WhereOrObject===>",WhereOrObject)
     		const results = await SelectWithWhereAnd("HospitalProgram", WhereOrObject);
-    		console.log("results===>",results)
+    		 console.log("results===>",results)
     		if(results.status==="success")
     		{
     			if(results.data.length)
@@ -226,33 +322,110 @@ console.log("hospitalName----->",hospitalName)
 									{
 										DataInfoTableToUpdate['Frieda']=HospitalProgramInfo['Frieda'];
 									}
-									if ((!hospitalInfo?.Frieda || String(hospitalInfo.Frieda).trim() === "") && shouldUpdate(HospitalProgramInfo.Frieda)) 
-									{
-    									DataInfoTableToUpdate.Frieda = HospitalProgramInfo.Frieda;
+									//if (!hospitalInfo?.teachingSiteNew || String(hospitalInfo.teachingSiteNew).trim() === "") 
+    								{
+    									DataInfoTableToUpdate['teachingSiteNew']=HospitalProgramInfo['teachingSiteNew'];
 									}
-									if (updateFreade && shouldUpdate(HospitalProgramInfo.Frieda)) 
-									{
-    									DataInfoTableToUpdate.Frieda = HospitalProgramInfo.Frieda;
+									//if (!hospitalInfo?.Nrmp || String(hospitalInfo.Nrmp).trim() === "") 
+    								{
+    									DataInfoTableToUpdate['Nrmp']=HospitalProgramInfo['Nrmp'];
 									}
-
-									// Update all remaining fields automatically
-									for (const [key, value] of Object.entries(HospitalProgramInfo)) 
-									{
-
-    									// Skip system fields
-    									if ([
-        									"ProgramName",
-        									"City",
-        									"State",
-        									"Frieda" // handled above
-    									].includes(key)) {
-        									continue;
-    									}
-
-    									if (shouldUpdate(value)) {
-        									DataInfoTableToUpdate[key] = value;
-    									}
+									//if (!hospitalInfo?.NrmpPrelim || String(hospitalInfo.NrmpPrelim).trim() === "") 
+    								{
+    									DataInfoTableToUpdate['NrmpPrelim']=HospitalProgramInfo['NrmpPrelim'];
 									}
+									//if (!hospitalInfo?.NrmpCategorical || String(hospitalInfo.NrmpCategorical).trim() === "") 
+    								{
+    									DataInfoTableToUpdate['NrmpCategorical']=HospitalProgramInfo['NrmpCategorical'];
+									}
+									//if (!hospitalInfo?.NrmpPriCase || String(hospitalInfo.NrmpPriCase).trim() === "") 
+    								{
+    									DataInfoTableToUpdate['NrmpPriCase']=HospitalProgramInfo['NrmpPriCase'];
+									}
+									//if (!hospitalInfo?.NrmpAdvance || String(hospitalInfo.NrmpAdvance).trim() === "") 
+    								{
+    									DataInfoTableToUpdate['NrmpAdvance']=HospitalProgramInfo['NrmpAdvance'];
+									}
+									//if (!hospitalInfo?.YOG || String(hospitalInfo.YOG).trim() === "") 
+    								{
+    									DataInfoTableToUpdate['YOG']=HospitalProgramInfo['YOG'];
+									}
+									//if (!hospitalInfo?.YOG || String(hospitalInfo.YOG).trim() === "") 
+    								{
+    									DataInfoTableToUpdate['YOG']=HospitalProgramInfo['YOG'];
+									}
+									//if (!hospitalInfo?.Eras || String(hospitalInfo.Eras).trim() === "") 
+    								{
+    									DataInfoTableToUpdate['Eras']=HospitalProgramInfo['Eras'];
+									}
+									//if (!hospitalInfo?.ProgramType || String(hospitalInfo.ProgramType).trim() === "") 
+    								{
+    									DataInfoTableToUpdate['ProgramType']=HospitalProgramInfo['ProgramType'];
+									}
+									//if (!hospitalInfo?.j1VisaNew || String(hospitalInfo.j1VisaNew).trim() === "") 
+    								{
+    									DataInfoTableToUpdate['j1VisaNew']=HospitalProgramInfo['j1VisaNew'];
+									}
+									//if (!hospitalInfo?.h1VisaNew || String(hospitalInfo.h1VisaNew).trim() === "") 
+    								{
+    									DataInfoTableToUpdate['h1VisaNew']=HospitalProgramInfo['h1VisaNew'];
+									}
+									//if (!hospitalInfo?.f1VisaNew || String(hospitalInfo.f1VisaNew).trim() === "") 
+    								{
+    									DataInfoTableToUpdate['f1VisaNew']=HospitalProgramInfo['f1VisaNew'];
+									}
+									//if (!hospitalInfo?.Step1ScoreLastYearMin || String(hospitalInfo.Step1ScoreLastYearMin).trim() === "") 
+    								{
+    									DataInfoTableToUpdate['Step1ScoreLastYearMin']=HospitalProgramInfo['Step1ScoreLastYearMin'];
+									}
+									//if (!hospitalInfo?.Step2Min || String(hospitalInfo.Step2Min).trim() === "") 
+    								{
+    									DataInfoTableToUpdate['Step2Min']=HospitalProgramInfo['Step2Min'];
+									}
+									//if (!hospitalInfo?.AppDeadline || String(hospitalInfo.AppDeadline).trim() === "") 
+    								{
+    									DataInfoTableToUpdate["AppDeadline"]=HospitalProgramInfo["AppDeadline"];
+									}
+									//if (!hospitalInfo?.NumInterviews || String(hospitalInfo.NumInterviews).trim() === "") 
+    								{
+    									DataInfoTableToUpdate["NumInterviews"]=HospitalProgramInfo["NumInterviews"];
+									}
+									//if (!hospitalInfo?.LORNum || String(hospitalInfo.LORNum).trim() === "") 
+    								{
+    									DataInfoTableToUpdate["LORNum"]=HospitalProgramInfo["LORNum"];
+									}
+									//if (!hospitalInfo?.SpanishReq || String(hospitalInfo.SpanishReq).trim() === "") 
+    								{
+    									DataInfoTableToUpdate["SpanishReq"]=HospitalProgramInfo["SpanishReq"];
+									}
+									//if (!hospitalInfo?.ResearchOpp || String(hospitalInfo.ResearchOpp).trim() === "") 
+    								{
+    									DataInfoTableToUpdate["ResearchOpp"]=HospitalProgramInfo["ResearchOpp"];
+									}
+									//if (!hospitalInfo?.address || String(hospitalInfo.address).trim() === "") 
+    								{
+    									DataInfoTableToUpdate["address"]=HospitalProgramInfo["address"];
+									}
+									//if (!hospitalInfo?.programDirectorNew || String(hospitalInfo.programDirectorNew).trim() === "") 
+    								{
+    									DataInfoTableToUpdate["programDirectorNew"]=HospitalProgramInfo["programDirectorNew"];
+									}
+									//if (!hospitalInfo?.personToContactNew || String(hospitalInfo.personToContactNew).trim() === "") 
+    								{
+    									DataInfoTableToUpdate["personToContactNew"]=HospitalProgramInfo["personToContactNew"];
+									}
+									//if (!hospitalInfo?.website || String(hospitalInfo.website).trim() === "") 
+    								{
+    									DataInfoTableToUpdate["website"]=HospitalProgramInfo["website"];
+									}
+									//if (!hospitalInfo?.friedaLink || String(hospitalInfo.friedaLink).trim() === "") 
+    								{
+    									DataInfoTableToUpdate["friedaLink"]=HospitalProgramInfo["friedaLink"];
+									}
+									DataInfoTableToUpdate["Step1Req"]=HospitalProgramInfo["Step1Req"];
+									DataInfoTableToUpdate["Step2Req"]=HospitalProgramInfo["Step2Req"];
+									DataInfoTableToUpdate['Step2AcceptN']=HospitalProgramInfo["Step2AcceptN"];
+									DataInfoTableToUpdate['Step1AcceptN']=HospitalProgramInfo["Step1AcceptN"];
     								if(!hospitalInfo?.Verified)
     								{
     									DataInfoTableToUpdate['Verified']="Yes";
@@ -267,26 +440,23 @@ console.log("hospitalName----->",hospitalName)
     									//let rRT=await handleUpdate("HospitalProgramInfo", hostinfoId, DataInfoTableToUpdate);
     									//console.log("rRT----->",rRT)
     								}
-const yearlyData = hospitalInfo?.yearlyData || {};
-
-yearlyData["2026"] = {
-    TotalApplicantsForTheYear: toNumber(HospitalProgramInfo.TotalApplicantsForTheYear),
-    TotalAplicantsInvitedForTheYear: toNumber(HospitalProgramInfo.TotalAplicantsInvitedForTheYear)
-};
-
-DataInfoTableToUpdate.yearlyData = yearlyData;
-DataInfoTableToUpdate.HPId=HPId;
-DataInfoTableToUpdate.HId=HId;
-
     								let rRT=await handleUpdate("HospitalProgramInfo", hostinfoId, DataInfoTableToUpdate);
-    								console.log("DataInfoTableToUpdate----->",DataInfoTableToUpdate)
-    								console.log("HPId----->",HPId)
-    								console.log("HId----->",HId)
     								console.log("rRT----->",rRT)
     							}
     							
     							
-  								
+  								//const existingPIds = hospital.PIds || [];
+								/*if (!existingPIds.includes(currentPId)) 
+								{
+    								const updatedPIds = [...existingPIds, currentPId];
+    								const updatedHospitalData = {
+      										...hospital,
+      									PIds: updatedPIds,
+      									updatedAt: Timestamp.fromDate(new Date()),
+    								};
+    								await handleUpdate("Hospital", hospital.id, updatedHospitalData);
+    								console.log(`Updated hospital "${hospital.HName}" with new PId: ${currentPId}`);
+  								}*/
 							}
     					}
     				}
@@ -353,10 +523,6 @@ DataInfoTableToUpdate.HId=HId;
           return HospitalProgramInfo;
         
   }
-  const toNumber = (value) => {
-    const num = Number(value);
-    return Number.isNaN(num) ? 0 : num;
-};
   const downloadExcelFormat = () => {
   
 
@@ -609,7 +775,7 @@ const SAMPLE_ROWS = [
         });
         return rowData;
       });
-       console.log("processedData-->",processedData)
+       //console.log("jsonData-->",jsonData)
        
        showLoading();
         for (const row of processedData) 
@@ -660,7 +826,7 @@ TooltipsPopovers("success", messageFull, "Status");
                     accept=".xls,.xlsx"
                     id="formFileLg"
                     label="Import Program List Excel 2"
-                    onChange={handleFileUpload}
+                    onChange={handleFileUpload1}
                   />
                   {errors.file && (
                     <CFormFeedback invalid>{errors.file}</CFormFeedback>

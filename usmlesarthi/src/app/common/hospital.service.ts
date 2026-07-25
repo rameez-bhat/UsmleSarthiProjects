@@ -44,14 +44,17 @@ export class HospitalService {
       for (var i in hospitaldocs.docs) {
         doc = hospitaldocs.docs[i];
         data = doc.data();
+
         const friedaId = data.HName ;
+  
         data.HId = doc.HId?doc.HId:doc.id;
         if (feridaList.includes(String(friedaId)) && friedaId!="") {
           //continue;
         }
         feridaList.push(String(friedaId));
         hospitalsData[data.HId] = data;
-        this.hospitalsByProgram[programId].push(data as Hospital);
+        this.hospitalsByProgram[programId][data.HId]=data;
+        //this.hospitalsByProgram[programId].push(data as Hospital);
       }
     }
     return {hospitalsByProgram:this.hospitalsByProgram[programId],hospitals:hospitalsData};
