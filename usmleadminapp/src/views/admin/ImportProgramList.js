@@ -271,7 +271,20 @@ const yearlyData = hospitalInfo?.yearlyData || {};
 
 yearlyData["2026"] = {
     TotalApplicantsForTheYear: toNumber(HospitalProgramInfo.TotalApplicantsForTheYear),
-    TotalAplicantsInvitedForTheYear: toNumber(HospitalProgramInfo.TotalAplicantsInvitedForTheYear)
+    TotalAplicantsInvitedForTheYear: toNumber(HospitalProgramInfo.TotalAplicantsInvitedForTheYear),
+    SentInterviewed: toNumber(HospitalProgramInfo.SignalsSent),
+    GoldSentInterviewed: toNumber(HospitalProgramInfo.GoldSentInterviewed),
+    AlignedInterviewed: toNumber(HospitalProgramInfo.GPAligned),
+    SilverInterviewed: toNumber(HospitalProgramInfo.SilverInterviewed),
+    NotalignedInterviewed: toNumber(HospitalProgramInfo.GPNotAligned),
+    SignalsNoSent: toNumber(HospitalProgramInfo.SignalsNoSent),
+    DidnotInterviewed: toNumber(HospitalProgramInfo.SignalsNoSent),
+    NopreferenceInterviewed: toNumber(HospitalProgramInfo.GPNoPreferences),
+    SignalsSentTotal: toNumber(HospitalProgramInfo.SignalsSentTotal),
+    CSignalsSentGold: toNumber(HospitalProgramInfo.CSignalsSentGold),
+    CSignalsSentSilver: toNumber(HospitalProgramInfo.CSignalsSentSilver),
+    CSignalsSent: toNumber(HospitalProgramInfo.CSignalsSent),
+    CSignalsSentTotal: toNumber(HospitalProgramInfo.CSignalsSentTotal)
 };
 
 DataInfoTableToUpdate.yearlyData = yearlyData;

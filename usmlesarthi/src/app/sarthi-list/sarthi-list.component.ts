@@ -95,6 +95,10 @@ export class SarthiListComponent implements OnInit {
     "Within 6 year",
     "YOG not a constrain",
   ];
+  shownStep1 = [
+    "Pass",
+    "Fail",
+  ];
   shownStep = [
     "200 and below",
     "210 and below",
@@ -108,6 +112,10 @@ export class SarthiListComponent implements OnInit {
     "50 and above",
     "80 and above",
   ]
+   shownSignalInvitedDropDown = [
+    "Less Than 50%",
+    "More Than 50%",
+  ]
   selectedCities : any[] = [];
   selectedStates : any[] = [];
   selectedVisas : any[] = [];
@@ -117,6 +125,7 @@ export class SarthiListComponent implements OnInit {
   selectedStep1 : any;
   selectedStep2 : any;
   selectedUsImg  : any;
+  selectedSignalInvited  : any;
   selectedNonUsImg : any;
   selectedDataNotAvailable : any;
 
@@ -777,7 +786,7 @@ private processDashboard() {
       {
         this.selectedHospitalData = await this.dbservice.getLatestHospital(this.userProfile.uid, this.selectedPId, hid, true);
       }
-
+      console.log("selectedHospitalData====>",this.selectedHospitalData)
       //this.selectedHospitalData['hospital']=this.hospitalsByProgram[this.selectedPId][hid]
       
      // this.selectedHospitalData = await this.dbservice.getLatestHospital(this.userProfile.uid, this.selectedPId, hid, true);
@@ -977,6 +986,66 @@ private processDashboard() {
       return this.selectedDataNotAvailable;
     return fieldScore <= score;
   }
+
+stepConditionStep1 = (field, toCheck) => {
+  if (field === null || field === undefined || field === "") {
+    return this.selectedDataNotAvailable;
+  }
+
+  const fieldValue =
+    typeof field === "number" ? field.toString() : String(field);
+
+  const checkValue =
+    typeof toCheck === "number" ? toCheck.toString() : String(toCheck);
+
+  return fieldValue.trim().toLowerCase() === checkValue.trim().toLowerCase();
+};
+SignalInvited = (field, toCheck) => {
+  // Handle null/undefined/empty
+  if (field === undefined || field === null || field === "") {
+    return this.selectedDataNotAvailable;
+  }
+
+  // Convert to string
+  field = String(field).trim();
+
+  // Treat 99 as NA
+  if (field === "99") {
+    return this.selectedDataNotAvailable;
+  }
+
+  // Extract first number from field
+  let fieldPercentage;
+
+  if (!isNaN(field)) {
+    fieldPercentage = Number(field);
+  } else {
+    const match = field.match(/\d+/);
+    if (!match) {
+      return this.selectedDataNotAvailable;
+    }
+    fieldPercentage = Number(match[0]);
+  }
+
+  // Extract percentage from condition
+  const match = toCheck.match(/\d+/);
+  if (!match) {
+    return false;
+  }
+
+  const percentage = Number(match[0]);
+
+  // Compare
+  if (toCheck.toLowerCase().includes("less")) {
+    return fieldPercentage < percentage;
+  }
+
+  if (toCheck.toLowerCase().includes("more")) {
+    return fieldPercentage >= percentage;
+  }
+
+  return false;
+};
 percentageCondition = (field, toCheck) => {
     const parts = toCheck.split(" ");
     const percentage = parseInt(parts[0]);
@@ -1058,8 +1127,6 @@ percentageCondition = (field, toCheck) => {
       this.shownList = this.shownList.filter(item => {
     const hospital = this.hospitalsByProgram[this.selectedPId][item.HId];
     console.log("this.selectedPId===>",this.selectedPId)
-    console.log("item.HId===>",item.HId)
-        console.log("hospitalhospital===>",hospital)
     return !hospital || !hospital.City || this.selectedCities.includes(hospital.City);
 });
       //this.shownList = this.shownList.filter((item) => this.selectedCities.includes(this.hospitalsByProgram[this.selectedPId][item.HId]?.City));
@@ -1091,12 +1158,15 @@ percentageCondition = (field, toCheck) => {
     }
     
     if (this.selectedStep1){
-      this.shownList = this.shownList.filter((item) => this.stepCondition(item.Step1ScoreLastYearMin, this.selectedStep1))
+      this.shownList = this.shownList.filter((item) => this.stepConditionStep1(item.Step1ScoreLastYearMin, this.selectedStep1))
     }
     if (this.selectedStep2){
       this.shownList = this.shownList.filter((item) => this.stepCondition(item.Step2Min, this.selectedStep2))
     }
-   
+    if (this.selectedSignalInvited){
+      
+      this.shownList = this.shownList.filter((item) => this.SignalInvited(item.GPAligned, this.selectedSignalInvited))
+    }
     if (this.selectedUsImg){
       
       this.shownList = this.shownList.filter((item) => this.percentageCondition(item.imgpercentage, this.selectedUsImg))

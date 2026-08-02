@@ -87,6 +87,7 @@ export class SarthiListService {
         const docsRef = await this.firestore.collection<HospitalFormData>("HospitalProgramInfo", ref =>
           ref.where("Verified", "==", "Yes")
              .where("PId", "==", pid)
+             //.where("DisplayProgram", "==", 1)
              .orderBy("TimeStamp", "desc")
         ).get().toPromise();
         for (let doc of docsRef.docs) 
