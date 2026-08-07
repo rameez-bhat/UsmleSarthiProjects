@@ -1165,7 +1165,7 @@ percentageCondition = (field, toCheck) => {
     }
     if (this.selectedSignalInvited){
       
-      this.shownList = this.shownList.filter((item) => this.SignalInvited(item.GPAligned, this.selectedSignalInvited))
+      this.shownList = this.shownList.filter((item) => this.SignalInvited(item.SentInterviewed, this.selectedSignalInvited))
     }
     if (this.selectedUsImg){
       
