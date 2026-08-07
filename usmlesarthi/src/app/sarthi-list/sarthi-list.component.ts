@@ -1164,8 +1164,14 @@ percentageCondition = (field, toCheck) => {
       this.shownList = this.shownList.filter((item) => this.stepCondition(item.Step2Min, this.selectedStep2))
     }
     if (this.selectedSignalInvited){
-      
-      this.shownList = this.shownList.filter((item) => this.SignalInvited(item.SentInterviewed, this.selectedSignalInvited))
+      if(this.selectedPId==1)
+      {
+        this.shownList = this.shownList.filter((item) => this.SignalInvited(item.GoldSentInterviewed, this.selectedSignalInvited))
+      }
+      else
+      {
+        this.shownList = this.shownList.filter((item) => this.SignalInvited(item.SentInterviewed, this.selectedSignalInvited))
+      }
     }
     if (this.selectedUsImg){
       
