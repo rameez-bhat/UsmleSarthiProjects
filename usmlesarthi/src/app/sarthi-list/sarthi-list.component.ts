@@ -1164,7 +1164,7 @@ percentageCondition = (field, toCheck) => {
       this.shownList = this.shownList.filter((item) => this.stepCondition(item.Step2Min, this.selectedStep2))
     }
     if (this.selectedSignalInvited){
-      if(this.selectedPId==1)
+      if(Number(this.selectedPId)==1)
       {
         this.shownList = this.shownList.filter((item) => this.SignalInvited(item.GoldSentInterviewed, this.selectedSignalInvited))
       }
