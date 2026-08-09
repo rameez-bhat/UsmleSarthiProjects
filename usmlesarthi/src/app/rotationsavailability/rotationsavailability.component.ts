@@ -264,6 +264,11 @@ export class RotationAvailabilityComponent implements OnInit {
         }
       }
     }
+    else
+    {
+      this.UserLoggedIn = false;
+      this.ShowModelPopup = true;
+    }
     } catch (err) {
       console.log(err.message);
       this.toastr.error("Error while fetching the data, please try again");
@@ -367,8 +372,18 @@ updateFullPhoneNumber() {
     this.toastr.error("Please enter a valid phone number");
     return;
   }
-   this.input.email=this.enteredEmail,
-   this.submitEnquireform();
+  console.log("this.input=====>",this.input)
+   this.input.email=this.enteredEmail;
+   if (this.calendar.isValid(this.BookingSelectedDateEnq) ) 
+   {
+      console.log("this.input=====>",this.input)
+      this.submitEnquireform();
+   }
+   else
+   {
+      this.submitEnquireformFirst();
+   }
+  
   this.submitEmailPopup=true;
 }
 closeEmailPopup() {
@@ -395,6 +410,22 @@ submitEnquireform()
   this.input.sarthi="yes";
   this.input.date=this.BookingSelectedDateEnq;
   this.doEnquire(this.selectedHospital.id,this.rotationCode);
+  
+}
+submitEnquireformFirst()
+{
+  //this.cleanupExpiredEnquiries();
+  if (this.hasAlreadyEnquiredToday(this.rotationCode)) {
+    this.submitEmailPopup=true;
+    return;
+   }
+  this.input.name="System";
+  this.input.query="Looking for the rotation";
+  this.input.duration="4 weeks";
+  this.input.phone=this.phone;
+  this.input.sarthi="yes";
+  //this.input.date=this.BookingSelectedDateEnq;
+  this.doEnquireWithoutDate(this.selectedHospital.id,this.rotationCode);
   
 }
 hasAlreadyEnquiredToday(rotationCode: string): boolean {
@@ -430,6 +461,39 @@ saveEnquiryRecord(rotationCode: string): void {
   expiryDate.setDate(expiryDate.getDate() + 1);
   localStorage.setItem(`${key}_expiry`, expiryDate.toISOString());
 }
+async doEnquireWithoutDate(rotationId,LocationCode="") {
+    try {
+      if (!this.auth.isLoggedIn) {
+        this.input.isNewUser = true;
+      }
+
+      if (this.phoneError) {
+        this.toastr.error("Phone is invalid");
+        return;
+      }
+      if (!this.validateInputs()) 
+        return;
+      await this.dbService.enquireRotation(
+        this.auth.userData,
+        rotationId,
+        LocationCode,
+        this.input
+      );
+      this.saveEnquiryRecord(this.rotationCode);
+     this.userEnquiries = await this.dbService.getEnquiriesByUId(
+        this.auth.userData
+      );
+      /*this.toastr.success(
+        "We have received your request. We will let you know within 2 business days, if there is availability"
+      );*/
+      this.modalService.dismissAll();
+    } catch (err) {
+      this.toastr.error(
+        "Error while processing your enquiry, Please try again"
+      );
+      console.log(err);
+    }
+  }
   async doEnquire(rotationId,LocationCode="") {
     try {
       if (!this.auth.isLoggedIn) {
