@@ -44,6 +44,8 @@ export class SarthiListComponent implements OnInit {
   ListUserHasUnverified: any;
   ListUserHasverified: any;
   message: string;
+  sortColumn = '';
+  sortDirection: 'asc' | 'desc' = 'asc';
   showAlert: boolean;
   programList: Program[];
   visaObject: any = {};
@@ -1000,6 +1002,125 @@ stepConditionStep1 = (field, toCheck) => {
 
   return fieldValue.trim().toLowerCase() === checkValue.trim().toLowerCase();
 };
+sortTable(column: string) {
+
+  if (this.sortColumn === column) {
+    this.sortDirection =
+      this.sortDirection === 'asc' ? 'desc' : 'asc';
+  } else {
+    this.sortColumn = column;
+    this.sortDirection = 'asc';
+  }
+
+  this.shownList.sort((a: any, b: any) => {
+
+    let valueA: any = '';
+    let valueB: any = '';
+
+    const hospitalA =
+      a &&
+      a.hospital
+        ? a.hospital
+        : (
+            this.hospitalsByProgram &&
+            this.hospitalsByProgram[this.selectedPId] &&
+            this.hospitalsByProgram[this.selectedPId][a.HId]
+              ? this.hospitalsByProgram[this.selectedPId][a.HId]
+              : {}
+          );
+
+    const hospitalB =
+      b &&
+      b.hospital
+        ? b.hospital
+        : (
+            this.hospitalsByProgram &&
+            this.hospitalsByProgram[this.selectedPId] &&
+            this.hospitalsByProgram[this.selectedPId][b.HId]
+              ? this.hospitalsByProgram[this.selectedPId][b.HId]
+              : {}
+          );
+
+    switch (column) {
+
+      case 'hospital':
+        valueA = hospitalA.HName || '';
+        valueB = hospitalB.HName || '';
+        break;
+
+      case 'city':
+        valueA = hospitalA.City || '';
+        valueB = hospitalB.City || '';
+        break;
+
+      case 'state':
+        valueA = hospitalA.State || '';
+        valueB = hospitalB.State || '';
+        break;
+
+      case 'frieda':
+        valueA = Number(a.Frieda);
+        valueB = Number(b.Frieda);
+        break;
+
+      case 'img':
+        valueA =
+          a.imgpercentage == -99 ||
+          a.imgpercentage == 99
+            ? -999999
+            : Number(a.imgpercentage);
+
+        valueB =
+          b.imgpercentage == -99 ||
+          b.imgpercentage == 99
+            ? -999999
+            : Number(b.imgpercentage);
+        break;
+
+      case 'nonimg':
+        valueA =
+          a.nonUsImgPercentage == -99 ||
+          a.nonUsImgPercentage == 99
+            ? -999999
+            : Number(a.nonUsImgPercentage);
+
+        valueB =
+          b.nonUsImgPercentage == -99 ||
+          b.nonUsImgPercentage == 99
+            ? -999999
+            : Number(b.nonUsImgPercentage);
+        break;
+
+      case 'date':
+        valueA = a.TimeStamp
+          ? new Date(a.TimeStamp).getTime()
+          : 0;
+
+        valueB = b.TimeStamp
+          ? new Date(b.TimeStamp).getTime()
+          : 0;
+        break;
+    }
+
+    if (typeof valueA === 'string') {
+      valueA = valueA.toLowerCase();
+    }
+
+    if (typeof valueB === 'string') {
+      valueB = valueB.toLowerCase();
+    }
+
+    if (valueA < valueB) {
+      return this.sortDirection === 'asc' ? -1 : 1;
+    }
+
+    if (valueA > valueB) {
+      return this.sortDirection === 'asc' ? 1 : -1;
+    }
+
+    return 0;
+  });
+}
 SignalInvited = (field, toCheck) => {
   // Handle null/undefined/empty
   if (field === undefined || field === null || field === "") {

@@ -202,16 +202,54 @@
             <thead class="text-center">
               <tr>
                 <th>S.No.</th>
-                <th>Hospital Name</th>
-                <th>City</th>
-                <th>State</th>
-                <th>Frieda Id</th>
-                <th>IMG Percentage<font color="red">(Frieda)</font></th>
-                <th>NON US IMG Percentage<font color="blue">(Residency Explorer)</font></th>
-               <!--<th *ngIf="userProfile.Role == 'Admin' || (!ListUserHasUnverified.length && ListUserHasverified.length)">-->
-                <th>
-                Last Updated
-              </th>
+                <th (click)="sortTable('hospital')" style="cursor:pointer">
+  Hospital Name
+  <span *ngIf="sortColumn === 'hospital'">
+    {{ sortDirection === 'asc' ? '▲' : '▼' }}
+  </span>
+</th>
+
+<th (click)="sortTable('city')" style="cursor:pointer">
+  City
+  <span *ngIf="sortColumn === 'city'">
+    {{ sortDirection === 'asc' ? '▲' : '▼' }}
+  </span>
+</th>
+
+<th (click)="sortTable('state')" style="cursor:pointer">
+  State
+  <span *ngIf="sortColumn === 'state'">
+    {{ sortDirection === 'asc' ? '▲' : '▼' }}
+  </span>
+</th>
+
+<th (click)="sortTable('frieda')" style="cursor:pointer">
+  Frieda Id
+  <span *ngIf="sortColumn === 'frieda'">
+    {{ sortDirection === 'asc' ? '▲' : '▼' }}
+  </span>
+</th>
+
+<th (click)="sortTable('img')" style="cursor:pointer">
+  IMG Percentage
+  <span *ngIf="sortColumn === 'img'">
+    {{ sortDirection === 'asc' ? '▲' : '▼' }}
+  </span>
+</th>
+
+<th (click)="sortTable('nonimg')" style="cursor:pointer">
+  NON US IMG Percentage
+  <span *ngIf="sortColumn === 'nonimg'">
+    {{ sortDirection === 'asc' ? '▲' : '▼' }}
+  </span>
+</th>
+
+<th (click)="sortTable('date')" style="cursor:pointer">
+  Last Updated
+  <span *ngIf="sortColumn === 'date'">
+    {{ sortDirection === 'asc' ? '▲' : '▼' }}
+  </span>
+</th>
                 <th>Add/Remove Favorites1</th>
                 <th>See Other Info</th>
               </tr>
@@ -1152,17 +1190,17 @@
                     <td style="font-weight: bold">
                       Website Address of the hospital
                     </td>
-                    <td>{{ selectedHospitalData.website }}</td>
+                    <td><a *ngIf="selectedHospitalData.website" target="_blank" href="{{ selectedHospitalData.website }}">Click Here</a></td>
                   </tr>
                   <tr id="reLink">
                     <td style="font-weight: bold">
                       Residency Explorer Link :-
                     </td>
-                    <td>{{ selectedHospitalData.reLink }}</td>
+                    <td><a *ngIf="selectedHospitalData.reLink" target="_blank" href="{{ selectedHospitalData.reLink }}">Click Here</a></td>
                   </tr>
                   <tr id="friedaLink">
                     <td style="font-weight: bold">Frieda Link :-</td>
-                    <td>{{ selectedHospitalData.friedaLink }}</td>
+                    <td><a *ngIf="selectedHospitalData.friedaLink" target="_blank" href="{{ selectedHospitalData.friedaLink }}">Click Here</a></td>
                   </tr>
                   <!-- <tr id="websummary">
                     <td style="font-weight: bold">
