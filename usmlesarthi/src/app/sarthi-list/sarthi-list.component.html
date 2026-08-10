@@ -243,6 +243,12 @@
     {{ sortDirection === 'asc' ? '▲' : '▼' }}
   </span>
 </th>
+<th (click)="sortTable('signalssent')" style="cursor:pointer">
+  Signals Sent
+  <span *ngIf="sortColumn === 'signalssent'">
+    {{ sortDirection === 'asc' ? '▲' : '▼' }}
+  </span>
+</th>
 
 <th (click)="sortTable('date')" style="cursor:pointer">
   Last Updated
@@ -279,6 +285,12 @@
                   </td>
                   <td>
                     {{hospitalData.nonUsImgPercentage==-99?"NA": hospitalData.nonUsImgPercentage==99?"NA":hospitalData.nonUsImgPercentage}}
+                  </td>
+                  <td *ngIf="selectedPId!= 1">
+                    {{ hospitalData?.SignalsSent }}
+                  </td>
+                  <td *ngIf="selectedPId== 1">
+                    {{ hospitalData?.GoldSentInterviewed }}
                   </td>
                   <!--<td *ngIf="userProfile.Role == 'Admin' || (!ListUserHasUnverified.length && ListUserHasverified.length)">-->
                     <td>

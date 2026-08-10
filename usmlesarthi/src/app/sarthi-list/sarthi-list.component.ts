@@ -1062,6 +1062,18 @@ sortTable(column: string) {
         valueA = Number(a.Frieda);
         valueB = Number(b.Frieda);
         break;
+      case 'signalssent':
+        if(this.selectedPId==1)
+        {
+          valueA = Number(a.GoldSentInterviewed);
+          valueB = Number(b.GoldSentInterviewed);
+        }
+        else
+        {
+          valueA = Number(a.SignalsSent);
+          valueB = Number(b.SignalsSent);
+        }
+        break;
 
       case 'img':
         valueA =
@@ -1123,6 +1135,8 @@ sortTable(column: string) {
 }
 SignalInvited = (field, toCheck) => {
   // Handle null/undefined/empty
+  console.log("Field Value=======>",field)
+  console.log("Field toCheck=======>",toCheck)
   if (field === undefined || field === null || field === "") {
     return this.selectedDataNotAvailable;
   }
@@ -1291,7 +1305,7 @@ percentageCondition = (field, toCheck) => {
       }
       else
       {
-        this.shownList = this.shownList.filter((item) => this.SignalInvited(item.SentInterviewed, this.selectedSignalInvited))
+        this.shownList = this.shownList.filter((item) => this.SignalInvited(item.SignalsSent, this.selectedSignalInvited))
       }
     }
     if (this.selectedUsImg){
