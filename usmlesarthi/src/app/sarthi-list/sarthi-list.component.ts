@@ -362,6 +362,13 @@ exportProgramsToExcel() {
     this.landing = "Specialities";
   }
 }
+ConvertNumber(num){
+  if(typeof num=="undefined")
+  {
+    num=0;
+  }
+  return Number(num);
+}
 private processFavorites() {
   this.favoritesObject = {};
   for (let i in this.favorites) {
@@ -1077,30 +1084,15 @@ sortTable(column: string) {
 
       case 'img':
         valueA =
-          a.imgpercentage == -99 ||
-          a.imgpercentage == 99
-            ? -999999
-            : Number(a.imgpercentage);
+          this.ConvertNumber(a.studentType_usimg)+this.ConvertNumber(a.studentType_nonusimg);
 
-        valueB =
-          b.imgpercentage == -99 ||
-          b.imgpercentage == 99
-            ? -999999
-            : Number(b.imgpercentage);
+        valueB = this.ConvertNumber(b.studentType_usimg)+this.ConvertNumber(b.studentType_nonusimg);;
         break;
 
       case 'nonimg':
-        valueA =
-          a.nonUsImgPercentage == -99 ||
-          a.nonUsImgPercentage == 99
-            ? -999999
-            : Number(a.nonUsImgPercentage);
+        valueA = this.ConvertNumber(a.studentType_nonusimg);
 
-        valueB =
-          b.nonUsImgPercentage == -99 ||
-          b.nonUsImgPercentage == 99
-            ? -999999
-            : Number(b.nonUsImgPercentage);
+        valueB = this.ConvertNumber(b.studentType_nonusimg);
         break;
 
       case 'date':
@@ -1135,8 +1127,6 @@ sortTable(column: string) {
 }
 SignalInvited = (field, toCheck) => {
   // Handle null/undefined/empty
-  console.log("Field Value=======>",field)
-  console.log("Field toCheck=======>",toCheck)
   if (field === undefined || field === null || field === "") {
     return this.selectedDataNotAvailable;
   }

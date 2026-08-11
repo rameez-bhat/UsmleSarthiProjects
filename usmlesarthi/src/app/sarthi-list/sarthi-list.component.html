@@ -280,12 +280,21 @@
                   <td>
                     {{ hospitalData.Frieda=="-149"?"": hospitalData.Frieda}}
                   </td>
-                  <td>
-                    {{hospitalData.imgpercentage==-99?"NA": hospitalData.imgpercentage==99?"NA":hospitalData.imgpercentage}}
+                  <ng-container *ngIf="ConvertNumber(selectedPId) != 1 && ConvertNumber(selectedPId) != 2 && ConvertNumber(selectedPId) != 3 && ConvertNumber(selectedPId) != 4 && ConvertNumber(selectedPId) != 5 && ConvertNumber(selectedPId) != 7; else otherPrograms">
+                <td>{{hospitalData.imgpercentage==-99?"NA": hospitalData.imgpercentage==99?"NA":hospitalData.imgpercentage}}</td>
+                <td>{{hospitalData.nonUsImgPercentage==-99?"NA": hospitalData.nonUsImgPercentage==99?"NA":hospitalData.nonUsImgPercentage}}</td>
+                 </ng-container>
+                <ng-template #otherPrograms>
+                <td>
+                    {{(ConvertNumber(hospitalData.studentType_usimg)+ConvertNumber(hospitalData.studentType_nonusimg))>100?100:ConvertNumber(hospitalData.studentType_usimg)+ConvertNumber(hospitalData.studentType_nonusimg)}}
                   </td>
                   <td>
-                    {{hospitalData.nonUsImgPercentage==-99?"NA": hospitalData.nonUsImgPercentage==99?"NA":hospitalData.nonUsImgPercentage}}
+                    {{ConvertNumber(hospitalData.studentType_nonusimg)}}
                   </td>
+                
+                  </ng-template>
+                  
+                  
                   <td *ngIf="selectedPId!= 1">
                     {{ hospitalData?.SignalsSent }}
                   </td>
@@ -404,12 +413,27 @@
               <td>
                 {{fav.value.Frieda}}
               </td>
-              <td>
+              <ng-container *ngIf="ConvertNumber(selectedPId) != 1 && ConvertNumber(selectedPId) != 2 && ConvertNumber(selectedPId) != 3 && ConvertNumber(selectedPId) != 4 && ConvertNumber(selectedPId) != 5 && ConvertNumber(selectedPId) != 7; else otherPrograms">
+                <td>{{ fav.value.ProgramInfo.imgpercentage }}</td>
+                <td>{{ fav.value.ProgramInfo.nonUsImgPercentage }}</td>
+                 </ng-container>
+                <ng-template #otherPrograms>
+                <td>
+                    {{(ConvertNumber(fav.value.ProgramInfo.studentType_usimg)+ConvertNumber(fav.value.ProgramInfo.studentType_nonusimg))>100?100:ConvertNumber(fav.value.ProgramInfo.studentType_usimg)+ConvertNumber(fav.value.ProgramInfo.studentType_nonusimg)}}
+                  </td>
+                  <td>
+                    <!--{{hospitalData.nonUsImgPercentage==-99?"NA": hospitalData.nonUsImgPercentage==99?"NA":hospitalData.nonUsImgPercentage}}-->
+                    {{ConvertNumber(fav.value.ProgramInfo.studentType_nonusimg)}}
+                  </td>
+                
+                  </ng-template>
+               
+              <!--<td>
                 {{fav.value.ProgramInfo.imgpercentage==-99?"NA": fav.value.ProgramInfo.imgpercentage==99?"NA":fav.value.ProgramInfo.imgpercentage}}
               </td>
               <td>
                 {{fav.value.ProgramInfo.nonUsImgPercentage==-99?"NA":fav.value.ProgramInfo.nonUsImgPercentage==99?"NA":fav.value.ProgramInfo.nonUsImgPercentage}}
-              </td>
+              </td>-->
               <!--<td *ngIf="userProfile.Role == 'Admin' || (!ListUserHasUnverified.length && ListUserHasverified.length)">-->
                 <td>
                 {{ fav.value.ProgramInfo.TimeStamp | date:'MM/dd/yyyy':'UTC':'en-US'  || '' }}
@@ -679,17 +703,32 @@
                 <th>IMG Percentage  <font color="red">(Frieda)</font></th>
                 <th>Non US IMG Percentage <font color="blue">(Residency Explorer)</font></th>
                 
-                <th>US MD Percentage</th>
+                <th>US MD+DO Percentage</th>
                 <th *ngIf="userProfile.Role == 'Admin' || (!ListUserHasUnverified.length && ListUserHasverified.length)">Last Updated</th>
               </tr>
             </thead>
             <tbody id="table1">
               <tr>
                 <td>{{  selectedHospitalData.Eras  }}</td>
+                <ng-container *ngIf="ConvertNumber(selectedPId) != 1 && ConvertNumber(selectedPId) != 2 && ConvertNumber(selectedPId) != 3 && ConvertNumber(selectedPId) != 4 && ConvertNumber(selectedPId) != 5 && ConvertNumber(selectedPId) != 7; else otherPrograms">
                 <td>{{ selectedHospitalData.imgpercentage }}</td>
                 <td>{{ selectedHospitalData.nonUsImgPercentage }}</td>
-                
                 <td>{{ selectedHospitalData.usmdPercentageNew }}</td>
+                 </ng-container>
+                <ng-template #otherPrograms>
+                <td>
+                    {{(ConvertNumber(selectedHospitalData.studentType_usimg)+ConvertNumber(selectedHospitalData.studentType_nonusimg))>100?100:ConvertNumber(selectedHospitalData.studentType_usimg)+ConvertNumber(selectedHospitalData.studentType_nonusimg)}}
+                  </td>
+                  <td>
+                    <!--{{hospitalData.nonUsImgPercentage==-99?"NA": hospitalData.nonUsImgPercentage==99?"NA":hospitalData.nonUsImgPercentage}}-->
+                    {{ConvertNumber(selectedHospitalData.studentType_nonusimg)}}
+                  </td>
+                
+                <td>
+                    {{(ConvertNumber(selectedHospitalData.studentType_usmdgrad)+ConvertNumber(selectedHospitalData.studentType_usdograd))>100?100:ConvertNumber(selectedHospitalData.studentType_usmdgrad)+ConvertNumber(selectedHospitalData.studentType_usdograd)}}
+                  </td>
+                  </ng-template>
+                <!--<td>{{ selectedHospitalData.usmdPercentageNew }}</td>-->
                 <!--<td *ngIf="userProfile.Role == 'Admin' || (!ListUserHasUnverified.length && ListUserHasverified.length)">-->
                 <td >{{ selectedHospitalData.Date }}</td>
               </tr>
@@ -985,8 +1024,8 @@
                 <div class="form-group">
                   <div >
                     <div *ngFor="let entry of this.yearDataArrayKeys">
-                      <ng-container *ngIf="entry">
-                        <div ><span style="color:red; font-weight:bold;font-size: 22px;">Note:</span> <span style="color:blue; font-weight:bold;font-size: 19px;"> For students who have contributed to the list, this tab’s data will be available once all your submitted forms are verified. If you are not contributing to the list, you can view similar information through the Residency Explorer.</span></div>
+                      <ng-container *ngIf="entry && entry!= '2025'">
+                       <!-- <div ><span style="color:red; font-weight:bold;font-size: 22px;">Note:</span> <span style="color:blue; font-weight:bold;font-size: 19px;"> For students who have contributed to the list, this tab’s data will be available once all your submitted forms are verified. If you are not contributing to the list, you can view similar information through the Residency Explorer.</span></div>-->
                     <table border="1"  cellpadding="8" style="width:100%">
                      
                       <tr id="Step3Accept">
@@ -1008,7 +1047,7 @@
                 </div>
                 <br>
                     <div *ngFor="let entry of this.yearDataArrayKeys">
-                      <ng-container *ngIf="entry">
+                      <ng-container *ngIf="entry && entry!= '2025'">
                         <h3>{{ entry }} Interview Rates by Applicant Characteristic</h3>
                     <table border="1" cellpadding="8" style="width:100%" *ngIf="selectedPId != 1">
                           <tr>
