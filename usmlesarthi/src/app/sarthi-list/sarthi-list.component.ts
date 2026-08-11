@@ -1063,7 +1063,7 @@ sortTable(column: string) {
         valueB = Number(b.Frieda);
         break;
       case 'signalssent':
-        if(this.selectedPId==1)
+        if(Number(this.selectedPId)==1)
         {
           valueA = Number(a.GoldSentInterviewed);
           valueB = Number(b.GoldSentInterviewed);
