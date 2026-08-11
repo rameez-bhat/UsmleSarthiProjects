@@ -23,6 +23,7 @@ export class ProgramService {
         data.PId = doc.id;
         this.programList.push(data as Program);
     }
+    this.programList.sort((a, b) => Number(a.PIdN) - Number(b.PIdN));
     return this.programList;
   }
   async getProgramObject(){

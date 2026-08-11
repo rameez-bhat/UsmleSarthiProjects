@@ -83,13 +83,24 @@ export class SarthiListService {
         this.hospitalsDataByPId[pid] = {};
         let hospitalsDataByHPId = {};
         const feridaSet = new Set<string>();
-  
-        const docsRef = await this.firestore.collection<HospitalFormData>("HospitalProgramInfo", ref =>
+        let docsRef;
+        if ([1, 2, 3, 4, 5, 7].includes(Number(pid))) {
+        docsRef = await this.firestore.collection<HospitalFormData>("HospitalProgramInfo", ref =>
+          ref.where("Verified", "==", "Yes")
+             .where("PId", "==", pid)
+             .where("DisplayProgram", "==", 1)
+             .orderBy("TimeStamp", "desc")
+        ).get().toPromise();
+      }
+      else
+      {
+        docsRef = await this.firestore.collection<HospitalFormData>("HospitalProgramInfo", ref =>
           ref.where("Verified", "==", "Yes")
              .where("PId", "==", pid)
              //.where("DisplayProgram", "==", 1)
              .orderBy("TimeStamp", "desc")
         ).get().toPromise();
+      }
         for (let doc of docsRef.docs) 
         {
           let data = doc.data() as HospitalFormData;
