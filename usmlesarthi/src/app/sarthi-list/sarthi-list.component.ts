@@ -312,7 +312,11 @@ exportProgramsToExcel() {
       this.toastr.error("Error while fetching data, please try again");
     }
   }
+get isResidencyExplorerProgram(): boolean {
+  const pid = this.ConvertNumber(this.selectedPId);
 
+  return [1, 2, 3, 4, 5, 7].includes(pid);
+}
   async takeMeToDashboard(event) {
   try {
     this.selectedPId = event;

@@ -229,14 +229,22 @@
     {{ sortDirection === 'asc' ? '▲' : '▼' }}
   </span>
 </th>
-
+<ng-container *ngIf="!isResidencyExplorerProgram; else residencyExplorerHeader">
 <th (click)="sortTable('img')" style="cursor:pointer">
   IMG Percentage
   <span *ngIf="sortColumn === 'img'">
     {{ sortDirection === 'asc' ? '▲' : '▼' }}
   </span>
 </th>
-
+</ng-container>
+<ng-template #residencyExplorerHeader>
+  <th (click)="sortTable('img')" style="cursor:pointer">
+  US IMG Percentage
+  <span *ngIf="sortColumn === 'img'">
+    {{ sortDirection === 'asc' ? '▲' : '▼' }}
+  </span>
+</th>
+</ng-template>
 <th (click)="sortTable('nonimg')" style="cursor:pointer">
   NON US IMG Percentage
   <span *ngIf="sortColumn === 'nonimg'">
@@ -280,13 +288,13 @@
                   <td>
                     {{ hospitalData.Frieda=="-149"?"": hospitalData.Frieda}}
                   </td>
-                  <ng-container *ngIf="ConvertNumber(selectedPId) != 1 && ConvertNumber(selectedPId) != 2 && ConvertNumber(selectedPId) != 3 && ConvertNumber(selectedPId) != 4 && ConvertNumber(selectedPId) != 5 && ConvertNumber(selectedPId) != 7; else otherPrograms">
+                  <ng-container *ngIf="!isResidencyExplorerProgram; else residencyExplorerHeader">
                 <td>{{hospitalData.imgpercentage==-99?"NA": hospitalData.imgpercentage==99?"NA":hospitalData.imgpercentage}}</td>
                 <td>{{hospitalData.nonUsImgPercentage==-99?"NA": hospitalData.nonUsImgPercentage==99?"NA":hospitalData.nonUsImgPercentage}}</td>
                  </ng-container>
-                <ng-template #otherPrograms>
+                <ng-template #residencyExplorerHeader>
                 <td>
-                    {{(ConvertNumber(hospitalData.studentType_usimg)+ConvertNumber(hospitalData.studentType_nonusimg))>100?100:ConvertNumber(hospitalData.studentType_usimg)+ConvertNumber(hospitalData.studentType_nonusimg)}}
+                    {{(ConvertNumber(hospitalData.studentType_usimg))>100?100:ConvertNumber(hospitalData.studentType_usimg)}}
                   </td>
                   <td>
                     {{ConvertNumber(hospitalData.studentType_nonusimg)}}
@@ -392,7 +400,12 @@
               <th>City</th>
               <th>State</th>
               <th>Frieda Id</th>
-              <th>IMG Percentage<font color="red">(Frieda)</font></th>
+              <ng-container *ngIf="!isResidencyExplorerProgram; else residencyExplorerHeader">
+                  <th>IMG Percentage<font color="red">(Frieda)</font></th>
+              </ng-container>
+              <ng-template #residencyExplorerHeader>
+                <th>US IMG Percentage<font color="blue">(Residency Explorer)</font></th>
+              </ng-template>
               <th>NON US IMG Percentage<font color="blue">(Residency Explorer)</font></th>
               <!--<th *ngIf="userProfile.Role == 'Admin' || (!ListUserHasUnverified.length && ListUserHasverified.length)">-->
                 <th>
@@ -413,13 +426,13 @@
               <td>
                 {{fav.value.Frieda}}
               </td>
-              <ng-container *ngIf="ConvertNumber(selectedPId) != 1 && ConvertNumber(selectedPId) != 2 && ConvertNumber(selectedPId) != 3 && ConvertNumber(selectedPId) != 4 && ConvertNumber(selectedPId) != 5 && ConvertNumber(selectedPId) != 7; else otherPrograms">
+              <ng-container *ngIf="!isResidencyExplorerProgram; else residencyExplorerHeader">
                 <td>{{ fav.value.ProgramInfo.imgpercentage }}</td>
                 <td>{{ fav.value.ProgramInfo.nonUsImgPercentage }}</td>
                  </ng-container>
-                <ng-template #otherPrograms>
+                <ng-template #residencyExplorerHeader>
                 <td>
-                    {{(ConvertNumber(fav.value.ProgramInfo.studentType_usimg)+ConvertNumber(fav.value.ProgramInfo.studentType_nonusimg))>100?100:ConvertNumber(fav.value.ProgramInfo.studentType_usimg)+ConvertNumber(fav.value.ProgramInfo.studentType_nonusimg)}}
+                    {{(ConvertNumber(fav.value.ProgramInfo.studentType_usimg))>100?100:ConvertNumber(fav.value.ProgramInfo.studentType_usimg)}}
                   </td>
                   <td>
                     <!--{{hospitalData.nonUsImgPercentage==-99?"NA": hospitalData.nonUsImgPercentage==99?"NA":hospitalData.nonUsImgPercentage}}-->
@@ -696,45 +709,104 @@
           </table>
         </div>
         <div class="table-responsive">
-          <table class="table table-hover table-bordered table-striped">
-            <thead>
-              <tr>
-                <th>Participating in ERAS</th>
-                <th>IMG Percentage  <font color="red">(Frieda)</font></th>
-                <th>Non US IMG Percentage <font color="blue">(Residency Explorer)</font></th>
-                
-                <th>US MD+DO Percentage</th>
-                <th *ngIf="userProfile.Role == 'Admin' || (!ListUserHasUnverified.length && ListUserHasverified.length)">Last Updated</th>
-              </tr>
-            </thead>
-            <tbody id="table1">
-              <tr>
-                <td>{{  selectedHospitalData.Eras  }}</td>
-                <ng-container *ngIf="ConvertNumber(selectedPId) != 1 && ConvertNumber(selectedPId) != 2 && ConvertNumber(selectedPId) != 3 && ConvertNumber(selectedPId) != 4 && ConvertNumber(selectedPId) != 5 && ConvertNumber(selectedPId) != 7; else otherPrograms">
-                <td>{{ selectedHospitalData.imgpercentage }}</td>
-                <td>{{ selectedHospitalData.nonUsImgPercentage }}</td>
-                <td>{{ selectedHospitalData.usmdPercentageNew }}</td>
-                 </ng-container>
-                <ng-template #otherPrograms>
-                <td>
-                    {{(ConvertNumber(selectedHospitalData.studentType_usimg)+ConvertNumber(selectedHospitalData.studentType_nonusimg))>100?100:ConvertNumber(selectedHospitalData.studentType_usimg)+ConvertNumber(selectedHospitalData.studentType_nonusimg)}}
-                  </td>
-                  <td>
-                    <!--{{hospitalData.nonUsImgPercentage==-99?"NA": hospitalData.nonUsImgPercentage==99?"NA":hospitalData.nonUsImgPercentage}}-->
-                    {{ConvertNumber(selectedHospitalData.studentType_nonusimg)}}
-                  </td>
-                
-                <td>
-                    {{(ConvertNumber(selectedHospitalData.studentType_usmdgrad)+ConvertNumber(selectedHospitalData.studentType_usdograd))>100?100:ConvertNumber(selectedHospitalData.studentType_usmdgrad)+ConvertNumber(selectedHospitalData.studentType_usdograd)}}
-                  </td>
-                  </ng-template>
-                <!--<td>{{ selectedHospitalData.usmdPercentageNew }}</td>-->
-                <!--<td *ngIf="userProfile.Role == 'Admin' || (!ListUserHasUnverified.length && ListUserHasverified.length)">-->
-                <td >{{ selectedHospitalData.Date }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+  <table class="table table-hover table-bordered table-striped">
+    <thead>
+      <tr>
+        <th>Participating in ERAS</th>
+
+        <ng-container *ngIf="!isResidencyExplorerProgram; else residencyExplorerHeader">
+          <th>
+            IMG Percentage
+            <font color="red">(Frieda)</font>
+          </th>
+        </ng-container>
+
+        <ng-template #residencyExplorerHeader>
+          <th>
+            US IMG Percentage
+            <font color="blue">(Residency Explorer)</font>
+          </th>
+        </ng-template>
+
+        <th>
+          Non US IMG Percentage
+          <font color="blue">(Residency Explorer)</font>
+        </th>
+
+        <th>US MD+DO Percentage</th>
+
+        <th
+          *ngIf="
+            userProfile.Role === 'Admin' ||
+            (!ListUserHasUnverified.length && ListUserHasverified.length)
+          "
+        >
+          Last Updated
+        </th>
+      </tr>
+    </thead>
+
+    <tbody id="table1">
+      <tr>
+        <td>{{ selectedHospitalData.Eras }}</td>
+
+        <!-- Frieda -->
+        <ng-container *ngIf="!isResidencyExplorerProgram; else residencyExplorerData">
+          <td>
+            {{ selectedHospitalData.imgpercentage }}
+          </td>
+
+          <td>
+            {{ selectedHospitalData.nonUsImgPercentage }}
+          </td>
+
+          <td>
+            {{ selectedHospitalData.usmdPercentageNew }}
+          </td>
+        </ng-container>
+
+        <!-- Residency Explorer -->
+        <ng-template #residencyExplorerData>
+          <td>
+            {{
+              ConvertNumber(selectedHospitalData.studentType_usimg) > 100
+                ? 100
+                : ConvertNumber(selectedHospitalData.studentType_usimg)
+            }}
+          </td>
+
+          <td>
+            {{
+              ConvertNumber(
+                selectedHospitalData.studentType_nonusimg
+              )
+            }}
+          </td>
+
+          <td>
+            {{
+              ConvertNumber(selectedHospitalData.studentType_usmdgrad) +
+                ConvertNumber(selectedHospitalData.studentType_usdograd) >
+              100
+                ? 100
+                : ConvertNumber(selectedHospitalData.studentType_usmdgrad) +
+                  ConvertNumber(selectedHospitalData.studentType_usdograd)
+            }}
+          </td>
+        </ng-template>
+
+        <td
+          *ngIf="
+            userProfile.Role === 'Admin' ||
+            (!ListUserHasUnverified.length && ListUserHasverified.length)
+          "
+        >
+          {{ selectedHospitalData.Date }}
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
 
         <div class="table-responsive">
           <table class="table table-hover table-bordered table-striped">
