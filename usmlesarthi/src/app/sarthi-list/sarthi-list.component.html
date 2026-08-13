@@ -277,7 +277,7 @@
                     {{
                       hospitalData?.hospital?.HName || hospitalsByProgram[selectedPId][hospitalData.HId]?.HName 
                     }}
-                    {{hospitalData?.hospital?.HId}}{{hospitalData?.hospital?.id}} 
+                    
                   </td>
                   <td>
                     {{ hospitalData?.hospital?.City || hospitalsByProgram[selectedPId][hospitalData.HId]?.City }}
@@ -286,11 +286,11 @@
                     {{hospitalData?.hospital?.State || hospitalsByProgram[selectedPId][hospitalData.HId]?.State}}
                   </td>
                   <td>
-                    {{ hospitalData.Frieda=="-149"?"": hospitalData.Frieda}}
+                    {{ hospitalData.Frieda=="-149"?"": getCleanValue(hospitalData.Frieda)}}
                   </td>
                   <ng-container *ngIf="!isResidencyExplorerProgram; else residencyExplorerHeader">
-                <td>{{hospitalData.imgpercentage==-99?"NA": hospitalData.imgpercentage==99?"NA":hospitalData.imgpercentage}}</td>
-                <td>{{hospitalData.nonUsImgPercentage==-99?"NA": hospitalData.nonUsImgPercentage==99?"NA":hospitalData.nonUsImgPercentage}}</td>
+                <td>{{hospitalData.imgpercentage==-99?"NA": hospitalData.imgpercentage==99?"NA":getCleanValue(hospitalData.imgpercentage)}}</td>
+                <td>{{hospitalData.nonUsImgPercentage==-99?"NA": hospitalData.nonUsImgPercentage==99?"NA":getCleanValue(hospitalData.nonUsImgPercentage)}}</td>
                  </ng-container>
                 <ng-template #residencyExplorerHeader>
                 <td>
@@ -304,10 +304,10 @@
                   
                   
                   <td *ngIf="selectedPId!= 1">
-                    {{ hospitalData?.SignalsSent }}
+                    {{ getCleanValue(hospitalData?.SignalsSent) }}
                   </td>
                   <td *ngIf="selectedPId== 1">
-                    {{ hospitalData?.GoldSentInterviewed }}
+                    {{ getCleanValue(hospitalData?.GoldSentInterviewed) }}
                   </td>
                   <!--<td *ngIf="userProfile.Role == 'Admin' || (!ListUserHasUnverified.length && ListUserHasverified.length)">-->
                     <td>
@@ -419,16 +419,16 @@
             <ng-container *ngFor="let fav of favorites | keyvalue; index as i">
             <tr  *ngIf="fav.value.hospital && fav.value.ProgramInfo">
               <td>{{ i + 1 }}</td>
-              <td>{{ programObject[fav.value.PId].PName }}</td>
-              <td>{{ fav.value.hospital?.HName }}</td>
-              <td>{{ fav.value.hospital?.City }}</td>
-              <td>{{ fav.value.hospital?.State }}</td>
+              <td>{{ getCleanValue(programObject[fav.value.PId].PName) }}</td>
+              <td>{{ getCleanValue(fav.value.hospital?.HName) }}</td>
+              <td>{{ getCleanValue(fav.value.hospital?.City) }}</td>
+              <td>{{ getCleanValue(fav.value.hospital?.State) }}</td>
               <td>
-                {{fav.value.Frieda}}
+                {{getCleanValue(fav.value.Frieda)}}
               </td>
               <ng-container *ngIf="!isResidencyExplorerProgram; else residencyExplorerHeader">
-                <td>{{ fav.value.ProgramInfo.imgpercentage }}</td>
-                <td>{{ fav.value.ProgramInfo.nonUsImgPercentage }}</td>
+                <td>{{ getCleanValue(fav.value.ProgramInfo.imgpercentage) }}</td>
+                <td>{{ getCleanValue(fav.value.ProgramInfo.nonUsImgPercentage) }}</td>
                  </ng-container>
                 <ng-template #residencyExplorerHeader>
                 <td>
@@ -442,10 +442,10 @@
                   </ng-template>
                
               <!--<td>
-                {{fav.value.ProgramInfo.imgpercentage==-99?"NA": fav.value.ProgramInfo.imgpercentage==99?"NA":fav.value.ProgramInfo.imgpercentage}}
+                {{fav.value.ProgramInfo.imgpercentage==-99?"NA": fav.value.ProgramInfo.imgpercentage==99?"NA":getCleanValue(fav.value.ProgramInfo.imgpercentage)}}
               </td>
               <td>
-                {{fav.value.ProgramInfo.nonUsImgPercentage==-99?"NA":fav.value.ProgramInfo.nonUsImgPercentage==99?"NA":fav.value.ProgramInfo.nonUsImgPercentage}}
+                {{fav.value.ProgramInfo.nonUsImgPercentage==-99?"NA":fav.value.ProgramInfo.nonUsImgPercentage==99?"NA":getCleanValue(fav.value.ProgramInfo.nonUsImgPercentage)}}
               </td>-->
               <!--<td *ngIf="userProfile.Role == 'Admin' || (!ListUserHasUnverified.length && ListUserHasverified.length)">-->
                 <td>
@@ -689,7 +689,7 @@
             </thead>
             <tbody id="table1">
               <tr>
-                <td>{{ programObject[selectedHospitalData.PId]?.PName }}</td>
+                <td>{{ getCleanValue(programObject[selectedHospitalData.PId]?.PName) }}</td>
                 <td>{{  selectedHospitalData?.hospital?.City || hospitalsByProgram[selectedHospitalData.PId][selectedHid]?.City }} </td>
                 <td>{{  selectedHospitalData?.hospital?.State || hospitalsByProgram[selectedHospitalData.PId][selectedHid]?.State}}}</td>
                 <!-- <td>
@@ -753,15 +753,15 @@
         <!-- Frieda -->
         <ng-container *ngIf="!isResidencyExplorerProgram; else residencyExplorerData">
           <td>
-            {{ selectedHospitalData.imgpercentage }}
+            {{ getCleanValue(selectedHospitalData.imgpercentage) }}
           </td>
 
           <td>
-            {{ selectedHospitalData.nonUsImgPercentage }}
+            {{ getCleanValue(selectedHospitalData.nonUsImgPercentage) }}
           </td>
 
           <td>
-            {{ selectedHospitalData.usmdPercentageNew }}
+            {{ getCleanValue(selectedHospitalData.usmdPercentageNew) }}
           </td>
         </ng-container>
 
@@ -807,7 +807,7 @@
             (!ListUserHasUnverified.length && ListUserHasverified.length)
           "
         >
-          {{ selectedHospitalData.Date }}
+          {{ getCleanValue(selectedHospitalData.Date) }}
         </td>
       </tr>
     </tbody>
@@ -833,11 +833,11 @@
             </thead>
             <tbody id="table2">
               <tr>
-                <td>{{ selectedHospitalData.noVisaNew }}</td>
-                <td>{{ selectedHospitalData.j1VisaNew}}</td>
-                <td>{{ selectedHospitalData.h1VisaNew }}</td>
-                <td>{{ selectedHospitalData.f1VisaNew}}</td>
-                <td>{{ selectedHospitalData.h4VisaNew }}</td>
+                <td>{{ getCleanValue(selectedHospitalData.noVisaNew) }}</td>
+                <td>{{ getCleanValue(selectedHospitalData.j1VisaNew) }}</td>
+                <td>{{ getCleanValue(selectedHospitalData.h1VisaNew) }}</td>
+                <td>{{ getCleanValue(selectedHospitalData.f1VisaNew) }}</td>
+                <td>{{ getCleanValue(selectedHospitalData.h4VisaNew) }}</td>
               </tr>
             </tbody>
           </table>
@@ -878,75 +878,75 @@
                     <td style="font-weight: bold; width: 50%">
                       ACGME FREIDA ID Number
                     </td>
-                    <td>{{ selectedHospitalData.Frieda }}</td>
+                    <td>{{ getCleanValue(selectedHospitalData.Frieda) }}</td>
                   </tr>
                   <tr id="Frieda">
                     <td style="font-weight: bold; width: 50%">
                       Region 
                     </td>
-                    <td>{{ selectedHospitalData.region || 'NA' }}</td>
+                    <td>{{ getCleanValue(selectedHospitalData.region) }}</td>
                   </tr>
                   <tr id="Frieda">
                     <td style="font-weight: bold; width: 50%">
                       Primary Teaching Site 
                     </td>
-                    <td>{{ selectedHospitalData.teachingSiteNew || 'NA' }}</td>
+                    <td>{{ getCleanValue(selectedHospitalData.teachingSiteNew)}}</td>
                   </tr>
                   <tr id="Nrmp">
                     <td style="font-weight: bold; width: 50%">
                       Participating in NRMP
                     </td>
-                    <td>{{ selectedHospitalData.Nrmp }}</td>
+                    <td>{{ getCleanValue(selectedHospitalData.Nrmp) }}</td>
                   </tr>
                   <tr id="NrmpPrelim">
                     <td style="font-weight: bold; width: 50%">
                       NRMP Number (Preliminary)
                     </td>
-                    <td>{{ selectedHospitalData.NrmpPrelim  }}</td>
+                    <td>{{ getCleanValue(selectedHospitalData.NrmpPrelim)  }}</td>
                   </tr>
 
                   <tr id="NrmpCategorical">
                     <td style="font-weight: bold">NRMP Number (Categorial)</td>
-                    <td>{{  selectedHospitalData.NrmpCategorical }}</td>
+                    <td>{{  getCleanValue(selectedHospitalData.NrmpCategorical) }}</td>
                   </tr>
 
                   <tr id="NrmpPriCase">
                     <td style="font-weight: bold">
                       NRMP Number (Primary Care Categorial)
                     </td>
-                    <td>{{ selectedHospitalData.NrmpPriCase }}</td>
+                    <td>{{ getCleanValue(selectedHospitalData.NrmpPriCase) }}</td>
                   </tr>
                   <tr id="NrmpAdvance">
                     <td style="font-weight: bold">NRMP Number (Advance)</td>
-                    <td>{{ selectedHospitalData.NrmpAdvance }}</td>
+                    <td>{{ getCleanValue(selectedHospitalData.NrmpAdvance) }}</td>
                   </tr>
                   <ng-container *ngIf="!isResidencyExplorerProgram; else residencyExplorerData1">
                   <tr id="usImgPercentage">
                     <td style="font-weight: bold">US IMG percentage <font color="red">(Frieda)</font></td>
-                    <td>{{ selectedHospitalData.usImgPercentage }}</td>
+                    <td>{{ getCleanValue(selectedHospitalData.usImgPercentage) }}</td>
                   </tr>
                   <tr id="nonUsImgPercentage">
                     <td style="font-weight: bold">DO percentage</td>
-                    <td>{{ selectedHospitalData.doPercentageNew }}</td>
+                    <td>{{ getCleanValue(selectedHospitalData.doPercentageNew) }}</td>
                   </tr>
 
                   </ng-container>
                   <ng-template #residencyExplorerData1>
                     <tr id="usImgPercentage">
                       <td style="font-weight: bold">US IMG percentage <font color="blue">(Residency Explorer)</font></td>
-                    <td>{{ selectedHospitalData.studentType_usimg }}</td>
+                    <td>{{ getCleanValue(selectedHospitalData.studentType_usimg) }}</td>
                   </tr>
                     <tr id="usImgPercentage">
                       <td style="font-weight: bold">NON US IMG percentage <font color="blue">(Residency Explorer)</font></td>
-                    <td>{{ selectedHospitalData.studentType_nonusimg }}</td>
+                    <td>{{ getCleanValue(selectedHospitalData.studentType_nonusimg) }}</td>
                   </tr>
                   <tr id="nonUsImgPercentage">
                     <td style="font-weight: bold">MD percentage</td>
-                    <td>{{ selectedHospitalData.studentType_usmdgrad }}</td>
+                    <td>{{ getCleanValue(selectedHospitalData.studentType_usmdgrad) }}</td>
                   </tr>
                   <tr id="nonUsImgPercentage">
                     <td style="font-weight: bold">DO percentage</td>
-                    <td>{{ selectedHospitalData.studentType_usdograd }}</td>
+                    <td>{{ getCleanValue(selectedHospitalData.studentType_usdograd) }}</td>
                   </tr>
                   </ng-template>
                   <tr id="imgpercentageComments">
@@ -965,7 +965,7 @@
                         <br />
                       </ng-template>
                       <div *ngIf="!selectedHospitalData.imgpercentageCommentsMerged?.includes(selectedHospitalData.imgpercentageComments)">
-                        {{ selectedHospitalData.imgpercentageComments }}
+                        {{ getCleanValue(selectedHospitalData.imgpercentageComments) }}
                       </div>
                     </td>
                   </tr>
@@ -973,13 +973,13 @@
                     <td style="font-weight: bold">
                       Number of First Year Spots available - Categorical
                     </td>
-                    <td>{{ selectedHospitalData.FirstYearSpots }}</td>
+                    <td>{{ getCleanValue(selectedHospitalData.FirstYearSpots) }}</td>
                   </tr>
                   <tr id="FirstYearSpotsPrelim">
                     <td style="font-weight: bold">
                       Number of First Year Spots available - Preliminary
                     </td>
-                    <td>{{ selectedHospitalData.FirstYearSpotsPrelim }}</td>
+                    <td>{{ getCleanValue(selectedHospitalData.FirstYearSpotsPrelim) }}</td>
                   </tr>
                   <tr id="FirstYearSpotsComments">
                     <td style="font-weight: bold">
@@ -997,7 +997,7 @@
                         <br />
                       </ng-template>
                       <div *ngIf="!selectedHospitalData.FirstYearSpotsCommentsMerged?.includes(selectedHospitalData.FirstYearSpotsComments)">
-                        {{ selectedHospitalData.FirstYearSpotsComments }}
+                        {{ getCleanValue(selectedHospitalData.FirstYearSpotsComments) }}
                       </div>
                     </td>
                   </tr>
@@ -1019,52 +1019,52 @@
                 >
                   <tr id="Step1Req">
                     <td style="font-weight: bold">Preferred STEP 1 score</td>
-                    <td>{{ selectedHospitalData.Step1Req }}</td>
+                    <td>{{ getCleanValue(selectedHospitalData.Step1Req) }}</td>
                   </tr>
                   <tr id="Step1ScoreLastYearMin">
                     <td style="font-weight: bold">Minimum</td>
-                    <td>{{ selectedHospitalData.Step1ScoreLastYearMin }}</td>
+                    <td>{{ getCleanValue(selectedHospitalData.Step1ScoreLastYearMin) }}</td>
                   </tr>
                   <!-- <tr id="Step1ScoreLastYearMax">
                     <td style="font-weight: bold">Maximum</td>
-                    <td>{{ selectedHospitalData.Step1ScoreLastYearMax }}</td>
+                    <td>{{ getCleanValue(selectedHospitalData.Step1ScoreLastYearMax) }}</td>
                   </tr> -->
                   <tr id="Step1Accept">
                     <td style="font-weight: bold; width: 50%">
                       Applicants must have passed Step 1 to be considered
                     </td>
-                    <td>{{ selectedHospitalData.Step1AcceptN || 'NA'}}</td>
+                    <td>{{ getCleanValue(selectedHospitalData.Step1AcceptN)}}</td>
                   </tr>
                   <tr id="Step1Accept">
                     <td style="font-weight: bold; width: 50%">
                       Condition about number of Step 1 attempts
                     </td>
-                    <td>{{ selectedHospitalData.Step1Accept }} </td>
+                    <td>{{ getCleanValue(selectedHospitalData.Step1Accept) }} </td>
                   </tr>
                  
                   <tr id="Step2Req">
                     <td style="font-weight: bold">Preferred STEP 2 CK Score</td>
-                    <td>{{ selectedHospitalData.Step2Req}}</td>
+                    <td>{{ getCleanValue(selectedHospitalData.Step2Req)}}</td>
                   </tr>
                   <tr id="Step2Min">
                     <td style="font-weight: bold">Minimum</td>
-                    <td>{{ selectedHospitalData.Step2Min }}</td>
+                    <td>{{ getCleanValue(selectedHospitalData.Step2Min) }}</td>
                   </tr>
                   <!-- <tr id="Step2Max">
                     <td style="font-weight: bold">Maximum</td>
-                    <td>{{ selectedHospitalData.Step2Max }}</td>
+                    <td>{{ getCleanValue(selectedHospitalData.Step2Max) }}</td>
                   </tr> -->
                   <tr id="Step1Accept">
                     <td style="font-weight: bold; width: 50%">
                       Applicants must have passed Step 2 to be considered
                     </td>
-                    <td>{{ selectedHospitalData.Step2AcceptN || 'NA'}}</td>
+                    <td>{{ getCleanValue(selectedHospitalData.Step2AcceptN) }}</td>
                   </tr>
                   <tr id="Step2Accept">
                     <td style="font-weight: bold">
                       Condition about number of Step 2 CK attempts
                     </td>
-                    <td>{{ selectedHospitalData.Step2Accept }}</td>
+                    <td>{{ getCleanValue(selectedHospitalData.Step2Accept) }}</td>
                   </tr>
                   <!--<tr id="Step2CSReq">
                     <td style="font-weight: bold">OET Requirement</td>
@@ -1080,7 +1080,7 @@
                     <td style="font-weight: bold">
                       What is Step 3 requirement
                     </td>
-                    <td>{{ selectedHospitalData.Step3Accept }}</td>
+                    <td>{{ getCleanValue(selectedHospitalData.Step3Accept) }}</td>
                   </tr>
                   <tr id="USMLEExamComments">
                     <td style="font-weight: bold">
@@ -1097,7 +1097,7 @@
                         <br />
                       </ng-template>
                       <div *ngIf="!selectedHospitalData.USMLEExamCommentsMerged?.includes(selectedHospitalData.USMLEExamComments)">
-                        {{ selectedHospitalData.USMLEExamComments }}
+                        {{ getCleanValue(selectedHospitalData.USMLEExamComments) }}
                       </div>
                     </td>
                   </tr>
@@ -1127,13 +1127,13 @@
                         <td  style="font-weight: bold; width: 50%">
                           {{ entry }} Applicant Count:
                         </td>
-                        <td>{{ (userProfile.Role == 'Admin' || (!ListUserHasUnverified.length && ListUserHasverified.length))?selectedHospitalData.yearlyData[entry].TotalApplicantsForTheYear:'NA' }}</td>
+                        <td>{{ (userProfile.Role == 'Admin' || (!ListUserHasUnverified.length && ListUserHasverified.length))?getCleanValue(selectedHospitalData.yearlyData[entry].TotalApplicantsForTheYear):'N/A' }}</td>
                       </tr>
                       <tr id="Step3Accept">
                         <td style="font-weight: bold; width: 50%" >
                           {{ entry }} Applicants Invited to Interview Count
                         </td>
-                        <td>{{ (userProfile.Role == 'Admin' || (!ListUserHasUnverified.length && ListUserHasverified.length))?selectedHospitalData.yearlyData[entry].TotalAplicantsInvitedForTheYear:'NA' }}</td>
+                        <td>{{ (userProfile.Role == 'Admin' || (!ListUserHasUnverified.length && ListUserHasverified.length))?getCleanValue(selectedHospitalData.yearlyData[entry].TotalAplicantsInvitedForTheYear):'N/A' }}</td>
                       </tr>
                       
                    
@@ -1157,23 +1157,23 @@
                       </tr>
                       <tr>
                         <th>Sent</th>
-                        <td>{{(userProfile.Role == 'Admin' || (!ListUserHasUnverified.length && ListUserHasverified.length))?selectedHospitalData.yearlyData[entry].SentInterviewed:'NA' }}</td>
+                        <td>{{(userProfile.Role == 'Admin' || (!ListUserHasUnverified.length && ListUserHasverified.length))?getCleanValue(selectedHospitalData.yearlyData[entry].SentInterviewed):'N/A' }}</td>
                         <th>Aligned</th>
-                        <td>{{(userProfile.Role == 'Admin' || (!ListUserHasUnverified.length && ListUserHasverified.length))?selectedHospitalData.yearlyData[entry].AlignedInterviewed:'NA'}}</td>
+                        <td>{{(userProfile.Role == 'Admin' || (!ListUserHasUnverified.length && ListUserHasverified.length))?getCleanValue(selectedHospitalData.yearlyData[entry].AlignedInterviewed):'N/A'}}</td>
                       </tr>
                       <tr>
                         <th>Did not sent</th>
-                        <td>{{(userProfile.Role == 'Admin' || (!ListUserHasUnverified.length && ListUserHasverified.length))?selectedHospitalData.yearlyData[entry].DidnotInterviewed:'NA'}}</td>
+                        <td>{{(userProfile.Role == 'Admin' || (!ListUserHasUnverified.length && ListUserHasverified.length))?getCleanValue(selectedHospitalData.yearlyData[entry].DidnotInterviewed):'N/A'}}</td>
                         
                         <th>Not aligned</th>
-                        <td>{{(userProfile.Role == 'Admin' || (!ListUserHasUnverified.length && ListUserHasverified.length))?selectedHospitalData.yearlyData[entry].NotalignedInterviewed:'NA'}}</td>
+                        <td>{{(userProfile.Role == 'Admin' || (!ListUserHasUnverified.length && ListUserHasverified.length))?getCleanValue(selectedHospitalData.yearlyData[entry].NotalignedInterviewed):'N/A'}}</td>
                       </tr>
                       <tr>
                         <th></th>
                         <td></td>
                         
                         <th>No Preference</th>
-                        <td>{{(userProfile.Role == 'Admin' || (!ListUserHasUnverified.length && ListUserHasverified.length))?selectedHospitalData.yearlyData[entry].NopreferenceInterviewed:'NA'}}</td>
+                        <td>{{(userProfile.Role == 'Admin' || (!ListUserHasUnverified.length && ListUserHasverified.length))?getCleanValue(selectedHospitalData.yearlyData[entry].NopreferenceInterviewed):'N/A'}}</td>
                       </tr>
                     
                     </table>
@@ -1191,22 +1191,22 @@
                       </tr>
                       <tr>
                         <th>Gold Sent</th>
-                        <td>{{ (userProfile.Role == 'Admin' || (!ListUserHasUnverified.length && ListUserHasverified.length))?selectedHospitalData.yearlyData[entry].GoldSentInterviewed:'NA' }}</td>
+                        <td>{{ (userProfile.Role == 'Admin' || (!ListUserHasUnverified.length && ListUserHasverified.length))?getCleanValue(selectedHospitalData.yearlyData[entry].GoldSentInterviewed):'N/A' }}</td>
                         <th>Aligned</th>
-                        <td>{{(userProfile.Role == 'Admin' || (!ListUserHasUnverified.length && ListUserHasverified.length))?selectedHospitalData.yearlyData[entry].AlignedInterviewed:'NA'}}</td>
+                        <td>{{(userProfile.Role == 'Admin' || (!ListUserHasUnverified.length && ListUserHasverified.length))?getCleanValue(selectedHospitalData.yearlyData[entry].AlignedInterviewed):'N/A'}}</td>
                       </tr>
                       <tr>
                         <th>Silver Sent</th>
-                        <td>{{(userProfile.Role == 'Admin' || (!ListUserHasUnverified.length && ListUserHasverified.length))?selectedHospitalData.yearlyData[entry].SilverInterviewed:'NA'}}</td>
+                        <td>{{(userProfile.Role == 'Admin' || (!ListUserHasUnverified.length && ListUserHasverified.length))?getCleanValue(selectedHospitalData.yearlyData[entry].SilverInterviewed):'N/A'}}</td>
                         <th>Not Aligned</th>
-                        <td>{{(userProfile.Role == 'Admin' || (!ListUserHasUnverified.length && ListUserHasverified.length))?selectedHospitalData.yearlyData[entry].NotalignedInterviewed:'NA'}}</td>
+                        <td>{{(userProfile.Role == 'Admin' || (!ListUserHasUnverified.length && ListUserHasverified.length))?getCleanValue(selectedHospitalData.yearlyData[entry].NotalignedInterviewed):'N/A'}}</td>
                       </tr>
                       <tr>
                         <th>Did not sent</th>
-                        <td>{{(userProfile.Role == 'Admin' || (!ListUserHasUnverified.length && ListUserHasverified.length))?selectedHospitalData.yearlyData[entry].DidnotInterviewed:'NA'}}</td>
+                        <td>{{(userProfile.Role == 'Admin' || (!ListUserHasUnverified.length && ListUserHasverified.length))?getCleanValue(selectedHospitalData.yearlyData[entry].DidnotInterviewed):'N/A'}}</td>
                         
                         <th>No Preference</th>
-                        <td>{{(userProfile.Role == 'Admin' || (!ListUserHasUnverified.length && ListUserHasverified.length))?selectedHospitalData.yearlyData[entry].NopreferenceInterviewed:'NA'}}</td>
+                        <td>{{(userProfile.Role == 'Admin' || (!ListUserHasUnverified.length && ListUserHasverified.length))?getCleanValue(selectedHospitalData.yearlyData[entry].NopreferenceInterviewed):'N/A'}}</td>
                       </tr>
                     
                     </table>
@@ -1233,24 +1233,24 @@
                     <td style="font-weight: bold">
                       Application deadline for IMGs
                     </td>
-                    <td>{{ selectedHospitalData.AppDeadline }}</td>
+                    <td>{{ getCleanValue(selectedHospitalData.AppDeadline) }}</td>
                   </tr>
                   <!--<tr id="NumInterviews">
                     <td style="font-weight: bold">
                       Number of interview last year
                     </td>
-                    <td>{{ selectedHospitalData.NumInterviews }}</td>
+                    <td>{{ getCleanValue(selectedHospitalData.NumInterviews) }}</td>
                   </tr>-->
                   <tr id="LORNum">
                     <td style="font-weight: bold">LOR Number required</td>
-                    <td>{{ selectedHospitalData.LORNum }}</td>
+                    <td>{{ getCleanValue(selectedHospitalData.LORNum) }}</td>
                   </tr>
 
                   <tr id="LORReq">
                     <td style="font-weight: bold; width: 50%">
                       Does Program require LOR from home country
                     </td>
-                    <td>{{ selectedHospitalData.LORReq }}</td>
+                    <td>{{ getCleanValue(selectedHospitalData.LORReq) }}</td>
                   </tr>
                   <!----<tr id="PTALReq">
                       <td style="font-weight: bold;">Is PTAL required (california specific requirement) at time of
@@ -1262,75 +1262,75 @@
                     <td style="font-weight: bold">
                       Is Spanish proficiency required
                     </td>
-                    <td>{{ selectedHospitalData.SpanishReq }}</td>
+                    <td>{{ getCleanValue(selectedHospitalData.SpanishReq) }}</td>
                   </tr>
                   <tr id="USCEReq">
                     <td style="font-weight: bold">
                       How many months of USCE Required
                     </td>
-                    <td>{{ selectedHospitalData.USCEReq }}</td>
+                    <td>{{ getCleanValue(selectedHospitalData.USCEReq) }}</td>
                   </tr>
                   <tr id="USCENotCon">
                     <td style="font-weight: bold">
                       What type of USCE does it not consider
                     </td>
-                    <td>{{ selectedHospitalData.USCENotCon }}</td>
+                    <td>{{ getCleanValue(selectedHospitalData.USCENotCon) }}</td>
                   </tr>
                   <tr id="USCEReqOrPref">
                     <td style="font-weight: bold">Is USCE Required?</td>
                     <td>
-                      {{ selectedHospitalData.USCEReqOrPref }}
+                      {{ getCleanValue(selectedHospitalData.USCEReqOrPref) }}
                     </td>
                   </tr>
                   <tr id="ECFMGReq">
                     <td style="font-weight: bold">
                       ECFMG certificate required at time of application
                     </td>
-                    <td>{{ selectedHospitalData.ECFMGReq }}</td>
+                    <td>{{ getCleanValue(selectedHospitalData.ECFMGReq) }}</td>
                   </tr>
                   <tr id="ResearchOpp">
                     <td style="font-weight: bold">
                       Does program offer research opportunities during residency
                     </td>
-                    <td>{{ selectedHospitalData.ResearchOpp }}</td>
+                    <td>{{ getCleanValue(selectedHospitalData.ResearchOpp) }}</td>
                   </tr>
                   <tr id="ProgramPref">
                     <td style="font-weight: bold">
                       Does program prefer any of the following?
                     </td>
-                    <td>{{ selectedHospitalData.ProgramPref }}</td>
+                    <td>{{ getCleanValue(selectedHospitalData.ProgramPref) }}</td>
                   </tr>
                   <!-- <tr id="InhouseFellow">
                     <td style="font-weight: bold">
                       Are there inhouse fellowships
                     </td>
-                    <td>{{ selectedHospitalData.InhouseFellow }}</td>
+                    <td>{{ getCleanValue(selectedHospitalData.InhouseFellow) }}</td>
                   </tr> -->
                   <tr id="DirName">
                     <td style="font-weight: bold">Program director details</td>
-                    <td>{{ selectedHospitalData.programDirectorNew }}</td>
+                    <td>{{ getCleanValue(selectedHospitalData.programDirectorNew) }}</td>
                   </tr>
                   <!-- <tr id="DirEmail">
                     <td style="font-weight: bold">Program director Email</td>
-                    <td>{{ selectedHospitalData.DirEmail }}</td>
+                    <td>{{ getCleanValue(selectedHospitalData.DirEmail) }}</td>
                   </tr> -->
                   <tr id="CorName">
                     <td style="font-weight: bold">Person to contact details</td>
-                    <td>{{ selectedHospitalData.personToContactNew }}</td>
+                    <td>{{ getCleanValue(selectedHospitalData.personToContactNew) }}</td>
                   </tr>
                   <!-- <tr id="CorEmail">
                     <td style="font-weight: bold">Coordinator Email</td>
-                    <td>{{ selectedHospitalData.CorEmail }}</td>
+                    <td>{{ getCleanValue(selectedHospitalData.CorEmail) }}</td>
                   </tr>
                   <tr id="CorPhone">
                     <td style="font-weight: bold">Coordinator Phone</td>
-                    <td>{{ selectedHospitalData.CorPhone }}</td>
+                    <td>{{ getCleanValue(selectedHospitalData.CorPhone) }}</td>
                   </tr> -->
                   <tr id="address">
                     <td style="font-weight: bold">
                       Full Correspondence Address
                     </td>
-                    <td>{{ selectedHospitalData.address }}</td>
+                    <td>{{ getCleanValue(selectedHospitalData.address) }}</td>
                   </tr>
                   <tr id="website">
                     <td style="font-weight: bold">
@@ -1392,21 +1392,21 @@
                           </tr>
                       <tr>
                         <th>Year 1</th>
-                        <td>{{selectedHospitalData.year1_salary}}</td>
-                        <td>{{selectedHospitalData.year1_paidSickDays}}</td>
-                        <td>{{selectedHospitalData.year1_paidVacationDays}}</td>
+                        <td>{{getCleanValue(selectedHospitalData.year1_salary)}}</td>
+                        <td>{{getCleanValue(selectedHospitalData.year1_paidSickDays)}}</td>
+                        <td>{{getCleanValue(selectedHospitalData.year1_paidVacationDays)}}</td>
                       </tr>
                       <tr>
                         <th>Year 2</th>
-                        <td>{{selectedHospitalData.year2_salary}}</td>
-                        <td>{{selectedHospitalData.year2_paidSickDays}}</td>
-                        <td>{{selectedHospitalData.year2_paidVacationDays}}</td>
+                        <td>{{getCleanValue(selectedHospitalData.year2_salary)}}</td>
+                        <td>{{getCleanValue(selectedHospitalData.year2_paidSickDays)}}</td>
+                        <td>{{getCleanValue(selectedHospitalData.year2_paidVacationDays)}}</td>
                       </tr>
                       <tr>
                         <th>Year 3</th>
-                        <td>{{selectedHospitalData.year3_salary}}</td>
-                        <td>{{selectedHospitalData.year3_paidSickDays}}</td>
-                        <td>{{selectedHospitalData.year3_paidVacationDays}}</td>
+                        <td>{{getCleanValue(selectedHospitalData.year3_salary)}}</td>
+                        <td>{{getCleanValue(selectedHospitalData.year3_paidSickDays)}}</td>
+                        <td>{{getCleanValue(selectedHospitalData.year3_paidVacationDays)}}</td>
                       </tr>
                      
                     
@@ -1456,27 +1456,27 @@
                         {{
                           interview[0].Step1Result === "Score" ||
                           interview[0].Step1Score
-                            ? interview[0].Step1Score
-                            : interview[0].Step1Result
+                            ? getCleanValue(interview[0].Step1Score)
+                            : getCleanValue(interview[0].Step1Result)
                         }}
                       </td>
                       <td>
                         {{
                           interview[0].Step2Result === "Score" ||
                           interview[0].Step2Score
-                            ? interview[0].Step2Score
-                            : interview[0].Step2Result
+                            ? getCleanValue(interview[0].Step2Score)
+                            : getCleanValue(interview[0].Step2Result)
                         }}
                       </td>
-                      <td>{{ interview[0].YOG }}</td>
-                      <td>{{ interview[0].USCE }}</td>
+                      <td>{{ getCleanValue(interview[0].YOG) }}</td>
+                      <td>{{ getCleanValue(interview[0].USCE) }}</td>
                       <td>
                         <ng-template
                           ngFor
                           let-visa
                           [ngForOf]="interview[0].Visas"
                         >
-                          {{ customVisa[visa].Type }}
+                          {{ getCleanValue(customVisa[visa].Type) }}
                           <br />
                         </ng-template>
                       </td>
@@ -1540,33 +1540,33 @@
                         {{
                           interview[0].Step1Result === "Score" ||
                           interview[0].Step1Score
-                            ? interview[0].Step1Score
-                            : interview[0].Step1Result
+                            ? getCleanValue(interview[0].Step1Score)
+                            : getCleanValue(interview[0].Step1Result)
                         }}
                       </td>
                       <td>
                         {{
                           interview[0].Step2Result === "Score" ||
                           interview[0].Step2Score
-                            ? interview[0].Step2Score
-                            : interview[0].Step2Result
+                            ? getCleanValue(interview[0].Step2Score)
+                            : getCleanValue(interview[0].Step2Result)
                         }}
                       </td>
-                      <td>{{ interview[0].YOG }}</td>
-                      <td>{{ interview[0].USCE }}</td>
+                      <td>{{ getCleanValue(interview[0].YOG) }}</td>
+                      <td>{{ getCleanValue(interview[0].USCE) }}</td>
                       <td>
                         <ng-template
                           ngFor
                           let-visa
                           [ngForOf]="interview[0].Visas"
                         >
-                          {{ customVisa[visa].Type }}
+                          {{ getCleanValue(customVisa[visa].Type) }}
                           <br />
                         </ng-template>
                       </td>
                       <td>
                         {{
-                          interview[1].yearMatch ? interview[1].yearMatch : "NA"
+                          interview[1].yearMatch ? getCleanValue(interview[1].yearMatch) : "NA"
                         }}
                       </td>
                     </tr>

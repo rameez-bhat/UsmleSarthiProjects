@@ -314,8 +314,27 @@ exportProgramsToExcel() {
   }
 get isResidencyExplorerProgram(): boolean {
   const pid = this.ConvertNumber(this.selectedPId);
-
   return [1, 2, 3, 4, 5, 7].includes(pid);
+}
+getCleanValue(value: any): string {
+  if (value == null) return 'N/A';
+
+  const str = String(value).trim();
+
+  const invalidValues = [
+    '',
+    'na',
+    'n/a',
+    'not available',
+    'data not available',
+    'data unavailable',
+    'not applicable',
+    'nil',
+    'none',
+    '-',
+  ];
+
+  return invalidValues.includes(str.toLowerCase()) ? 'N/A' : str;
 }
   async takeMeToDashboard(event) {
   try {
