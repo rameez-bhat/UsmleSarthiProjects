@@ -733,8 +733,8 @@
           <font color="blue">(Residency Explorer)</font>
         </th>
 
-        <th>US MD+DO Percentage</th>
-
+        <th>US MD Percentage</th>
+        <th>DO Percentage</th>
         <th
           *ngIf="
             userProfile.Role === 'Admin' ||
@@ -785,12 +785,18 @@
 
           <td>
             {{
-              ConvertNumber(selectedHospitalData.studentType_usmdgrad) +
-                ConvertNumber(selectedHospitalData.studentType_usdograd) >
+              ConvertNumber(selectedHospitalData.studentType_usmdgrad)  >
               100
                 ? 100
-                : ConvertNumber(selectedHospitalData.studentType_usmdgrad) +
-                  ConvertNumber(selectedHospitalData.studentType_usdograd)
+                : ConvertNumber(selectedHospitalData.studentType_usmdgrad) 
+            }}
+          </td>
+          <td>
+            {{
+              
+                ConvertNumber(selectedHospitalData.studentType_usdograd) >100
+                ? 100
+                : ConvertNumber(selectedHospitalData.studentType_usdograd)
             }}
           </td>
         </ng-template>
@@ -914,6 +920,7 @@
                     <td style="font-weight: bold">NRMP Number (Advance)</td>
                     <td>{{ selectedHospitalData.NrmpAdvance }}</td>
                   </tr>
+                  <ng-container *ngIf="!isResidencyExplorerProgram; else residencyExplorerData1">
                   <tr id="usImgPercentage">
                     <td style="font-weight: bold">US IMG percentage <font color="red">(Frieda)</font></td>
                     <td>{{ selectedHospitalData.usImgPercentage }}</td>
@@ -922,10 +929,26 @@
                     <td style="font-weight: bold">DO percentage</td>
                     <td>{{ selectedHospitalData.doPercentageNew }}</td>
                   </tr>
-                  <tr id="imgpercentageCarribean">
-                    <td style="font-weight: bold">Carribean IMG percentage</td>
-                    <td>{{ selectedHospitalData.imgpercentageCarribean }}</td>
+
+                  </ng-container>
+                  <ng-template #residencyExplorerData1>
+                    <tr id="usImgPercentage">
+                      <td style="font-weight: bold">US IMG percentage <font color="blue">(Residency Explorer)</font></td>
+                    <td>{{ selectedHospitalData.studentType_usimg }}</td>
                   </tr>
+                    <tr id="usImgPercentage">
+                      <td style="font-weight: bold">NON US IMG percentage <font color="blue">(Residency Explorer)</font></td>
+                    <td>{{ selectedHospitalData.studentType_nonusimg }}</td>
+                  </tr>
+                  <tr id="nonUsImgPercentage">
+                    <td style="font-weight: bold">MD percentage</td>
+                    <td>{{ selectedHospitalData.studentType_usmdgrad }}</td>
+                  </tr>
+                  <tr id="nonUsImgPercentage">
+                    <td style="font-weight: bold">DO percentage</td>
+                    <td>{{ selectedHospitalData.studentType_usdograd }}</td>
+                  </tr>
+                  </ng-template>
                   <tr id="imgpercentageComments">
                     <td style="font-weight: bold">
                       Comments about IMG percentage and friendliness
