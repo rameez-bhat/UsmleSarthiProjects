@@ -3,5 +3,6 @@ export class Program {
         public PName : any,
         public PId   : any,
         public PIdN?: any,
+        public order?: any,
     ) {}
 }
