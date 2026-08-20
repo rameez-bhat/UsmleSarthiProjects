@@ -215,7 +215,7 @@ const navigate = useNavigate();
   	options.unshift({value:'',label:'-None-',FieldName:"LocationState"});
   	setLocationState(options)
   	const userDataSelected = await FetchDataFromCollection("Users", 20, "uid", "==", id, 0);
-  	
+
   	console.log("userDataSelected--->",userDataSelected)
         const userDataSelectedAgent = await FetchDataFromCollection("AgentUserConnection", 20, "uid", "==", id, 0);
         console.log("userDataSelectedAgent--->",userDataSelectedAgent)
@@ -242,7 +242,7 @@ const navigate = useNavigate();
          if(typeof userDataSelected[0]?.ReferralObject!="undefined" && typeof userDataSelected[0]?.ReferralObject?.Settings!="undefined")
         	{
         	  console.log("userDataSelected[0].ReferralObject?.Settings----->",userDataSelected[0].ReferralObject?.Settings)
-        	  
+
         	  let ServicesListExisting=[];
         	  Object.entries(userDataSelected[0].ReferralObject?.Settings).map(([key, value]) => {
         	    ServicesListExisting.push(value.service)
@@ -476,7 +476,7 @@ const adminOptions = await fetchAdminDataWithJoin(mainCollectionName,joinCollect
     	else
     	{
     	  const newUSCEDATA = {};
-        Object.keys(userDataSelected[0]['USCEDATA']).forEach((key, index) => 
+        Object.keys(userDataSelected[0]['USCEDATA']).forEach((key, index) =>
         {
           newUSCEDATA[`USCENO${index}`] = userDataSelected[0]['USCEDATA'][key];
         });
@@ -1187,8 +1187,8 @@ const options = uniqueCodes.map(codes => ({
       		dataTobesend['PhoneCountry']=StudentData.PhoneCountry;
       		dataTobesend['phoneNumber']=StudentData.phoneNumber;
       		dataTobesend['emailVerified']=true;
-      		dataTobesend['Role']="Default";
-      		StudentData['Role']="Default";
+      		//dataTobesend['Role']="Default";
+      		//StudentData['Role']="Default";
       		StudentData['emailVerified']=true;
       		StudentData['Locked']=1;
       		dataTobesend['SameAsWhatsAppNumber']=StudentData.SameAsWhatsAppNumber;
@@ -1677,7 +1677,7 @@ const handlePlanChange = (event) => {
       Go Back
     </button>
     )}
-   
+
 
 
       <Typography className="" variant="h6">Your Profile({StudentData.email}) {(LockProfile) && ( <label><font color="red">(Is Under Process With Admin. Please Contact Support If You Need Any Updation.)</font></label> )}</Typography>
@@ -1917,8 +1917,8 @@ const handlePlanChange = (event) => {
                   {errors.Step1Score && <span className="validationerror">{errors.Step1Score}</span>}
                 </FormControl>
               </Grid>
-    
-              
+
+
               {StudentData?.['ScoreData']?.['Step1Score']?.['Selected']?.['Name'] === 'Score' && (
                 <Grid item xs={6}>
                 <div className="InputLabel" ></div>
@@ -2388,7 +2388,7 @@ const handlePlanChange = (event) => {
 
                   )}
 
-               {/*   
+               {/*
                 <Grid item xs={6}>
                 <div className="InputLabel" ></div>
                   <TextField
@@ -2551,8 +2551,8 @@ const handlePlanChange = (event) => {
 </Grid>
               </div>
   			</div>
-  			
-  			
+
+
 
   			)}
 
@@ -3174,7 +3174,7 @@ const handlePlanChange = (event) => {
 
 
        </div>
-       
+
 
 <div className="RotationAddedPayment MatchPayment" >
        			<div className="TitleDiv">
@@ -3292,7 +3292,7 @@ const handlePlanChange = (event) => {
                       {errors.NotesObject?.NoteType?.[NotesIndex]  && <span className="validationerror">{errors.NotesObject?.NoteType?.[NotesIndex]}</span>}
                     </FormControl>
                   </Grid>
-              
+
               <Grid item xs={6} sx={{ display: 'none'}}>
               <div className="">
                 <div className="InputLabel">Team Member</div>

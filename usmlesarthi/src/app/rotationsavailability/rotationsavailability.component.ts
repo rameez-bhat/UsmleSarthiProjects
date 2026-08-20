@@ -388,8 +388,8 @@ updateFullPhoneNumber() {
 }
 closeEmailPopup() {
     //this.cleanupExpiredEnquiries();
-    this.submitEmailPopup=true;
-  this.ShowModelPopup=false;
+    //this.submitEmailPopup=true;
+  //this.ShowModelPopup=false;
 }
 onPhoneCountryChange(selected: any) 
   {
