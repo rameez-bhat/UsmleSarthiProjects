@@ -1,7 +1,35 @@
 const agencies = `
-123A
-124568M
-VAJKBR00009681
+VAJKBR00021511
+VAJKBR00027940
+VAJKBR00027931
+VAJKBR00027930
+VAJKBR00021521
+VAJKBR00027928
+VAJKBR00009445
+VAJKBR00021519
+VAJKBR00021515
+VAJKBR00027937
+VAJKBR00027929
+VAJKBR00021516
+VAJKBR00021510
+VAJKBR00021514
+VAJKBR00021517
+VAJKBR00023567
+VAJKBR00027924
+VAJKBR00027925
+VAJKBR00027926
+VAJKBR00027932
+VAJKBR00027942
+VAJKBR00045225
+VAJKBR00021513
+VAJKBR00027927
+VAJKBR00027933
+VAJKBR00027938
+VAJKBR00027939
+VAJKBR00021520
+VAJKBR00027934
+VAJKBR00027935
+VAJKBR00027936
 `;
 
 const agencyList = agencies
@@ -154,7 +182,49 @@ async function setInput(id, value) {
 
   return true;
 }
+async function setDateInput(id, value) {
+  const el = document.getElementById(id);
 
+  if (!el) {
+    console.log("DATE INPUT NOT FOUND:", id);
+    return false;
+  }
+
+  el.focus();
+
+  $(el)
+    .val(value)
+    .trigger("input")
+    .trigger("change")
+    .trigger("blur");
+
+  await waitForIdle();
+
+  console.log("Date set:", value);
+
+  return true;
+}
+async function setDateLast(id, value) {
+  await waitForIdle();
+
+  const el = document.getElementById(id);
+
+  if (!el) {
+    console.log("DATE INPUT NOT FOUND:", id);
+    return false;
+  }
+
+  el.value = value;
+
+  el.dispatchEvent(new Event("input", { bubbles: true }));
+  el.dispatchEvent(new Event("change", { bubbles: true }));
+
+  await sleep(300);
+
+  console.log("Date set:", el.value);
+
+  return true;
+}
 async function processAgencies() {
 
   for (let i = 0; i < agencyList.length; i++) {
@@ -167,7 +237,11 @@ async function processAgencies() {
 
     // Payment in favor is selected manually before running script
 
-
+	// 1. Select Vendor
+    const agencyFound1 = await selectByValue(
+      "ctl00_ContentPlaceHolder1_PayFav",
+      "T"
+    );
     // 1. Select Agency Name
     const agencyFound = await selectByValue(
       "ctl00_ContentPlaceHolder1_RBLpaymentinfavor",
@@ -199,7 +273,7 @@ async function processAgencies() {
 
 
     // 4. Voucher Date
-    await setInput(
+    await setDateInput(
       "ctl00_ContentPlaceHolder1_textboxtvDate",
       "19/08/2026"
     );
@@ -229,11 +303,17 @@ async function processAgencies() {
       "Completed:",
       agency
     );
-
+document
+  .getElementById("ctl00_ContentPlaceHolder1_btnadd")
+  .click();
+  await waitForIdle();
     /*
       Add/Save button can be inserted here later:
 
-      $("#BUTTON_ID").click();
+document
+  .getElementById("ctl00_ContentPlaceHolder1_btnadd")
+  .click();
+      //ConfirmSave();
       await waitForIdle();
     */
   }
@@ -243,9 +323,13 @@ async function processAgencies() {
   );
 }
 
-window.alert = function(message) {
+/*window.alert = function(message) {
   console.log("Alert blocked:", message);
   return true;
 };
+window.confirm = function(message) {
+  console.log("Confirm automatically accepted:", message);
+  return true;
+};*/
 
 processAgencies();
