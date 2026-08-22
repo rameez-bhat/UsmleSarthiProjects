@@ -102,6 +102,13 @@
             style="width: 400px; margin-right: 8px"
           />
           <ng-select
+            placeholder="Students From"
+            [items]="shownMedicalSchools"
+            [multiple]="true"
+            [(ngModel)]="selectedMedicalSchools"
+            (change)="filterSearch()" 
+          ></ng-select>
+          <ng-select
             placeholder="State"
             [items]="shownStates"
             [multiple]="true"
@@ -1210,6 +1217,57 @@
                       </tr>
                     
                     </table>
+                  </ng-container>
+                </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div
+              class="tab-pane fade"
+              [ngClass]="{
+                'show active': showPane == 'Medical school information',
+                hide: showPane != 'Medical school information'
+              }"
+            >
+              <div class="table-responsive">
+                <br />
+               
+                <div class="form-group">
+                  <div >
+
+                <br>
+                    <div  *ngIf="selectedHospitalData.medicalSchoolMatches && selectedHospitalData.medicalSchoolMatches.length">
+                      <ng-container>
+                        <h3>Most attended medical schools among current residents </h3>
+                    <table
+  class="table table-hover table-bordered table-striped"
+  style="width:100%"
+  *ngIf="selectedHospitalData.medicalSchoolMatches && selectedHospitalData.medicalSchoolMatches.length"
+>
+  <thead>
+    <tr>
+      <th>S.No.</th>
+      <th>Medical College / School</th>
+      <th>Number of Students%</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <tr *ngFor="let entry of selectedHospitalData.medicalSchoolMatches; let i = index">
+      <td>{{ i + 1 }}</td>
+
+      <td>
+        {{ entry.name }}
+      </td>
+
+      <td>
+        {{ entry.studentCount }}
+      </td>
+    </tr>
+  </tbody>
+</table>
+
                   </ng-container>
                 </div>
                   </div>

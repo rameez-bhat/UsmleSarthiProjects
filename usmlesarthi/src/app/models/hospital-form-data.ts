@@ -15,6 +15,8 @@ export class HospitalFormData {
         public Frieda: any;
         public HPId: any;
         public yearlyData: any;
+        public medicalSchoolMatches: any;
+        public medicalSchoolSearchTokens: any;
         public InhouseFellow: any;
         public LORNum: any;
         public LORReq: any;

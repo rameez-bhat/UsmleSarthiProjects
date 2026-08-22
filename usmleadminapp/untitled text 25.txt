@@ -1,0 +1,251 @@
+const agencies = `
+123A
+124568M
+VAJKBR00009681
+`;
+
+const agencyList = agencies
+  .split('\n')
+  .map(x => x.trim())
+  .filter(Boolean);
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function waitForIdle() {
+  await sleep(400);
+
+  while (
+    $("#ctl00_ContentPlaceHolder1_UpdateProgress1").length &&
+    $("#ctl00_ContentPlaceHolder1_UpdateProgress1").css("display") !== "none"
+  ) {
+    await sleep(400);
+  }
+
+  await sleep(500);
+}
+async function selectByValue(id, value) {
+  const select = document.getElementById(id);
+
+  if (!select) {
+    console.log("SELECT NOT FOUND:", id);
+    return false;
+  }
+
+  const optionExists = Array.from(select.options)
+    .some(option => String(option.value) === String(value));
+
+  if (!optionExists) {
+    console.log("VALUE NOT FOUND:", value);
+    return false;
+  }
+
+  select.value = value;
+
+  console.log(
+    "Selected:",
+    select.options[select.selectedIndex].text,
+    "| Value:",
+    select.value
+  );
+
+  $(select).trigger("change");
+
+  await waitForIdle();
+
+  return true;
+}
+async function selectByPartialText(id, partialText) {
+  const select = document.getElementById(id);
+
+  if (!select) {
+    console.log("SELECT NOT FOUND:", id);
+    return false;
+  }
+
+  const search = partialText.trim().toLowerCase();
+
+  for (let j = 0; j < select.options.length; j++) {
+    const optionText = select.options[j].text
+      .trim()
+      .toLowerCase();
+
+    if (optionText.includes(search)) {
+      select.selectedIndex = j;
+
+      console.log(
+        "Selected:",
+        select.options[j].text
+      );
+
+      $(select).trigger("change");
+
+      await waitForIdle();
+
+      return true;
+    }
+  }
+
+  console.log("NOT FOUND:", partialText);
+  return false;
+}
+
+async function selectFirstRealOption(id) {
+  const select = document.getElementById(id);
+
+  if (!select) {
+    console.log("SELECT NOT FOUND:", id);
+    return false;
+  }
+
+  for (let j = 0; j < select.options.length; j++) {
+    const option = select.options[j];
+
+    const value = String(option.value || "").trim();
+    const text = String(option.text || "").trim().toLowerCase();
+
+    if (
+      value !== "" &&
+      value !== "-1" &&
+      text !== "--select--" &&
+      text !== "select"
+    ) {
+      select.selectedIndex = j;
+
+      console.log(
+        "Selected first option:",
+        option.text
+      );
+
+      $(select).trigger("change");
+
+      await waitForIdle();
+
+      return true;
+    }
+  }
+
+  console.log("No valid option found:", id);
+  return false;
+}
+
+async function setInput(id, value) {
+  const el = document.getElementById(id);
+
+  if (!el) {
+    console.log("INPUT NOT FOUND:", id);
+    return false;
+  }
+
+  $(el)
+    .val(value)
+    .trigger("input")
+    .trigger("change");
+
+  await waitForIdle();
+
+  console.log(
+    "Set:",
+    id,
+    "=",
+    value
+  );
+
+  return true;
+}
+
+async function processAgencies() {
+
+  for (let i = 0; i < agencyList.length; i++) {
+
+    const agency = agencyList[i];
+
+    console.log(
+      `Processing ${i + 1}/${agencyList.length}: ${agency}`
+    );
+
+    // Payment in favor is selected manually before running script
+
+
+    // 1. Select Agency Name
+    const agencyFound = await selectByValue(
+      "ctl00_ContentPlaceHolder1_RBLpaymentinfavor",
+      agency
+    );
+
+    if (!agencyFound) {
+      console.log("Skipping agency:", agency);
+      continue;
+    }
+
+
+    // 2. Select first Account Number
+    const accountFound = await selectFirstRealOption(
+      "ctl00_ContentPlaceHolder1_DDlagencyname"
+    );
+
+    if (!accountFound) {
+      console.log("No account found for:", agency);
+      continue;
+    }
+
+
+    // 3. Voucher Number
+    await setInput(
+      "ctl00_ContentPlaceHolder1_TextBoxtvno",
+      "ZEO-SK-2060"
+    );
+
+
+    // 4. Voucher Date
+    await setInput(
+      "ctl00_ContentPlaceHolder1_textboxtvDate",
+      "19/08/2026"
+    );
+
+
+    // 5. Voucher Amount
+    await setInput(
+      "ctl00_ContentPlaceHolder1_TextBoxamtacc",
+      "2143"
+    );
+
+
+    // 6. Payable Amount
+    await setInput(
+      "ctl00_ContentPlaceHolder1_TextBoxamtpay",
+      "2143"
+    );
+
+
+    // 7. Withdrawal Type → select first real option
+    await selectFirstRealOption(
+      "ctl00_ContentPlaceHolder1_ddlwithdrwltype"
+    );
+
+
+    console.log(
+      "Completed:",
+      agency
+    );
+
+    /*
+      Add/Save button can be inserted here later:
+
+      $("#BUTTON_ID").click();
+      await waitForIdle();
+    */
+  }
+
+  console.log(
+    "===== ALL AGENCIES COMPLETED ====="
+  );
+}
+
+window.alert = function(message) {
+  console.log("Alert blocked:", message);
+  return true;
+};
+
+processAgencies();

@@ -133,6 +133,26 @@ const getNavigation = (user) => {
       },
       {
         component: CNavGroup,
+        name: 'Micro Services',
+        to: '/base',
+        icon: <CIcon icon={cilList} customClassName="nav-icon" />,
+       items: [
+          {
+            component: CNavItem,
+            icon: <CIcon icon={cilBabyCarriage} customClassName="nav-icon" />,
+            name: 'List Microservices',
+            to: '/admin/listofmicroservices',
+          },
+          {
+            component: CNavItem,
+            icon: <CIcon icon={cilBabyCarriage} customClassName="nav-icon" />,
+            name: 'Edit microservices',
+            to: '/admin/editmicroservices',
+          }
+        ],
+      },
+      {
+        component: CNavGroup,
         name: 'Match',
         to: '/base',
         icon: <CIcon icon={cilList} customClassName="nav-icon" />,
@@ -635,7 +655,7 @@ const getNavigation = (user) => {
 
       navigation.push(moremenu);
     }
-    if (user?.profile?.servicesChoosen?.enableresourceforstudent !== false) 
+    if (user?.profile?.servicesChoosen?.enableresourceforstudent !== false)
     {
       let moremenu1={
     component: CNavGroup,

@@ -62,6 +62,8 @@ const ListOfHousing = React.lazy(() => import('./views/admin/ListOfHousing'))
 const EditHousing = React.lazy(() => import('./views/admin/EditHousing'))
 const ListOfResearch = React.lazy(() => import('./views/admin/ListOfResearch'))
 const EditResearch = React.lazy(() => import('./views/admin/EditResearch'))
+const ListOfMicroservices = React.lazy(() => import('./views/admin/ListOfMicroservices'))
+const EditMicroservices = React.lazy(() => import('./views/admin/EditMicroservices'))
 
 const ListOfAllResearchStudents = React.lazy(() => import('./views/admin/ListOfAllResearchStudents'))
 const ListOfAllServiceStudents = React.lazy(() => import('./views/admin/ListOfAllServiceStudents'))
@@ -112,8 +114,8 @@ const routes = {"public":[
 	{ path: '/admin/assignprogram', name: 'AssigneProgram',exact: true, element: AssigneProgram },
 	{ path: '/admin/pendingprograms', name: 'UnVerifiedPrograms',exact: true, element: UnVerifiedPrograms },
 	{ path: '/admin/adminreferrals/', name: 'ReferralsAdmin',exact: true, element: ReferralsAdmin },
-	
-	
+
+
 	{ path: '/admin/leads', name: 'Leads',exact: true, element: Leads },
 	{ path: '/admin/userdetails/:id', name: 'UserDetails',exact: true, element: UserDetails },
 	{ path: '/admin/updateprofile/:id', name: 'ProfileUpdate',exact: true, element: ProfileUpdate },
@@ -172,6 +174,8 @@ const routes = {"public":[
     { path: '/admin/journalist', name: 'Journalist Details',exact: true, element: JournalistsList },
     { path: '/admin/journalist/:mentorId', name: 'Journalist Details',exact: true, element: JournalistsDetails },
     { path: '/admin/rotationreview', name: 'Rotation Review',exact: true, element: RotationReview },
+    { path: '/admin/listofmicroservices', name: 'Microservices List',exact: true, element: ListOfMicroservices },
+    { path: '/admin/editmicroservices/:microservices_id?', name: 'Edit Microservices',exact: true, element: EditMicroservices },
 ],
 "users":[
 	{ path: '/users/register', name: 'RegisterUser',exact: true, element: RegisterUser },

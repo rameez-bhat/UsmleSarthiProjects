@@ -103,10 +103,10 @@ const shouldUpdate = (value) => {
 };
   const processDataToTable= async (row)=>
   {
-  	
+
         //console.log("row-->",row)
         //const codesArray = row['Location code'];
-        
+
         let hospitalName=row['ProgramName']?.trim();
         let HPId;
         if (!hospitalName) return null;
@@ -133,8 +133,40 @@ if (row?.['Frieda']) {
 HospitalProgramInfo['yearlyData']={"2026":{"TotalAplicantsInvitedForTheYear":row['TotalAplicantsInvitedForTheYear'],"TotalApplicantsForTheYear":row['TotalApplicantsForTheYear']}};
 console.log("HospitalData----->",HospitalData)
 console.log("hospitalName----->",hospitalName)
+const medicalSchoolMatches = [];
+let medicalSchoolSearchTokens = [];
+if(row?.['topTenSchools'])
+{
+
+	const source=JSON.parse(row['topTenSchools']);
+
+	if(Object.keys(source).length)
+	{
+
+		Object.keys(source).forEach(name =>
+		{
+  			const normalizedName = name.toLowerCase().replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
+  			const tokens = normalizedName.split(" ").filter(token => token.length > 2);
+  			medicalSchoolMatches.push({name: name,normalizedName: normalizedName,tokens: tokens,studentCount: source[name]});
+  			medicalSchoolSearchTokens =medicalSchoolSearchTokens.concat(tokens);
+		});
+		medicalSchoolSearchTokens = Array.from(new Set(medicalSchoolSearchTokens));
+	}
+
+}
+
+row.medicalSchoolMatches = medicalSchoolMatches;
+row.medicalSchoolSearchTokens = medicalSchoolSearchTokens;
+
+// Do not save original topTenSchools field
+delete row['topTenSchools'];
+delete HospitalProgramInfo['topTenSchools'];
+
+// Add processed fields to HospitalProgramInfo
+HospitalProgramInfo['medicalSchoolMatches'] = medicalSchoolMatches;
+HospitalProgramInfo['medicalSchoolSearchTokens'] = medicalSchoolSearchTokens;
         HId = hospitalCache.get(hospitalName);
-        if (!HId) 
+        if (!HId)
         {
         	const HospitalTableData = await FetchDataFromCollection("Hospital", 20, "HName", "==", hospitalName, 0);
         	console.log("HospitalTableData----->",HospitalTableData)
@@ -142,10 +174,10 @@ console.log("hospitalName----->",hospitalName)
     		{
     		let currentPId=PId;
     		//console.log("HospitalTableData----->",HospitalTableData)
-    		for (const hospital of HospitalTableData) 
+    		for (const hospital of HospitalTableData)
     		{
   				const existingPIds = hospital.PIds || [];
-				if (!existingPIds.includes(currentPId)) 
+				if (!existingPIds.includes(currentPId))
 				{
     				const updatedPIds = [...existingPIds, currentPId];
     				const updatedHospitalData = {
@@ -159,7 +191,7 @@ console.log("hospitalName----->",hospitalName)
     				await handleUpdate("Hospital", hospital.id, updatedHospitalData);
     				//console.log(`Updated hospital "${hospital.HName}" with new PId: ${currentPId}`);
   				}
-  				else if (!hospital.HId) 
+  				else if (!hospital.HId)
 				{
     				const updatedPIds = [...existingPIds, currentPId];
     				const updatedHospitalData = {
@@ -177,7 +209,7 @@ console.log("hospitalName----->",hospitalName)
     		HPId=HospitalTableData[0]?.HPId?HospitalTableData[0]?.HPId:HospitalTableData[0]?.id;
     		//const HospitalProgrammData = await FetchDataFromCollection("HospitalProgram", 20, "HName", "==", hospitalName, 0);
     		let WhereOrObject=[{"name":"HId","condition":"==","value":HId},{"name":"PId","condition":"==","value":PId}];
-    		
+
     		//await DeleteDocumentWhereMultiple("HospitalProgramInfo",WhereOrObject)
     		//await DeleteDocumentWhereMultiple("HospitalProgram",WhereOrObject)
     		//await removePidFromHospital(HId,PId);
@@ -209,7 +241,7 @@ console.log("hospitalName----->",hospitalName)
     					}
     					if(resultsInfo.data.length)
     					{
-    						for (const hospitalInfo of resultsInfo.data) 
+    						for (const hospitalInfo of resultsInfo.data)
     						{
     							//console.log("hospitalInfo----->",hospitalInfo)
     							//console.log("HospitalProgramInfo----->",HospitalProgramInfo)
@@ -218,7 +250,7 @@ console.log("hospitalName----->",hospitalName)
     							let DataInfoTableToUpdate={"TimeStamp":Date.now(), "TimeStampD": nowDate.toISOString()}
     							if(hostinfoId)
     							{
-    								if (!hospitalInfo?.Frieda || String(hospitalInfo.Frieda).trim() === "") 
+    								if (!hospitalInfo?.Frieda || String(hospitalInfo.Frieda).trim() === "")
     								{
     									DataInfoTableToUpdate['Frieda']=HospitalProgramInfo['Frieda'];
 									}
@@ -226,17 +258,17 @@ console.log("hospitalName----->",hospitalName)
 									{
 										DataInfoTableToUpdate['Frieda']=HospitalProgramInfo['Frieda'];
 									}
-									if ((!hospitalInfo?.Frieda || String(hospitalInfo.Frieda).trim() === "") && shouldUpdate(HospitalProgramInfo.Frieda)) 
+									if ((!hospitalInfo?.Frieda || String(hospitalInfo.Frieda).trim() === "") && shouldUpdate(HospitalProgramInfo.Frieda))
 									{
     									DataInfoTableToUpdate.Frieda = HospitalProgramInfo.Frieda;
 									}
-									if (updateFreade && shouldUpdate(HospitalProgramInfo.Frieda)) 
+									if (updateFreade && shouldUpdate(HospitalProgramInfo.Frieda))
 									{
     									DataInfoTableToUpdate.Frieda = HospitalProgramInfo.Frieda;
 									}
 
 									// Update all remaining fields automatically
-									for (const [key, value] of Object.entries(HospitalProgramInfo)) 
+									for (const [key, value] of Object.entries(HospitalProgramInfo))
 									{
 
     									// Skip system fields
@@ -297,9 +329,9 @@ DataInfoTableToUpdate.HId=HId;
     								console.log("HId----->",HId)
     								console.log("rRT----->",rRT)
     							}
-    							
-    							
-  								
+
+
+
 							}
     					}
     				}
@@ -327,15 +359,15 @@ DataInfoTableToUpdate.HId=HId;
     				console.log("resHtt====>",resHtt)
     				resHtt=await handleUpdate("HospitalProgram",Hpidg,HospitalProgram)
     				console.log("resHtt====>",resHtt)
-    				
+
     			}
     		}
-    		
+
     	}
     		else
     		{
     			let HospitalTableData=await handleAdd("Hospital",HospitalData)
-    		
+
     			HId=HospitalTableData[0]?.HId?HospitalTableData[0]?.HId:HospitalTableData[0]?.id;
     			HospitalData['HId']=HId;
     			let res=await handleUpdate("Hospital",HId,HospitalData)
@@ -356,22 +388,22 @@ DataInfoTableToUpdate.HId=HId;
     			resHtt=await handleUpdate("HospitalProgram",Hpidg,HospitalProgram)
     			console.log("resHtt====>",resHtt)
     			console.log("resHtt====>",resHtt)
-    		
+
     		}
     		hospitalCache.set(hospitalName, HId);
     	}
-        
+
           //console.log("dataTobesend---->",dataTobesend)
-     
+
           return HospitalProgramInfo;
-        
+
   }
   const toNumber = (value) => {
     const num = Number(value);
     return Number.isNaN(num) ? 0 : num;
 };
   const downloadExcelFormat = () => {
-  
+
 
 const SAMPLE_ROWS = [
   [
@@ -552,10 +584,10 @@ const SAMPLE_ROWS = [
         });
         return rowData;
       });
-      for (const row of processedData) 
+      for (const row of processedData)
         {
         	console.log("row---->",row)
-        	let date = getFormattedDateTime(); 
+        	let date = getFormattedDateTime();
         	let Ratings=String(row.StarsRating);
         	let Location_Code=String(row.Location_Code);
         	let Student_Name=String(row.Student_Name);
@@ -623,13 +655,13 @@ const SAMPLE_ROWS = [
         return rowData;
       });
        console.log("processedData-->",processedData)
-       
+
        showLoading();
-        for (const row of processedData) 
+        for (const row of processedData)
         {
         	await processDataToTable(row);
         }
-     
+
 hideLoading();
 if(messageFull==="")
 {
@@ -680,11 +712,11 @@ TooltipsPopovers("success", messageFull, "Status");
                   )}
                 </div>
               </CCol>
-              
+
                <CCol md={4}>
                <div>
 
-              
+
     </div>
      </CCol>
      <CCol md={4}>
@@ -706,7 +738,7 @@ TooltipsPopovers("success", messageFull, "Status");
         </CCard>
       </CCol>
     </CRow>
- 
+
     </>
   );
 }

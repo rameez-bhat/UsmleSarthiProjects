@@ -68,7 +68,7 @@ export class SarthiListComponent implements OnInit {
   allLandings = ["Specialities", "Dashboard", "Favorites", "My Notes"];
   allTabs = ["Best", "Possible", "Difficult", "Others"];
   totalNo = [0, 0, 0, 0];
-  allPanes = ["Information from Frieda", "Score Information","Applicant characteristics", "Additional Information", "Interview Profiles", "Matched Profiles"];
+  allPanes = ["Information from Frieda", "Score Information","Applicant characteristics","Medical school information", "Additional Information", "Interview Profiles", "Matched Profiles"];
   customVisa: any = { "1": { Type: "GC/US citizen/H4 EAD", VId: "1" }, "2": { Type: "Need H1", VId: "2" }, "3": { Type: "Need J1", VId: "3" }, "4": { Type: "Other", VId: "4" } };
   showPane = "Information from Frieda";
   showTab: string;
@@ -86,6 +86,7 @@ export class SarthiListComponent implements OnInit {
   isNotesCollapsed: boolean = true;
   shownStates : any[];
   shownCities : any[];
+  shownMedicalSchools: any[];
   shownVisas  = ["J1", "H1", "H4 EAD", "No Visa Sponsorship", "F1 (OPT 1st year)"];
   shownNrmp = ["Yes", "No"];
   shownEcfmg = ["Yes", "No", "Required for IMGs"];
@@ -120,6 +121,7 @@ export class SarthiListComponent implements OnInit {
   ]
   selectedCities : any[] = [];
   selectedStates : any[] = [];
+  selectedMedicalSchools : any[] = [];
   selectedVisas : any[] = [];
   selectedNrmp : any;
   selectedEcfmg : any;
@@ -365,7 +367,7 @@ getCleanValue(value: any): string {
     this.favorites = await this.dbservice.getFavoritesByUId(
       this.userProfile.uid.toString()
     );
-
+console.log("selectedHospitalData---->",this.selectedHospitalData)
     // Step 3 — process synchronously (fast enough)
     this.processFavorites();
     this.processDashboard();
@@ -418,15 +420,22 @@ private processDashboard() {
   this.possibleMatches[this.selectedPId] = [];
   this.difficultMatches[this.selectedPId] = [];
   this.others[this.selectedPId] = [];
-
+  const medicalSchoolsObj=[];
   for (let hpinfoid in this.hospitalsDataByProgram[this.selectedPId]) {
     let hospitalData = this.hospitalsDataByProgram[this.selectedPId][hpinfoid];
-
+console.log("hospitalData====>",hospitalData)
     if (hospitalData.TimeStamp) {
       const timeStamp = new Date(hospitalData.TimeStamp);
       hospitalData.Date = `${String(timeStamp.getDate()).padStart(2,'0')}/${String(timeStamp.getMonth()+1).padStart(2,'0')}/${timeStamp.getFullYear()}`;
     }
-
+    if (hospitalData.medicalSchoolMatches && hospitalData.medicalSchoolMatches.length) {
+      hospitalData.medicalSchoolMatches.forEach(school => {
+        if (school && school.name) {
+          medicalSchoolsObj[school.name] = 1;
+        }
+      });
+    }
+    this.shownMedicalSchools =Object.keys(medicalSchoolsObj);
     let key = hospitalData.HId + '_' + hospitalData.PId;
     hospitalData.favorite = key in this.favoritesObject
       ? this.favoritesObject[key]
@@ -818,7 +827,7 @@ private processDashboard() {
       {
         this.selectedHospitalData = await this.dbservice.getLatestHospital(this.userProfile.uid, this.selectedPId, hid, true);
       }
-      console.log("selectedHospitalData====>",this.selectedHospitalData)
+      console.log("selectedHospitalData=1===>",this.selectedHospitalData)
       //this.selectedHospitalData['hospital']=this.hospitalsByProgram[this.selectedPId][hid]
       
      // this.selectedHospitalData = await this.dbservice.getLatestHospital(this.userProfile.uid, this.selectedPId, hid, true);
@@ -936,16 +945,21 @@ private processDashboard() {
 
   createFilters(){
     let statesObj = [];
-    let citiesObj = []
+    let citiesObj = [];
     this.shownList.forEach(hospital => {
     const hospitalData = this.hospitalsByProgram[this.selectedPId][hospital.HId];
+    console.log("hospitalData===>",hospitalData)
     if (!hospitalData) return;
 
     hospitalData.State && (statesObj[hospitalData.State] = 1);
     hospitalData.City && (citiesObj[hospitalData.City] = 1);
+      // Medical Schools
+   
+
 });
     this.shownStates = Object.keys(statesObj);
     this.shownCities = Object.keys(citiesObj);
+
   }
 
   setShownListToInitial() {
@@ -1288,6 +1302,26 @@ percentageCondition = (field, toCheck) => {
 });
       //this.shownList = this.shownList.filter((item) => this.selectedStates.includes(this.hospitalsByProgram[this.selectedPId][item.HId]?.State));
     }
+    if (this.selectedMedicalSchools.length) {
+
+  this.shownList = this.shownList.filter(item => {
+
+
+    if (
+      !item ||
+      !item.medicalSchoolMatches ||
+      !item.medicalSchoolMatches.length
+    ) {
+      return false;
+    }
+
+    return item.medicalSchoolMatches.some(school =>
+      this.selectedMedicalSchools.includes(school.name)
+    );
+
+  });
+
+}
       
     
     if (this.selectedVisas.length){
@@ -1303,6 +1337,10 @@ percentageCondition = (field, toCheck) => {
     
     if (this.selectedYog){
       this.shownList = this.shownList.filter((item) => this.yogCondition(item.YOG, this.selectedYog))
+    }
+
+    if (this.selectedStep1){
+      this.shownList = this.shownList.filter((item) => this.stepConditionStep1(item.Step1ScoreLastYearMin, this.selectedStep1))
     }
     
     if (this.selectedStep1){
