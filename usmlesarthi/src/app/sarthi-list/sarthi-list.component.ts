@@ -429,13 +429,18 @@ console.log("hospitalData====>",hospitalData)
       hospitalData.Date = `${String(timeStamp.getDate()).padStart(2,'0')}/${String(timeStamp.getMonth()+1).padStart(2,'0')}/${timeStamp.getFullYear()}`;
     }
     if (hospitalData.medicalSchoolMatches && hospitalData.medicalSchoolMatches.length) {
-      hospitalData.medicalSchoolMatches.forEach(school => {
-        if (school && school.name) {
-          medicalSchoolsObj[school.name] = 1;
-        }
-      });
+      hospitalData.medicalSchoolMatches.forEach((school) => {
+            if (!school || !school.name) return;
+            const schoolName = school.name.replace(/\s+/g, " ").trim();
+            if (schoolName.toLowerCase() ==="more than 1 school has this rank*") 
+            {
+              return;
+            }
+            medicalSchoolsObj[schoolName] = 1;
+          });
     }
-    this.shownMedicalSchools =Object.keys(medicalSchoolsObj);
+    //this.shownMedicalSchools =Object.keys(medicalSchoolsObj);
+    this.shownMedicalSchools = Object.keys(medicalSchoolsObj).sort((a, b) => a.localeCompare(b, undefined, {sensitivity: "base",}));
     let key = hospitalData.HId + '_' + hospitalData.PId;
     hospitalData.favorite = key in this.favoritesObject
       ? this.favoritesObject[key]
