@@ -953,13 +953,10 @@ console.log("hospitalData====>",hospitalData)
     let citiesObj = [];
     this.shownList.forEach(hospital => {
     const hospitalData = this.hospitalsByProgram[this.selectedPId][hospital.HId];
-    console.log("hospitalData===>",hospitalData)
     if (!hospitalData) return;
 
-    hospitalData.State && (statesObj[hospitalData.State] = 1);
-    hospitalData.City && (citiesObj[hospitalData.City] = 1);
-      // Medical Schools
-   
+    hospitalData.State && (statesObj[hospitalData.State.trim()] = 1);
+    hospitalData.City && (citiesObj[hospitalData.City.trim()] = 1);
 
 });
     this.shownStates = Object.keys(statesObj);
