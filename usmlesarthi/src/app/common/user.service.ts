@@ -165,6 +165,9 @@ export class UserService {
     let docRef = await this.firestore.doc(`UsersRoles/${dataObject.uid}`).update({
       Role:dataObject.newRole,
     })
+    let docRef1 = await this.firestore.doc(`Users/${dataObject.uid}`).update({
+      Role:dataObject.newRole,
+    })
     this.usersUpdated = true;
     if(dataObject.newRole=="NA")
       this.naUpdated = true;
