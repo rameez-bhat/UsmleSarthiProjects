@@ -91,7 +91,8 @@ export default function IssueTrackerPage(LoginInUserMain) {
   const [studentSearch, setStudentSearch] = useState("");
   const [studentLoading, setStudentLoading] = useState(false);
   const [loading, setLoading] = useState(true);
-
+  const [replyText, setReplyText] = useState({});
+  const [replyLoading, setReplyLoading] = useState({});
   const { fetchAdminDataWithJoin,showLoading, hideLoading,} = useLoading();
 
   const [form, setForm] = useState({
@@ -200,7 +201,7 @@ const issueQuery = query(
       ...doc.data(),
     }))
   );*/
-  const issuesWithHistory = await Promise.all(
+  /*const issuesWithHistory = await Promise.all(
   issueSnap.docs.map(async (issueDoc) => {
     const issueData = {
       id: issueDoc.id,
@@ -223,7 +224,45 @@ const issueQuery = query(
     return issueData;
   })
 );
-setIssues(issuesWithHistory);
+setIssues(issuesWithHistory);*/
+const issuesWithDetails = await Promise.all(
+  issueSnap.docs.map(async (issueDoc) => {
+    const issueData = {
+      id: issueDoc.id,
+      ...issueDoc.data(),
+    };
+
+    const historyQuery = query(
+      collection(db, "IssuesTraker", issueDoc.id, "History"),
+      orderBy("timestamp", "desc")
+    );
+
+    const repliesQuery = query(
+      collection(db, "IssuesTraker", issueDoc.id, "Replies"),
+      orderBy("createdAt", "desc")
+    );
+
+    const [historySnap, repliesSnap] = await Promise.all([
+      getDocs(historyQuery),
+      getDocs(repliesQuery),
+    ]);
+
+    issueData.history = historySnap.docs.map((historyDoc) => ({
+      id: historyDoc.id,
+      ...historyDoc.data(),
+    }));
+
+    // Newest reply will be first
+    issueData.replies = repliesSnap.docs.map((replyDoc) => ({
+      id: replyDoc.id,
+      ...replyDoc.data(),
+    }));
+
+    return issueData;
+  })
+);
+
+setIssues(issuesWithDetails);
 
 
     // Load Admins
@@ -557,7 +596,59 @@ hideLoading()
   console.error(err);
 }
 };
+const submitReply = async (issueId) => {
+  const message = replyText[issueId]?.trim();
 
+  if (!message) {
+    alert("Please enter a reply");
+    return;
+  }
+
+  setReplyLoading((prev) => ({
+    ...prev,
+    [issueId]: true,
+  }));
+
+  try {
+    const createdAt = Timestamp.now();
+
+    await addDoc(
+      collection(db, "IssuesTraker", issueId, "Replies"),
+      {
+        message,
+        repliedBy: {
+          uid: ActualUser.id,
+          name: ActualUser.displayName || "",
+          email: ActualUser.email || "",
+        },
+        createdAt,
+      }
+    );
+
+    /*
+     * This is essential. Without updating the parent document,
+     * Firestore will not move the replied issue to the top.
+     */
+    await updateDoc(doc(db, "IssuesTraker", issueId), {
+      updatedAt: createdAt,
+    });
+
+    setReplyText((prev) => ({
+      ...prev,
+      [issueId]: "",
+    }));
+
+    await loadData();
+  } catch (error) {
+    console.error("Reply submission failed:", error);
+    alert("Reply could not be submitted");
+  } finally {
+    setReplyLoading((prev) => ({
+      ...prev,
+      [issueId]: false,
+    }));
+  }
+};
   if (loading) return <Typography>Loading...</Typography>;
 
   return (
@@ -1038,7 +1129,94 @@ hideLoading()
         </IconButton>
       )}
     </Box>
+{/* Replies */}
+<Box
+  mt={2}
+  sx={{
+    backgroundColor: "#fff",
+    border: "1px solid #dce3ec",
+    borderRadius: 2,
+    p: 2,
+  }}
+>
+  <Typography variant="subtitle1" fontWeight="bold" mb={1}>
+    Replies
+  </Typography>
 
+  <Box display="flex" gap={1} mb={2}>
+    <TextField
+      fullWidth
+      size="small"
+      multiline
+      minRows={2}
+      placeholder="Write a reply..."
+      value={replyText[issue.id] || ""}
+      onChange={(event) =>
+        setReplyText((prev) => ({
+          ...prev,
+          [issue.id]: event.target.value,
+        }))
+      }
+    />
+
+    <Button
+      variant="contained"
+      disabled={
+        replyLoading[issue.id] ||
+        !replyText[issue.id]?.trim()
+      }
+      onClick={() => submitReply(issue.id)}
+    >
+      {replyLoading[issue.id] ? "Sending..." : "Reply"}
+    </Button>
+  </Box>
+
+  {issue.replies?.length > 0 ? (
+    issue.replies.map((reply) => (
+      <Box
+        key={reply.id}
+        sx={{
+          p: 1.5,
+          mb: 1,
+          borderRadius: 2,
+          backgroundColor: "#f4f7fb",
+          borderLeft: "4px solid #1976d2",
+        }}
+      >
+        <Box
+          display="flex"
+          justifyContent="space-between"
+          gap={2}
+        >
+          <Typography variant="body2" fontWeight="bold">
+            {reply.repliedBy?.name || "Unknown user"}
+          </Typography>
+
+          <Typography variant="caption" color="text.secondary">
+            {reply.createdAt?.toDate
+              ? reply.createdAt.toDate().toLocaleString()
+              : ""}
+          </Typography>
+        </Box>
+
+        <Typography
+          variant="body2"
+          mt={0.5}
+          sx={{
+            whiteSpace: "pre-wrap",
+            overflowWrap: "break-word",
+          }}
+        >
+          {reply.message}
+        </Typography>
+      </Box>
+    ))
+  ) : (
+    <Typography variant="body2" color="text.secondary">
+      No replies yet.
+    </Typography>
+  )}
+</Box>
     {/* Body */}
     <Box mt={3}>
       <Typography variant="h6">

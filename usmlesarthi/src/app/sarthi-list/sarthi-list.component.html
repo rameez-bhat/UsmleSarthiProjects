@@ -163,7 +163,7 @@
           ></ng-select>
           <div class="d-flex flex-column">
           <ng-select
-            placeholder="IMG Percentage (Frieda)"
+            placeholder="IMG Percentage (Residency)"
             [items]="shownPercentage"
             [(ngModel)]="selectedUsImg"
             (change)="filterSearch()" 
@@ -698,7 +698,7 @@
               <tr>
                 <td>{{ getCleanValue(programObject[selectedHospitalData.PId]?.PName) }}</td>
                 <td>{{  selectedHospitalData?.hospital?.City || hospitalsByProgram[selectedHospitalData.PId][selectedHid]?.City }} </td>
-                <td>{{  selectedHospitalData?.hospital?.State || hospitalsByProgram[selectedHospitalData.PId][selectedHid]?.State}}}</td>
+                <td>{{  selectedHospitalData?.hospital?.State || hospitalsByProgram[selectedHospitalData.PId][selectedHid]?.State}}</td>
                 <!-- <td>
                   <ng-template
                     ngFor
@@ -1024,14 +1024,14 @@
                   style="width: 100%"
                   class="table table-hover table-bordered table-striped"
                 >
-                  <tr id="Step1Req">
+                  <!--<tr id="Step1Req">
                     <td style="font-weight: bold">Preferred STEP 1 score</td>
                     <td>{{ getCleanValue(selectedHospitalData.Step1Req) }}</td>
                   </tr>
                   <tr id="Step1ScoreLastYearMin">
                     <td style="font-weight: bold">Minimum</td>
                     <td>{{ getCleanValue(selectedHospitalData.Step1ScoreLastYearMin) }}</td>
-                  </tr>
+                  </tr>-->
                   <!-- <tr id="Step1ScoreLastYearMax">
                     <td style="font-weight: bold">Maximum</td>
                     <td>{{ getCleanValue(selectedHospitalData.Step1ScoreLastYearMax) }}</td>
@@ -1055,7 +1055,7 @@
                   </tr>
                   <tr id="Step2Min">
                     <td style="font-weight: bold">Minimum</td>
-                    <td>{{ getCleanValue(selectedHospitalData.Step2Min) }}</td>
+                    <td>{{ getCleanValue(selectedHospitalData.Step2ckNonIMGInvited10th) }}-{{ getCleanValue(selectedHospitalData.Step2ckNonIMGInvited90th) }}</td>
                   </tr>
                   <!-- <tr id="Step2Max">
                     <td style="font-weight: bold">Maximum</td>

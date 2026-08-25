@@ -1349,7 +1349,7 @@ percentageCondition = (field, toCheck) => {
       this.shownList = this.shownList.filter((item) => this.stepConditionStep1(item.Step1ScoreLastYearMin, this.selectedStep1))
     }
     if (this.selectedStep2){
-      this.shownList = this.shownList.filter((item) => this.stepCondition(item.Step2Min, this.selectedStep2))
+      this.shownList = this.shownList.filter((item) => this.stepCondition(item.Step2ckNonIMGInvited10th, this.selectedStep2))
     }
     if (this.selectedSignalInvited){
       if(Number(this.selectedPId)==1)
