@@ -318,10 +318,56 @@ get isResidencyExplorerProgram(): boolean {
   const pid = this.ConvertNumber(this.selectedPId);
   return [1, 2, 3, 4, 5, 7].includes(pid);
 }
-getCleanValue(value: any): string {
-  if (value == null) return 'N/A';
+getCleanValueYOG(value: any, value2: any = null): string {
 
-  const str = String(value).trim();
+  const extractYears = (val: any): string | null => {
+    if (val == null) return null;
+
+    const str = String(val).trim();
+
+    if (!str) return null;
+
+    // Already a number: 5, "5", 10, "10"
+    if (/^\d+$/.test(str)) {
+      return str;
+    }
+
+    // No cap on number of years → 0
+    if (/no\s+cap\s+on\s+the\s+number\s+of\s+years/i.test(str)) {
+      return '0';
+    }
+
+    // Example:
+    // Graduation from medical school must have occurred
+    // within the past 5 year(s).
+    const match = str.match(
+      /within\s+the\s+past\s+(\d+)\s+year(?:\(s\)|s)?/i
+    );
+
+    if (match) {
+      return match[1];
+    }
+
+    return null;
+  };
+
+  // value2 gets priority
+  const result2 = extractYears(value2);
+
+  if (result2 !== null) {
+    return result2;
+  }
+
+  // Otherwise use value
+  const result1 = extractYears(value);
+
+  if (result1 !== null) {
+    return result1;
+  }
+
+  return 'N/A';
+}
+getCleanValue(value: any, value2: any = null): string {
 
   const invalidValues = [
     '',
@@ -336,7 +382,31 @@ getCleanValue(value: any): string {
     '-',
   ];
 
-  return invalidValues.includes(str.toLowerCase()) ? 'N/A' : str;
+  const clean = (val: any): string | null => {
+    if (val == null) return null;
+
+    const str = String(val).trim();
+
+    return invalidValues.includes(str.toLowerCase())
+      ? null
+      : str;
+  };
+
+  // Priority: value2
+  const cleanedValue2 = clean(value2);
+
+  if (cleanedValue2 !== null) {
+    return cleanedValue2;
+  }
+
+  // Fallback: value
+  const cleanedValue = clean(value);
+
+  if (cleanedValue !== null) {
+    return cleanedValue;
+  }
+
+  return 'N/A';
 }
   async takeMeToDashboard(event) {
   try {

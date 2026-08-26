@@ -101,6 +101,50 @@ const shouldUpdate = (value) => {
         str !== "-"
     );
 };
+const getCleanValueYOG = (value, value2 = null) => {
+  const extractYears = (val) => {
+    if (val === null || val === undefined) {
+      return null;
+    }
+
+    const str = String(val).trim();
+
+    if (!str) {
+      return null;
+    }
+
+    // Already numeric
+    if (/^\d+$/.test(str)) {
+      return Number(str);
+    }
+
+    // No cap → 0
+    if (/no\s+cap\s+on\s+the\s+number\s+of\s+years/i.test(str)) {
+      return 0;
+    }
+
+    // "within the past 5 year(s)"
+    const match = str.match(
+      /within\s+the\s+past\s+(\d+)\s+year(?:\(s\)|s)?/i
+    );
+
+    if (match) {
+      return Number(match[1]);
+    }
+
+    return null;
+  };
+
+  // value2 gets priority
+  const result2 = extractYears(value2);
+
+  if (result2 !== null) {
+    return result2;
+  }
+
+  // Otherwise value
+  return extractYears(value);
+};
   const processDataToTable= async (row)=>
   {
 
@@ -153,6 +197,12 @@ if(row?.['topTenSchools'])
 		medicalSchoolSearchTokens = Array.from(new Set(medicalSchoolSearchTokens));
 	}
 
+}
+if (row?.['YOG'] !== null && row?.['YOG'] !== undefined)
+{
+	const YOGGot=getCleanValueYOG(row?.['YOG']);
+	HospitalProgramInfo['YOG']=YOGGot;
+	delete row['YOG'];
 }
 
 row.medicalSchoolMatches = medicalSchoolMatches;

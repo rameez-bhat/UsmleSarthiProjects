@@ -710,7 +710,7 @@
                   </ng-template>
                 </td> -->
                 <td>{{ selectedHospitalData.ProgramType }}</td>
-                <td>{{ selectedHospitalData.YOG }}</td>
+                <td>{{ getCleanValueYOG(selectedHospitalData.YOG) }}</td>
               </tr>
             </tbody>
           </table>
@@ -1040,7 +1040,7 @@
                     <td style="font-weight: bold; width: 50%">
                       Applicants must have passed Step 1 to be considered
                     </td>
-                    <td>{{ getCleanValue(selectedHospitalData.Step1AcceptN)}}</td>
+                    <td>{{ getCleanValue(selectedHospitalData.Step1AcceptN,selectedHospitalData.IMG_USMLE_Step1)}}</td>
                   </tr>
                   <tr id="Step1Accept">
                     <td style="font-weight: bold; width: 50%">
@@ -1051,10 +1051,10 @@
                  
                   <tr id="Step2Req">
                     <td style="font-weight: bold">Preferred STEP 2 CK Score</td>
-                    <td>{{ getCleanValue(selectedHospitalData.Step2Req)}}</td>
+                    <td>{{ getCleanValue(selectedHospitalData.Step2Req,selectedHospitalData.IMG_USMLE_Step2CK)}}</td>
                   </tr>
                   <tr id="Step2Min">
-                    <td style="font-weight: bold">Minimum</td>
+                    <td style="font-weight: bold">Score range</td>
                     <td>{{ getCleanValue(selectedHospitalData.Step2ckNonIMGInvited10th) }}-{{ getCleanValue(selectedHospitalData.Step2ckNonIMGInvited90th) }}</td>
                   </tr>
                   <!-- <tr id="Step2Max">

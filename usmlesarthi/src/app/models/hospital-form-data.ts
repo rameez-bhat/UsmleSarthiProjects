@@ -87,6 +87,11 @@ export class HospitalFormData {
         public programDirectorNew : any;
         public personToContactNew : any;
         public teachingSiteNew : any;
+        public IMG_USMLE_Step2CK : any;
+        public IMG_USMLE_Step1 : any;
+        public Step2ckNonIMGInvited10th : any;
+        public Step2ckNonIMGInvited90th : any;
+
     public constructor (
          )
     { 
