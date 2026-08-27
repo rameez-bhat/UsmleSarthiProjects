@@ -171,26 +171,44 @@ private async loadHospitalsForProgram(
   programId: string
 ): Promise<Record<string, Hospital>> {
   try {
+    const startedAt = performance.now();
+
     const snapshot = await this.firestore
       .collection<Hospital>('Hospital', ref =>
-        ref
-          .where('PIds', 'array-contains', programId)
-          .orderBy('HName', 'asc')
+        ref.where(
+          'PIds',
+          'array-contains',
+          programId
+        )
       )
       .get()
       .toPromise();
 
+    console.log(
+      'Firestore hospital query:',
+      `${(performance.now() - startedAt).toFixed(0)} ms`
+    );
+
+    const documents = snapshot.docs
+      .map(doc => {
+        const data = doc.data() as Hospital;
+
+        return {
+          ...data,
+          HId: (data as any).HId || doc.id
+        };
+      })
+      .sort((a: any, b: any) =>
+        String(a.HName || '').localeCompare(
+          String(b.HName || '')
+        )
+      );
+
     const hospitals: Record<string, Hospital> = {};
 
-    snapshot.docs.forEach(doc => {
-      const data = doc.data() as Hospital;
-      const hospitalId = (data as any).HId || doc.id;
-
-      hospitals[hospitalId] = {
-        ...data,
-        HId: hospitalId
-      };
-    });
+    for (const hospital of documents) {
+      hospitals[(hospital as any).HId] = hospital;
+    }
 
     this.hospitalsCache[programId] = hospitals;
     this.hospitalsByProgram[programId] = hospitals;

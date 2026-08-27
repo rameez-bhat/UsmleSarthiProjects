@@ -335,7 +335,7 @@ getCleanValueYOG(value: any, value2: any = null): string {
       return str;
     }
 
-    // No cap on number of years â†’ 0
+    // No cap on number of years → 0
     if (/no\s+cap\s+on\s+the\s+number\s+of\s+years/i.test(str)) {
       return '0';
     }

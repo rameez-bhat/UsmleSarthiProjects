@@ -26,7 +26,9 @@ import {
 export class SarthiListService {
   hospitalsDataByPId = {};
   hospitalsDataByHPId = {};
+  private hospitalsDataRequests: Record<string, Promise<any>> = {};
   favorites:any = {};
+  private favoritesRequest: Promise<any> | null = null;
   favoritesUpdated = true;
   notes = [];
   notesUpdated = true;
@@ -78,62 +80,87 @@ export class SarthiListService {
     return this.hospitalsDataByPId[pid];
   }
   async getHospitalsDataByPId(pid: any): Promise<any> {
-    try {
-      if (!this.hospitalsDataByPId[pid] || !Object.keys(this.hospitalsDataByPId[pid]).length) {
-        this.hospitalsDataByPId[pid] = {};
-        let hospitalsDataByHPId = {};
-        const feridaSet = new Set<string>();
-        let docsRef;
-        if ([1, 2, 3, 4, 5, 7].includes(Number(pid))) {
-        docsRef = await this.firestore.collection<HospitalFormData>("HospitalProgramInfo", ref =>
-          ref.where("Verified", "==", "Yes")
-             .where("PId", "==", pid)
-             .where("DisplayProgram", "==", 1)
-             .orderBy("TimeStamp", "desc")
-        ).get().toPromise();
-      }
-      else
-      {
-        docsRef = await this.firestore.collection<HospitalFormData>("HospitalProgramInfo", ref =>
-          ref.where("Verified", "==", "Yes")
-             .where("PId", "==", pid)
-             //.where("DisplayProgram", "==", 1)
-             .orderBy("TimeStamp", "desc")
-        ).get().toPromise();
-      }
-        for (let doc of docsRef.docs) 
-        {
-          let data = doc.data() as HospitalFormData;
-          data.HPInfoId = doc.id;
-          const friedaId = String(data.Frieda);
-          let key = (friedaId + '_' + data.PId).toString();
-          
-          if (key in hospitalsDataByHPId)
-            this.hospitalsDataByHPId[key].push(data);
-          else
-          this.hospitalsDataByHPId[key] = [data];
+    const programId = String(pid);
+    const cached = this.hospitalsDataByPId[programId];
 
-          if (data.Frieda == -149 || !data.Frieda)
-          {
-            continue;
-          }
-             
-  
-          if (feridaSet.has(friedaId)) 
-          {
-            continue;
-          }
-            
-          feridaSet.add(friedaId);
-          //this.hospitalsDataByPId[pid][data.HPInfoId] = data;
-          //if(this.hospitalsDataByPId[pid][key])
-          this.hospitalsDataByPId[pid][key] = data;
-        }
-      }
-    } catch (err) {
-      console.log("err------>", err);
+    if (cached && Object.keys(cached).length) {
+      return cached;
     }
-    return this.hospitalsDataByPId[pid];
+
+    if (this.hospitalsDataRequests[programId]) {
+      return this.hospitalsDataRequests[programId];
+    }
+
+    this.hospitalsDataRequests[programId] =
+      this.loadHospitalsDataByPId(programId);
+
+    try {
+      return await this.hospitalsDataRequests[programId];
+    } finally {
+      delete this.hospitalsDataRequests[programId];
+    }
+  }
+
+  private async loadHospitalsDataByPId(programId: string): Promise<any> {
+    const startedAt = performance.now();
+    const shouldFilterDisplayed = [1, 2, 3, 4, 5, 7]
+      .includes(Number(programId));
+
+    const docsRef = await this.firestore
+      .collection<HospitalFormData>('HospitalProgramInfo', ref => {
+        let query: any = ref
+          .where('Verified', '==', 'Yes')
+          .where('PId', '==', programId);
+
+        if (shouldFilterDisplayed) {
+          query = query.where('DisplayProgram', '==', 1);
+        }
+
+        return query.orderBy('TimeStamp', 'desc');
+      })
+      .get()
+      .toPromise();
+
+    const latestByProgram: Record<string, HospitalFormData> = {};
+    const historyByProgram: Record<string, HospitalFormData[]> = {};
+
+    for (const doc of docsRef.docs) {
+      const data = doc.data() as HospitalFormData;
+      data.HPInfoId = doc.id;
+
+      if (!data.Frieda || data.Frieda == -149) {
+        continue;
+      }
+
+      const key = `${String(data.Frieda)}_${data.PId}`;
+
+      if (!historyByProgram[key]) {
+        historyByProgram[key] = [];
+      }
+
+      historyByProgram[key].push(data);
+
+      // Query is newest first, so the first record is the latest.
+      if (!latestByProgram[key]) {
+        latestByProgram[key] = data;
+      }
+    }
+
+    this.hospitalsDataByHPId = {
+      ...this.hospitalsDataByHPId,
+      ...historyByProgram
+    };
+
+    this.hospitalsDataByPId[programId] = latestByProgram;
+
+    console.log(
+      `HospitalProgramInfo Firestore query (${programId}):`,
+      `${(performance.now() - startedAt).toFixed(0)} ms`,
+      `documents=${docsRef.size}`,
+      `latest=${Object.keys(latestByProgram).length}`
+    );
+
+    return latestByProgram;
   }
 
   async getHospitalsDataByPIdHId(hid: any, pid: any): Promise < any > {
@@ -179,47 +206,87 @@ export class SarthiListService {
       return;
     }
 
-    async getFavoritesByUId(uid: any): Promise < any[] > {
-      try
-      {
-      if (Object.keys(this.favorites).length==0 || this.favoritesUpdated) {
-        let remainingHospitalsPrograms = {
-          hids: [],
-          Frieda: [],
-        };
-        this.favorites = {};
-        let docsRef = await this.firestore.collection("UserFav", ref => ref.where("UId", "==", uid)).get().toPromise();
-        for (let i in docsRef.docs) {
-          let doc = docsRef.docs[i];
-          let data = doc.data();
-          const friedaId = String(data.Frieda);
-          if(typeof data.Frieda!="undefined")
-          {
-            let key = (friedaId + '_' + data.PId).toString();
-            if (!(data.PId in this.hospitalsDataByPId) || !(data.HId in this.hospitalsDataByPId[data.PId])) {
-              remainingHospitalsPrograms.hids.push(data.HId);
-              remainingHospitalsPrograms.Frieda.push(data.Frieda);
-            } else
-              data.hospital = this.hospitalsDataByPId[data.PId][key];
-            data.UFId = doc.id;
-            if(typeof this.favorites[key]=="undefined")
-            {
-              this.favorites[key]=data;
-            }
-            
-          }
-         
+    async getFavoritesByUId(uid: any, enrich: boolean = true): Promise<any> {
+      if (this.favoritesUpdated || !Object.keys(this.favorites).length) {
+        if (!this.favoritesRequest) {
+          this.favoritesRequest = this.loadFavoriteDocuments(uid);
         }
-        this.favoritesUpdated = false;
-        this.favorites = await this.hospitalApi.getProgramByFriedaID(remainingHospitalsPrograms.Frieda, this.favorites);
-        this.favorites = await this.hospitalApi.getHospitalsByHIdsRameez(remainingHospitalsPrograms.hids, this.favorites);
+
+        try {
+          await this.favoritesRequest;
+        } finally {
+          this.favoritesRequest = null;
+        }
       }
-    }
-    catch(err)
-    {
-      console.log("error---->",err)
-    }
+
+      // Dashboard only needs IDs and must not wait for these extra queries.
+      if (!enrich) {
+        return this.favorites;
+      }
+
+      const hids = new Set<any>();
+      const friedaIds = new Set<any>();
+
+      for (const key of Object.keys(this.favorites)) {
+        const favorite = this.favorites[key];
+        const programData = this.hospitalsDataByPId[favorite.PId];
+        const programKey = `${String(favorite.Frieda)}_${favorite.PId}`;
+
+        if (programData && programData[programKey]) {
+          favorite.ProgramInfo = programData[programKey];
+        } else {
+          friedaIds.add(favorite.Frieda);
+        }
+
+        if (!favorite.hospital) {
+          hids.add(favorite.HId);
+        }
+      }
+
+      if (friedaIds.size) {
+        this.favorites = await this.hospitalApi.getProgramByFriedaID(
+          Array.from(friedaIds),
+          this.favorites
+        );
+      }
+
+      if (hids.size) {
+        this.favorites = await this.hospitalApi.getHospitalsByHIdsRameez(
+          Array.from(hids),
+          this.favorites
+        );
+      }
+
       return this.favorites;
+    }
+
+    private async loadFavoriteDocuments(uid: any): Promise<void> {
+      const docsRef = await this.firestore
+        .collection('UserFav', ref => ref.where('UId', '==', uid))
+        .get()
+        .toPromise();
+
+      const favorites: any = {};
+
+      for (const doc of docsRef.docs) {
+        const data: any = doc.data();
+
+        if (typeof data.Frieda === 'undefined') {
+          continue;
+        }
+
+        const key = `${String(data.Frieda)}_${data.PId}`;
+
+        if (!favorites[key]) {
+          favorites[key] = {
+            ...data,
+            UFId: doc.id
+          };
+        }
+      }
+
+      this.favorites = favorites;
+      this.favoritesUpdated = false;
     }
     async addFavoriteByUId(uid: any, hid: any, pid: any,Friedaid:any): Promise < any > {
       let docsRef = await this.firestore.collection("UserFav", ref => ref.where("UId", "==", uid).where("Frieda", "==", Friedaid).where("PId", "==", pid)).get().toPromise();
@@ -233,6 +300,7 @@ export class SarthiListService {
         }
         let docRef = await this.firestore.collection("UserFav").add(data);
         this.favoritesUpdated = true;
+        this.favoritesRequest = null;
         return docRef;
       }
       return null;
@@ -240,6 +308,7 @@ export class SarthiListService {
     async deleteFavoriteById(ufid: any) {
       await this.firestore.doc(`UserFav/${ufid}`).delete();
       this.favoritesUpdated = true;
+      this.favoritesRequest = null;
     }
 
     async getNotesByUId(uid: any): Promise < any[] > {

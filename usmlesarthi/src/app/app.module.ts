@@ -17,7 +17,9 @@ import { AngularFireModule } from '@angular/fire';
 import { AngularFireAuthModule } from "@angular/fire/auth";
 import { AngularFireDatabaseModule } from '@angular/fire/database';
 import { environment } from '../environments/environment';
-import { AngularFirestore } from '@angular/fire/firestore';
+import {
+  AngularFirestoreModule
+} from '@angular/fire/firestore';
 import { CookieService } from 'ngx-cookie-service';
 import { AngularFireFunctions, AngularFireFunctionsModule } from "@angular/fire/functions";
 import { NgxSpinnerModule } from "ngx-spinner";
@@ -85,7 +87,13 @@ const DEFAULT_PERFECT_SCROLLBAR_CONFIG: PerfectScrollbarConfigInterface = {
       }),
       PerfectScrollbarModule,
       AngularFireAuthModule, 
-      AngularFireModule.initializeApp(environment.firebaseConfig),
+      AngularFireModule.initializeApp(
+  environment.firebaseConfig
+),
+
+AngularFirestoreModule.enablePersistence({
+  synchronizeTabs: true
+}),
       AngularFireDatabaseModule,
       Ng2TelInputModule,
       AngularFireFunctionsModule,
@@ -99,7 +107,6 @@ const DEFAULT_PERFECT_SCROLLBAR_CONFIG: PerfectScrollbarConfigInterface = {
       { provide: NZ_I18N, useValue: en_US },
       AuthenticationService,
       CookieService,
-      AngularFirestore,
 
       { provide: PERFECT_SCROLLBAR_CONFIG, useValue: DEFAULT_PERFECT_SCROLLBAR_CONFIG }
     ],
