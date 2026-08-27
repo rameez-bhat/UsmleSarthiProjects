@@ -360,7 +360,10 @@ getCleanValueYOG(value: any, value2: any = null): string {
 
   // Otherwise use value
   const result1 = extractYears(value);
-
+if(Number(result1)==0)
+{
+  return "YOG not a constrain";
+}
   if (result1 !== null) {
     return result1;
   }
