@@ -68,9 +68,9 @@ export class SarthiListComponent implements OnInit {
   allLandings = ["Specialities", "Dashboard", "Favorites", "My Notes"];
   allTabs = ["Best", "Possible", "Difficult", "Others"];
   totalNo = [0, 0, 0, 0];
-  allPanes = ["Information from Frieda", "Score Information","Applicant characteristics","Medical school information", "Additional Information", "Interview Profiles", "Matched Profiles"];
+  allPanes = ["Program Information", "Score Information","Applicant characteristics","Medical school information", "Additional Information", "Interview Profiles", "Matched Profiles"];
   customVisa: any = { "1": { Type: "GC/US citizen/H4 EAD", VId: "1" }, "2": { Type: "Need H1", VId: "2" }, "3": { Type: "Need J1", VId: "3" }, "4": { Type: "Other", VId: "4" } };
-  showPane = "Information from Frieda";
+  showPane = "Program Information";
   showTab: string;
   userProfile: any = {
     uid: 8,
@@ -499,7 +499,6 @@ private processDashboard() {
   const medicalSchoolsObj=[];
   for (let hpinfoid in this.hospitalsDataByProgram[this.selectedPId]) {
     let hospitalData = this.hospitalsDataByProgram[this.selectedPId][hpinfoid];
-console.log("hospitalData====>",hospitalData)
     if (hospitalData.TimeStamp) {
       const timeStamp = new Date(hospitalData.TimeStamp);
       hospitalData.Date = `${String(timeStamp.getDate()).padStart(2,'0')}/${String(timeStamp.getMonth()+1).padStart(2,'0')}/${timeStamp.getFullYear()}`;
