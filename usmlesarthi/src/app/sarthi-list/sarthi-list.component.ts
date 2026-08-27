@@ -371,6 +371,7 @@ getCleanValue(value: any, value2: any = null): string {
 
   const invalidValues = [
     '',
+    '--',
     'na',
     'n/a',
     'not available',
