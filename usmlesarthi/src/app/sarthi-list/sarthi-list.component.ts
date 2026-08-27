@@ -1,7 +1,8 @@
 import {
   Component,
   OnInit,
-  NgZone
+  NgZone,
+  ChangeDetectorRef
 } from '@angular/core';
 import * as XLSX from 'xlsx'; 
 import {
@@ -64,6 +65,8 @@ export class SarthiListComponent implements OnInit {
   selectedHid: any;
   notesObject: any = {};
   updateDashboard: boolean = true;
+  private dashboardProcessed: Record<string, boolean> = {};
+  private hospitalDataRequests: Record<string, Promise<any>> = {};
   others: any = {};
   allLandings = ["Specialities", "Dashboard", "Favorites", "My Notes"];
   allTabs = ["Best", "Possible", "Difficult", "Others"];
@@ -133,12 +136,12 @@ export class SarthiListComponent implements OnInit {
   selectedNonUsImg : any;
   selectedDataNotAvailable : any;
 
-  constructor(private dbservice: SarthiListService, private programApi: ProgramService, private hospitalApi: HospitalService, private toastr: ToastrService, private authService: AuthenticationService,private ngZone: NgZone ) {
+  constructor(private dbservice: SarthiListService, private programApi: ProgramService, private hospitalApi: HospitalService, private toastr: ToastrService, private authService: AuthenticationService, private ngZone: NgZone, private cdr: ChangeDetectorRef) {
     this.showTab = "Others";
     this.programList = [];
     this.showAlert = false;
   }
-
+private favoritesPromise: Promise<any> | null = null;
   async ngOnInit() {
     try {
 
@@ -332,7 +335,7 @@ getCleanValueYOG(value: any, value2: any = null): string {
       return str;
     }
 
-    // No cap on number of years → 0
+    // No cap on number of years â†’ 0
     if (/no\s+cap\s+on\s+the\s+number\s+of\s+years/i.test(str)) {
       return '0';
     }
@@ -414,53 +417,262 @@ getCleanValue(value: any, value2: any = null): string {
 
   return 'N/A';
 }
-  async takeMeToDashboard(event) {
-  try {
-    this.selectedPId = event;
-    this.loading = true;
-    this.landing = "Dashboard";
-    this.ListUserHasverified = [];
-    this.ListUserHasUnverified = [];
-    this.ListUserHasverified.push({ id: 1, name: "Test User" });
+private getFavoritesCached(): Promise<any> {
+  if (this.favorites && Object.keys(this.favorites).length) {
+    return Promise.resolve(this.favorites);
+  }
 
-    // Step 1 — parallel fetch
-    const [hospitals, hospitalsData] = await Promise.all([
-      this.hospitalApi.getHospitalsObjectByProgramRameez(this.selectedPId),
-      this.dbservice.getHospitalsDataByPId(this.selectedPId)
+  if (!this.favoritesPromise) {
+    this.favoritesPromise = this.dbservice
+      .getFavoritesByUId(
+        String(this.userProfile.uid)
+      )
+      .catch(error => {
+        this.favoritesPromise = null;
+        throw error;
+      });
+  }
+
+  return this.favoritesPromise;
+}
+
+private getHospitalDataCached(programId: string): Promise<any> {
+  const cached = this.hospitalsDataByProgram[programId];
+
+  if (cached && Object.keys(cached).length) {
+    return Promise.resolve(cached);
+  }
+
+  if (this.hospitalDataRequests[programId]) {
+    return this.hospitalDataRequests[programId];
+  }
+
+  this.hospitalDataRequests[programId] = this.dbservice
+    .getHospitalsDataByPId(programId)
+    .then(data => {
+      this.hospitalsDataByProgram[programId] = data || {};
+      return this.hospitalsDataByProgram[programId];
+    })
+    .finally(() => {
+      delete this.hospitalDataRequests[programId];
+    });
+
+  return this.hospitalDataRequests[programId];
+}
+private processDashboardOptimized(): void {
+  const programId = this.selectedPId;
+
+  if (
+    this.dashboardProcessed[programId] &&
+    !this.updateDashboard
+  ) {
+    return;
+  }
+
+  const best: any[] = [];
+  const possible: any[] = [];
+  const difficult: any[] = [];
+  const others: any[] = [];
+
+  const medicalSchools = new Set<string>();
+
+  const programData =
+    this.hospitalsDataByProgram[programId] || {};
+
+  for (const hospitalData of Object.values(programData) as any[]) {
+    if (hospitalData.TimeStamp) {
+      const date = new Date(hospitalData.TimeStamp);
+
+      hospitalData.Date = [
+        String(date.getDate()).padStart(2, '0'),
+        String(date.getMonth() + 1).padStart(2, '0'),
+        date.getFullYear()
+      ].join('/');
+    }
+
+    for (
+      const school of hospitalData.medicalSchoolMatches || []
+    ) {
+      if (!school || !school.name) {
+        continue;
+      }
+
+      const schoolName = String(school.name)
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      if (
+        schoolName.toLowerCase() !==
+        'more than 1 school has this rank*'
+      ) {
+        medicalSchools.add(schoolName);
+      }
+    }
+
+    const key =
+      `${hospitalData.HId}_${hospitalData.PId}`;
+
+    hospitalData.favorite =
+      this.favoritesObject[key];
+
+    switch (this.bifurcateHospital(hospitalData)) {
+      case 'Best':
+        best.push(hospitalData);
+        break;
+
+      case 'Possible':
+        possible.push(hospitalData);
+        break;
+
+      case 'Difficult':
+        difficult.push(hospitalData);
+        break;
+
+      default:
+        others.push(hospitalData);
+    }
+  }
+
+  // Sort only once.
+  this.shownMedicalSchools =
+    Array.from(medicalSchools).sort((a, b) =>
+      a.localeCompare(
+        b,
+        undefined,
+        { sensitivity: 'base' }
+      )
+    );
+
+  this.bestMatches[programId] = best;
+  this.possibleMatches[programId] = possible;
+  this.difficultMatches[programId] = difficult;
+  this.others[programId] = others;
+
+  this.totalNo = [
+    best.length,
+    possible.length,
+    difficult.length,
+    others.length
+  ];
+
+  this.dashboardProcessed[programId] = true;
+  this.updateDashboard = false;
+}
+async takeMeToDashboard(event: any): Promise<void> {
+  const programId = String(event);
+
+  // Prevent repeated clicks while loading.
+  if (this.loading && this.selectedPId === programId) {
+    return;
+  }
+
+  this.selectedPId = programId;
+  this.loading = true;
+  this.landing = 'Dashboard';
+  console.time(`dashboard-${programId}`);
+
+  try {
+
+    this.ListUserHasverified = [
+      { id: 1, name: 'Test User' }
+    ];
+
+    this.ListUserHasUnverified = [];
+
+    const [
+      hospitals,
+      hospitalsData,
+      favorites
+    ] = await Promise.all([
+      this.measureRequest(
+        'Hospitals',
+        this.hospitalApi.getHospitalsObjectByProgramRameez(programId)
+      ),
+      this.measureRequest(
+        'Hospital program data',
+        this.getHospitalDataCached(programId)
+      ),
+      this.measureRequest(
+        'Favorites',
+        this.getFavoritesCached()
+      )
     ]);
 
-    this.hospitalsByProgram[this.selectedPId] = hospitals;
-    this.hospitalsDataByProgram[this.selectedPId] = hospitalsData;
-    if (Object.keys(this.hospitalsDataByProgram[this.selectedPId]).length === 0) {
-      this.toastr.info("Selected speciality doesn't have any hospital data.");
+    this.hospitalsByProgram[programId] =
+      hospitals || {};
+
+    this.hospitalsDataByProgram[programId] =
+      hospitalsData || {};
+
+    this.favorites = favorites || {};
+
+    const recordCount = Object.keys(
+      this.hospitalsDataByProgram[programId]
+    ).length;
+
+    console.log('Hospital data records:', recordCount);
+
+    if (recordCount === 0) {
+      this.toastr.info(
+        "Selected speciality doesn't have any hospital data."
+      );
+
       this.selectedPId = undefined;
-      this.landing = "Specialities";
-      this.loading = false;
+      this.landing = 'Specialities';
+
       return;
     }
 
-    // Step 2 — favorites needs hospitalsData ready
-    this.favorites = await this.dbservice.getFavoritesByUId(
-      this.userProfile.uid.toString()
-    );
-console.log("selectedHospitalData---->",this.selectedHospitalData)
-    // Step 3 — process synchronously (fast enough)
     this.processFavorites();
-    this.processDashboard();
-    this.filterSearch();
 
-    // Step 4 — done
-    this.loading = false;
-    this.landing = "Dashboard";
+    // The program data was freshly assigned, so rebuild its dashboard lists.
+    this.dashboardProcessed[programId] = false;
+    this.processDashboardOptimized();
+
+    this.showTab = this.showTab || 'Others';
+    this.shownList = [
+      ...(this.showTab === 'Best'
+        ? this.bestMatches[programId]
+        : this.showTab === 'Possible'
+          ? this.possibleMatches[programId]
+          : this.showTab === 'Difficult'
+            ? this.difficultMatches[programId]
+            : this.others[programId])
+    ];
+
+    this.sortDataOnFilter('State', this.shownList);
+    this.createFilters();
+
+    console.log('Shown list records:', this.shownList.length);
+  } catch (error) {
+    console.error(
+      'Dashboard loading failed:',
+      error
+    );
+
+    this.landing = 'Specialities';
+
+    this.toastr.error(
+      'Error while loading the dashboard. Please try again.'
+    );
+  } finally {
+    console.timeEnd(`dashboard-${programId}`);
+
+    // Older AngularFire promises may finish outside Angular change detection.
     this.ngZone.run(() => {
       this.loading = false;
-      this.landing = "Dashboard";
+      this.cdr.detectChanges();
     });
+  }
+}
 
-  } catch (err) {
-    console.log("Error===>", err.message);
-    this.loading = false;
-    this.landing = "Specialities";
+private async measureRequest<T>(name: string, request: Promise<T>): Promise<T> {
+  const startedAt = performance.now();
+
+  try {
+    return await request;
+  } finally {
+    console.log(`${name}: ${(performance.now() - startedAt).toFixed(0)} ms`);
   }
 }
 ConvertNumber(num){
@@ -490,7 +702,7 @@ private processFavorites() {
 }
 
 private processDashboard() {
-  if (this.selectedPId in this.bestMatches && !this.updateDashboard) return;
+  
 
   this.bestMatches[this.selectedPId] = [];
   this.possibleMatches[this.selectedPId] = [];
@@ -679,7 +891,6 @@ private processDashboard() {
           this.toastr.info("Choose a speciality first");
         else
           {
-             this.setShownListToInitial()
             await this.takeMeToDashboard(this.selectedPId);
           }
          
@@ -1040,9 +1251,8 @@ private processDashboard() {
   }
 
   setShownListToInitial() {
-   console.log("this.shownList====>",this.shownList)
-   console.log("this.showTab====>",this.showTab)
-    this.shownList = this.showTab === "Best" ? this.bestMatches[this.selectedPId] : this.showTab === "Possible" ? this.possibleMatches[this.selectedPId] : this.showTab === "Difficult" ? this.difficultMatches[this.selectedPId] : this.others[this.selectedPId];
+    const source = this.showTab === "Best" ? this.bestMatches[this.selectedPId] : this.showTab === "Possible" ? this.possibleMatches[this.selectedPId] : this.showTab === "Difficult" ? this.difficultMatches[this.selectedPId] : this.others[this.selectedPId];
+    this.shownList = [...(source || [])];
     this.sortDataOnFilter("State", this.shownList);
     this.createFilters();
   }

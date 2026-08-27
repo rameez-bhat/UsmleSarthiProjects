@@ -21,17 +21,43 @@ export class HospitalService {
   hospitalsList: Hospital[];
   hospitalsByProgram: any = {};
   hospitals: any = [];
-private hospitalsCache: Record<string, Record<string, Hospital>> = {};
 
-private hospitalsRequests:
-  Record<string, Promise<Record<string, Hospital>>> = {};
   constructor(private firestore: AngularFirestore) {
     this.collectionRef = this.firestore.collection('Hospital');
   }
 
-  async getHospitalsByProgramRameez(id: any): Promise<{ hospitalsByProgram: Record<string, Hospital>; hospitals: Record<string, Hospital> }> {
-    const hospitals = await this.getHospitalsObjectByProgramRameez(id);
-    return { hospitalsByProgram: hospitals, hospitals };
+  async getHospitalsByProgramRameez(id: any): Promise<{ hospitalsByProgram: Hospital[]; hospitals: Record<string, Hospital> }> {
+    let feridaList=[];
+    let programId = id.toString();
+    let hospitalsData= {}
+    this.hospitalsByProgram={};
+    if (!Object.keys(this.hospitalsByProgram[programId] || {}).length){
+      this.hospitalsByProgram[programId] = [];
+      let hids = [];
+      let hid_hpid = {};
+
+      let hospitaldocs = await this.firestore.collection < Hospital > ("Hospital", ref => {
+        return ref
+          .where("PIds", "array-contains", programId).orderBy("HName", "asc");
+      }).get().toPromise();
+      let doc, hid, data;
+      for (var i in hospitaldocs.docs) {
+        doc = hospitaldocs.docs[i];
+        data = doc.data();
+
+        const friedaId = data.HName ;
+  
+        data.HId = doc.HId?doc.HId:doc.id;
+        if (feridaList.includes(String(friedaId)) && friedaId!="") {
+          //continue;
+        }
+        feridaList.push(String(friedaId));
+        hospitalsData[data.HId] = data;
+        this.hospitalsByProgram[programId][data.HId]=data;
+        //this.hospitalsByProgram[programId].push(data as Hospital);
+      }
+    }
+    return {hospitalsByProgram:this.hospitalsByProgram[programId],hospitals:hospitalsData};
   }
   async getHospitalsByProgram(id: any): Promise < Hospital[] > {
     let feridaList=[];
@@ -147,59 +173,26 @@ async getAlreadyAssignedHospotal(id: any): Promise <any>
     }
     
   }
-  getHospitalsObjectByProgramRameez(
-  pid: string | number
-): Promise<Record<string, Hospital>> {
-  const programId = String(pid);
-
-  // Return already-loaded data immediately.
-  if (this.hospitalsCache[programId]) {
-    return Promise.resolve(this.hospitalsCache[programId]);
+  async getHospitalsObjectByProgramRameez(pid: any): Promise <any>
+  {
+    let hospitalsList = await this.getHospitalsByProgramRameez(pid);
+    return hospitalsList['hospitals'];
+    /*let hospitals = {};
+    try
+    {
+      for(let i in hospitalsList)
+        {
+          let hospital = hospitalsList[i];
+          hospitals[hospital.HId] = hospital;
+        }
+        return hospitals;
+    }
+    catch(err)
+    {
+      return [];
+    }*/
+    
   }
-
-  // Prevent duplicate simultaneous Firestore requests.
-  if (this.hospitalsRequests[programId]) {
-    return this.hospitalsRequests[programId];
-  }
-
-  this.hospitalsRequests[programId] =
-    this.loadHospitalsForProgram(programId);
-
-  return this.hospitalsRequests[programId];
-}
-private async loadHospitalsForProgram(
-  programId: string
-): Promise<Record<string, Hospital>> {
-  try {
-    const snapshot = await this.firestore
-      .collection<Hospital>('Hospital', ref =>
-        ref
-          .where('PIds', 'array-contains', programId)
-          .orderBy('HName', 'asc')
-      )
-      .get()
-      .toPromise();
-
-    const hospitals: Record<string, Hospital> = {};
-
-    snapshot.docs.forEach(doc => {
-      const data = doc.data() as Hospital;
-      const hospitalId = (data as any).HId || doc.id;
-
-      hospitals[hospitalId] = {
-        ...data,
-        HId: hospitalId
-      };
-    });
-
-    this.hospitalsCache[programId] = hospitals;
-    this.hospitalsByProgram[programId] = hospitals;
-
-    return hospitals;
-  } finally {
-    delete this.hospitalsRequests[programId];
-  }
-}
   async getProgramByFriedaID(hidsObj: any[], dataObject): Promise <any>
   {
     try
