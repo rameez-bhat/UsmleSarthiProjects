@@ -373,6 +373,8 @@ getCleanValue(value: any, value2: any = null): string {
     '',
     '--',
     'na',
+    '99',
+    '999',
     'n/a',
     'not available',
     'data not available',
