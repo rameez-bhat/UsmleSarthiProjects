@@ -23,7 +23,7 @@ import {
 import {
   Visa
 } from '../models/visa';
-import collegesByCountry from "./colleges_by_country.json";
+import { collegesByCountry } from './colleges_by_country';
 import {
   ToastrService
 } from 'ngx-toastr';
