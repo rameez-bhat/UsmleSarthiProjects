@@ -316,9 +316,9 @@ const copyCollection = async (sourceCollection, targetCollection,AlreadyData={})
       const docData = document.data(); // Get document data
       if(typeof docData.Frieda=="undefined")
       {
-         KeyD=docData.HId+"_"+docData.PId;
-         console.log("docData=====>",docData)
-        docData.Frieda=AlreadyData[KeyD].Frieda;
+         //KeyD=docData.HId+"_"+docData.PId;
+         //console.log("docData=====>",docData)
+        //docData.Frieda=AlreadyData[KeyD].Frieda;
         // Step 3: Prepare the document for saving in the target collection
         //const convertedDataForSaving = convertRotationsArrayToMap(docData);
 
@@ -1333,7 +1333,7 @@ const SelectWithComplexConditions = async (
   } else {
     throw new Error("mainCollectionName must be a string or array");
   }
-       
+
       orClause.forEach(andCondition => {
         orQuery = query(orQuery, where(andCondition.name, andCondition.condition, andCondition.value));
       });
@@ -2171,7 +2171,7 @@ const fetchAdminDataWithJoin = async (mainCollectionName, joinCollectionName, pa
         );
       }
     }
-    
+
     const q = query(mainCollectionRef, ...queryConstraints);
     const querySnapshot = await getDocs(q);
 

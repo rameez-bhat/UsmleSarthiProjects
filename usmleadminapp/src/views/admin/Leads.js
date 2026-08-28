@@ -8,6 +8,15 @@ import ExcelJS from 'exceljs';
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import axios from 'axios';
+import {
+  collection,
+  getDocs,
+  query,
+  where,
+  writeBatch,
+} from "firebase/firestore";
+const DELETE_BATCH_SIZE = 50;
+import { db } from '../../firebase';
 import { Table, Typography, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, TextField, Box, CircularProgress,Select, MenuItem, FormControl, InputLabel ,Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle} from '@mui/material';
 import { CrystalButton } from '../../components/css/CustomStyles';
 import  '../../components/css/style.css';
@@ -53,7 +62,133 @@ const { LoggedInuser,setLoggedInuser } = useState(ActualUser);
     loadFilterOptions();
   },[]);
 
+const getTimestampMillis = (value) => {
+  if (!value) return 0;
 
+  if (typeof value.toMillis === "function") {
+    return value.toMillis();
+  }
+
+  if (typeof value.seconds === "number") {
+    return value.seconds * 1000;
+  }
+
+  const millis = new Date(value).getTime();
+  return Number.isNaN(millis) ? 0 : millis;
+};
+
+ const removeOldHospitalProgramEntries = async (
+  db,
+  programId,
+  dryRun = true
+) => {
+  const hospitalQuery = query(
+    collection(db, "HospitalProgramInfo"),
+    where("PId", "==", String(programId))
+  );
+
+  const snapshot = await getDocs(hospitalQuery);
+  const groups = new Map();
+
+  snapshot.docs.forEach((documentSnapshot) => {
+    const data = documentSnapshot.data();
+
+    if (
+      data.Frieda === undefined ||
+      data.Frieda === null ||
+      String(data.Frieda).trim() === "" ||
+      Number(data.Frieda) === -149
+    ) {
+      return;
+    }
+
+    // Each Frieda and specialty/program ID gets its own group.
+    const groupKey = `${String(data.Frieda)}_${String(data.PId)}`;
+
+    if (!groups.has(groupKey)) {
+      groups.set(groupKey, []);
+    }
+
+    groups.get(groupKey).push({
+      id: documentSnapshot.id,
+      ref: documentSnapshot.ref,
+      timestamp: getTimestampMillis(data.TimeStamp),
+    });
+  });
+
+  const documentsToDelete = [];
+  let retainedDocuments = 0;
+
+  groups.forEach((documents, groupKey) => {
+    // Do not delete from a group if timestamps cannot be verified.
+    if (documents.some((item) => item.timestamp === 0)) {
+      console.warn(
+        `Skipped ${groupKey}: one or more documents have an invalid TimeStamp`
+      );
+      return;
+    }
+
+    documents.sort((a, b) => b.timestamp - a.timestamp);
+
+    retainedDocuments += Math.min(2, documents.length);
+
+    // Keep newest two and delete everything after them.
+    documentsToDelete.push(...documents.slice(2));
+  });
+
+  const result = {
+    programId: String(programId),
+    totalDocuments: snapshot.size,
+    friedasFound: groups.size,
+    retainedDocuments,
+    documentsToDelete: documentsToDelete.length,
+    dryRun,
+  };
+
+  console.table(result);
+
+  if (dryRun) {
+    console.log(
+      "Dry run only. No documents were deleted:",
+      documentsToDelete.map((item) => item.id)
+    );
+
+    return result;
+  }
+
+  let deleted = 0;
+
+  // Small sequential batches avoid Firestore's transaction-size limit.
+  for (
+    let start = 0;
+    start < documentsToDelete.length;
+    start += DELETE_BATCH_SIZE
+  ) {
+    const chunk = documentsToDelete.slice(
+      start,
+      start + DELETE_BATCH_SIZE
+    );
+
+    const batch = writeBatch(db);
+
+    chunk.forEach((item) => {
+      batch.delete(item.ref);
+    });
+
+    await batch.commit();
+
+    deleted += chunk.length;
+
+    console.log(
+      `Deleted ${deleted} of ${documentsToDelete.length}`
+    );
+  }
+
+  return {
+    ...result,
+    deleted,
+  };
+};
   // Toggle function for the date picker visibility
   const togglePicker = () => {
     setShowPicker(!showPicker);
@@ -305,11 +440,13 @@ const groupedServices = allServices.reduce((acc, serrives) => {
       UserFav[KeyD]=resultsr['data'][i]
     }*/
     //console.log("UserFav--->",UserFav)
-    //copyCollection("UserFav","UserFav",UserFav);
+    //await keepLatestTwoDocumentsPerFrieda("1");
+    //copyCollection("HospitalProgramInfo","HospitalProgramInfoBK",null);
    //copyFieldToAnotherCollection("Users","UsersRoles","StudentUniqueId");
    //updateOrAddFieldInCollection("HospitalProgramInfo","DisplayProgram",0);
     let result;
      console.log("fetchPaginatedDataWithJoin--->",direction)
+     //await removeOldHospitalProgramEntries(db, 16, false);
      /*let WhereOrObjectJ=[{"name":"PId","condition":"==","value":"1"}];
     	const resultsJ = await SelectWithWhereAnd("HospitalProgramInfo", WhereOrObjectJ);
     	let WhereOrObjectK=[{"name":"PIds","condition":"array-contains","value":"1"}];
@@ -481,7 +618,7 @@ const loadTotalRecords = async () => {
       loadData('previous');
     }
   };
-  
+
 
 const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -799,7 +936,7 @@ const adminOptions = await fetchAdminDataWithJoin(mainCollectionName,joinCollect
   )}
 </TableCell>
 
-    
+
               </TableRow>
             ))}
           </TableBody>
