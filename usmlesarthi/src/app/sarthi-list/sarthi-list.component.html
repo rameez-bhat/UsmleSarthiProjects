@@ -109,6 +109,13 @@
             (change)="filterSearch()" 
           ></ng-select>
           <ng-select
+            placeholder="Applicant med country"
+            [items]="shownCountries"
+            [multiple]="true"
+            [(ngModel)]="selectedCountries"
+            (change)="filterSearch()" 
+          ></ng-select>
+          <ng-select
             placeholder="State"
             [items]="shownStates"
             [multiple]="true"

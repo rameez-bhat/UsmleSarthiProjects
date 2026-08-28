@@ -23,7 +23,7 @@ import {
 import {
   Visa
 } from '../models/visa';
-
+import collegesByCountry from "./colleges_by_country.json";
 import {
   ToastrService
 } from 'ngx-toastr';
@@ -44,6 +44,7 @@ export class SarthiListComponent implements OnInit {
   selectedHospitalData: any;
   ListUserHasUnverified: any;
   ListUserHasverified: any;
+  collegesByCountry: any = collegesByCountry;
   message: string;
   sortColumn = '';
   sortDirection: 'asc' | 'desc' = 'asc';
@@ -135,7 +136,12 @@ export class SarthiListComponent implements OnInit {
   selectedSignalInvited  : any;
   selectedNonUsImg : any;
   selectedDataNotAvailable : any;
+//collegesByCountry: any = collegesByCountry;
 
+shownCountries: string[] = Object.keys(collegesByCountry)
+  .sort((a, b) => a.localeCompare(b));
+
+selectedCountries: string[] = [];
   constructor(private dbservice: SarthiListService, private programApi: ProgramService, private hospitalApi: HospitalService, private toastr: ToastrService, private authService: AuthenticationService, private ngZone: NgZone, private cdr: ChangeDetectorRef) {
     this.showTab = "Others";
     this.programList = [];
@@ -1589,6 +1595,52 @@ percentageCondition = (field, toCheck) => {
 });
       //this.shownList = this.shownList.filter((item) => this.selectedStates.includes(this.hospitalsByProgram[this.selectedPId][item.HId]?.State));
     }
+    if (this.selectedCountries.length) {
+
+  const countryCollegeSet = new Set<string>();
+
+  this.selectedCountries.forEach(country => {
+
+    const colleges =
+      this.collegesByCountry[country] || [];
+
+    colleges.forEach(college => {
+      countryCollegeSet.add(
+        String(college)
+          .replace(/\s+/g, ' ')
+          .trim()
+          .toLowerCase()
+      );
+    });
+
+  });
+
+  this.shownList = this.shownList.filter(item => {
+
+    if (
+      !item ||
+      !item.medicalSchoolMatches ||
+      !item.medicalSchoolMatches.length
+    ) {
+      return false;
+    }
+
+    return item.medicalSchoolMatches.some(school => {
+
+      if (!school || !school.name) {
+        return false;
+      }
+
+      const schoolName = String(school.name)
+        .replace(/\s+/g, ' ')
+        .trim()
+        .toLowerCase();
+
+      return countryCollegeSet.has(schoolName);
+    });
+
+  });
+}
     if (this.selectedMedicalSchools.length) {
 
   this.shownList = this.shownList.filter(item => {
