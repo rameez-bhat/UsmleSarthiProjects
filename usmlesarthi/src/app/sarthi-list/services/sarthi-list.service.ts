@@ -24,6 +24,8 @@ import {
   providedIn: 'root'
 })
 export class SarthiListService {
+  private readonly programCacheTtlMs = 24 * 60 * 60 * 1000;
+  private readonly favoritesCacheTtlMs = 5 * 60 * 1000;
   hospitalsDataByPId = {};
   hospitalsDataByHPId = {};
   private hospitalsDataRequests: Record<string, Promise<any>> = {};
@@ -106,20 +108,26 @@ export class SarthiListService {
     const shouldFilterDisplayed = [1, 2, 3, 4, 5, 7]
       .includes(Number(programId));
 
-    const docsRef = await this.firestore
-      .collection<HospitalFormData>('HospitalProgramInfo', ref => {
-        let query: any = ref
-          .where('Verified', '==', 'Yes')
-          .where('PId', '==', programId);
+    const cacheKey = `firestore:HospitalProgramInfo:${programId}:v1`;
 
-        if (shouldFilterDisplayed) {
-          query = query.where('DisplayProgram', '==', 1);
-        }
+    let query: any = this.firestore.firestore
+      .collection('HospitalProgramInfo')
+      .where('Verified', '==', 'Yes')
+      .where('PId', '==', programId);
 
-        return query.orderBy('TimeStamp', 'desc');
-      })
-      .get()
-      .toPromise();
+    if (shouldFilterDisplayed) {
+      query = query.where('DisplayProgram', '==', 1);
+    }
+
+    query = query.orderBy('TimeStamp', 'desc');
+
+    const result = await this.getQueryCacheFirst(
+      query,
+      cacheKey,
+      this.programCacheTtlMs
+    );
+
+    const docsRef = result.snapshot;
 
     const latestByProgram: Record<string, HospitalFormData> = {};
     const historyByProgram: Record<string, HospitalFormData[]> = {};
@@ -156,11 +164,76 @@ export class SarthiListService {
     console.log(
       `HospitalProgramInfo Firestore query (${programId}):`,
       `${(performance.now() - startedAt).toFixed(0)} ms`,
+      `source=${result.source}`,
       `documents=${docsRef.size}`,
       `latest=${Object.keys(latestByProgram).length}`
     );
 
     return latestByProgram;
+  }
+
+  private async getQueryCacheFirst(
+    query: any,
+    cacheKey: string,
+    ttlMs: number
+  ): Promise<{ snapshot: any; source: 'indexeddb-cache' | 'server' }> {
+    const cacheFresh = this.isLocalCacheFresh(cacheKey, ttlMs);
+
+    console.log(
+      'Cache status:',
+      cacheKey,
+      cacheFresh ? 'fresh' : 'expired'
+    );
+
+    if (cacheFresh) {
+      try {
+        const cachedSnapshot = await query.get({ source: 'cache' });
+
+        if (!cachedSnapshot.empty) {
+          return {
+            snapshot: cachedSnapshot,
+            source: 'indexeddb-cache'
+          };
+        }
+
+        console.warn('TTL exists but IndexedDB query cache is empty.');
+      } catch (cacheError) {
+        console.warn('Firestore cache unavailable:', cacheError);
+      }
+    }
+
+    const serverSnapshot = await query.get({ source: 'server' });
+    this.markLocalCacheFresh(cacheKey);
+
+    return {
+      snapshot: serverSnapshot,
+      source: 'server'
+    };
+  }
+
+  private isLocalCacheFresh(cacheKey: string, ttlMs: number): boolean {
+    try {
+      const savedAt = Number(localStorage.getItem(cacheKey) || 0);
+      return savedAt > 0 && Date.now() - savedAt < ttlMs;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  private markLocalCacheFresh(cacheKey: string): void {
+    try {
+      localStorage.setItem(cacheKey, String(Date.now()));
+    } catch (_) {
+      // Local storage can be unavailable in private/restricted browsing.
+    }
+  }
+
+  private invalidateLocalCache(cacheKey: string): void {
+    try {
+      localStorage.removeItem(cacheKey);
+    } catch (_) {
+      // Nothing to invalidate when local storage is unavailable.
+    }
   }
 
   async getHospitalsDataByPIdHId(hid: any, pid: any): Promise < any > {
@@ -261,10 +334,24 @@ export class SarthiListService {
     }
 
     private async loadFavoriteDocuments(uid: any): Promise<void> {
-      const docsRef = await this.firestore
-        .collection('UserFav', ref => ref.where('UId', '==', uid))
-        .get()
-        .toPromise();
+      const cacheKey = `firestore:UserFav:${String(uid)}:v1`;
+      const query = this.firestore.firestore
+        .collection('UserFav')
+        .where('UId', '==', uid);
+
+      const result = await this.getQueryCacheFirst(
+        query,
+        cacheKey,
+        this.favoritesCacheTtlMs
+      );
+
+      const docsRef = result.snapshot;
+
+      console.log(
+        'UserFav query:',
+        `source=${result.source}`,
+        `documents=${docsRef.size}`
+      );
 
       const favorites: any = {};
 
@@ -301,6 +388,7 @@ export class SarthiListService {
         let docRef = await this.firestore.collection("UserFav").add(data);
         this.favoritesUpdated = true;
         this.favoritesRequest = null;
+        this.invalidateLocalCache(`firestore:UserFav:${String(uid)}:v1`);
         return docRef;
       }
       return null;
@@ -309,6 +397,16 @@ export class SarthiListService {
       await this.firestore.doc(`UserFav/${ufid}`).delete();
       this.favoritesUpdated = true;
       this.favoritesRequest = null;
+      try {
+        for (let index = localStorage.length - 1; index >= 0; index--) {
+          const key = localStorage.key(index);
+          if (key && key.indexOf('firestore:UserFav:') === 0) {
+            localStorage.removeItem(key);
+          }
+        }
+      } catch (_) {
+        // Ignore restricted local-storage environments.
+      }
     }
 
     async getNotesByUId(uid: any): Promise < any[] > {
