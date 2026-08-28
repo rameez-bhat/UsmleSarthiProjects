@@ -149,10 +149,9 @@ export class SarthiListService {
       historyByProgram[key].push(data);
 
       // Query is newest first, so the first record is the latest.
-      /*if (!latestByProgram[key]) {
+      if (!latestByProgram[key]) {
         latestByProgram[key] = data;
-      }*/
-      latestByProgram[key] = data;
+      }
     }
 
     this.hospitalsDataByHPId = {
