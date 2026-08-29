@@ -1277,6 +1277,8 @@ private processDashboard() {
   }
   yogCondition = (field, toCheck) => {
     const toCheckNoValue = this.selectedDataNotAvailable;
+    console.log("field=====>",field)
+    console.log("toCheck=====>",toCheck)
     if (toCheckNoValue && (!field || field=== 'Data not available')){
       return true;
     }
@@ -1305,9 +1307,10 @@ private processDashboard() {
       val = parseInt(parts[1]);
     }*/
       var numbersVal=null;
+      console.log("field====>",field)
     if(typeof field!="undefined")
     {
-      numbersVal = field.match(/\d+/g);
+      numbersVal = String(field).match(/\d+/g);
     }
       
       if(numbersVal!=null && numbersVal.length)
@@ -1417,6 +1420,12 @@ sortTable(column: string) {
           this.ConvertNumber(a.studentType_usimg)+this.ConvertNumber(a.studentType_nonusimg);
 
         valueB = this.ConvertNumber(b.studentType_usimg)+this.ConvertNumber(b.studentType_nonusimg);;
+        break;
+      case 'usimg':
+        valueA =
+          this.ConvertNumber(a.studentType_usimg);
+
+        valueB = this.ConvertNumber(b.studentType_usimg);
         break;
 
       case 'nonimg':
