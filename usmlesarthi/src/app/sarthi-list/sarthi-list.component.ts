@@ -91,6 +91,7 @@ export class SarthiListComponent implements OnInit {
   shownStates : any[];
   shownCities : any[];
   shownMedicalSchools: any[];
+  shownMedicalSchoolsAll: any[];
   shownVisas  = ["J1", "H1", "H4 EAD", "No Visa Sponsorship", "F1 (OPT 1st year)"];
   shownNrmp = ["Yes", "No"];
   shownEcfmg = ["Yes", "No", "Required for IMGs"];
@@ -140,7 +141,7 @@ export class SarthiListComponent implements OnInit {
 
 shownCountries: string[] = Object.keys(collegesByCountry)
   .sort((a, b) => a.localeCompare(b));
-
+shownCountriesAll: string[] =this.shownCountries;
 selectedCountries: string[] = [];
   constructor(private dbservice: SarthiListService, private programApi: ProgramService, private hospitalApi: HospitalService, private toastr: ToastrService, private authService: AuthenticationService, private ngZone: NgZone, private cdr: ChangeDetectorRef) {
     this.showTab = "Others";
@@ -548,7 +549,7 @@ private processDashboardOptimized(): void {
         { sensitivity: 'base' }
       )
     );
-
+this.shownMedicalSchoolsAll=this.shownMedicalSchools;
   this.bestMatches[programId] = best;
   this.possibleMatches[programId] = possible;
   this.difficultMatches[programId] = difficult;
@@ -1583,6 +1584,45 @@ percentageCondition = (field, toCheck) => {
 
     let text = this.search.trim().toLowerCase();
     this.setShownListToInitial();
+    if (this.selectedCountries.length) {
+  const medicalSchoolMap = new Map<string, string>();
+
+  this.selectedCountries.forEach(country => {
+    const colleges = this.collegesByCountry[country] || [];
+
+    colleges.forEach(college => {
+      const originalName = String(college)
+        .replace(/\s+/g, " ")
+        .trim();
+
+      if (originalName) {
+        medicalSchoolMap.set(
+          originalName.toLowerCase(),
+          originalName
+        );
+      }
+    });
+  });
+
+  this.shownMedicalSchools = Array.from(
+    medicalSchoolMap.values()
+  ).sort((a, b) => a.localeCompare(b));
+
+  // Remove selected schools that are no longer available
+  const availableSchoolSet = new Set(
+    this.shownMedicalSchools.map(school =>
+      this.normalizeSchoolName(school)
+    )
+  );
+
+  this.selectedMedicalSchools = (
+    this.selectedMedicalSchools || []
+  ).filter(school =>
+    availableSchoolSet.has(this.normalizeSchoolName(school))
+  );
+} else {
+  this.shownMedicalSchools = [...this.shownMedicalSchoolsAll];
+}
     
     if (text)
       this.shownList = this.shownList.filter((item) => this.hospitalsByProgram[this.selectedPId][item.HId].HName.toLowerCase().includes(text));
@@ -1615,10 +1655,7 @@ percentageCondition = (field, toCheck) => {
 
     colleges.forEach(college => {
       countryCollegeSet.add(
-        String(college)
-          .replace(/\s+/g, ' ')
-          .trim()
-          .toLowerCase()
+        this.normalizeSchoolName(college)
       );
     });
 
@@ -1720,7 +1757,12 @@ percentageCondition = (field, toCheck) => {
       console.log("error--->",err)
     }
   }
-
+private normalizeSchoolName(value: unknown): string {
+  return String(value)
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
   getStep1Score(){
     if (this.userProfile.Step1Result === "Score")
       return this.userProfile.Step1Score;

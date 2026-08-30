@@ -101,18 +101,19 @@
             (change)="filterSearch()" 
             style="width: 400px; margin-right: 8px"
           />
-          <ng-select
-            placeholder="Applicant med school"
-            [items]="shownMedicalSchools"
-            [multiple]="true"
-            [(ngModel)]="selectedMedicalSchools"
-            (change)="filterSearch()" 
-          ></ng-select>
+          
           <ng-select
             placeholder="Applicant med country"
             [items]="shownCountries"
             [multiple]="true"
             [(ngModel)]="selectedCountries"
+            (change)="filterSearch()" 
+          ></ng-select>
+          <ng-select
+            placeholder="Applicant med school"
+            [items]="shownMedicalSchools"
+            [multiple]="true"
+            [(ngModel)]="selectedMedicalSchools"
             (change)="filterSearch()" 
           ></ng-select>
           <ng-select
