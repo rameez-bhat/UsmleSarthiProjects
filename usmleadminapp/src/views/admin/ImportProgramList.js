@@ -175,8 +175,8 @@ if (row?.['Frieda']) {
   HospitalProgramInfo['Frieda'] = String(row['Frieda']);
 }
 HospitalProgramInfo['yearlyData']={"2026":{"TotalAplicantsInvitedForTheYear":row['TotalAplicantsInvitedForTheYear'],"TotalApplicantsForTheYear":row['TotalApplicantsForTheYear']}};
-console.log("HospitalData----->",HospitalData)
-console.log("hospitalName----->",hospitalName)
+//console.log("HospitalData----->",HospitalData)
+//console.log("hospitalName----->",hospitalName)
 const medicalSchoolMatches = [];
 let medicalSchoolSearchTokens = [];
 if(row?.['topTenSchools'])
@@ -219,7 +219,7 @@ HospitalProgramInfo['medicalSchoolSearchTokens'] = medicalSchoolSearchTokens;
         if (!HId)
         {
         	const HospitalTableData = await FetchDataFromCollection("Hospital", 20, "HName", "==", hospitalName, 0);
-        	console.log("HospitalTableData----->",HospitalTableData)
+        	//console.log("HospitalTableData----->",HospitalTableData)
         	if(HospitalTableData.length)
     		{
     		let currentPId=PId;
@@ -265,7 +265,7 @@ HospitalProgramInfo['medicalSchoolSearchTokens'] = medicalSchoolSearchTokens;
     		//await removePidFromHospital(HId,PId);
     		  //console.log("WhereOrObject===>",WhereOrObject)
     		const results = await SelectWithWhereAnd("HospitalProgram", WhereOrObject);
-    		console.log("results===>",results)
+    		//console.log("results===>",results)
     		if(results.status==="success")
     		{
     			if(results.data.length)
@@ -274,8 +274,8 @@ HospitalProgramInfo['medicalSchoolSearchTokens'] = medicalSchoolSearchTokens;
     				let WhereOrObject=[{"name":"PId","condition":"==","value":PId},{"name":"Frieda","condition":"==","value":HospitalProgramInfo['Frieda']}];
     		  		//console.log("WhereOrObject===>",WhereOrObject)
     				const resultsInfo = await SelectWithWhereAnd("HospitalProgramInfo", WhereOrObject);
-    				console.log("resultsInfo--->",resultsInfo)
-    				console.log("WhereOrObject--->",WhereOrObject)
+    				//console.log("resultsInfo--->",resultsInfo)
+    				//console.log("WhereOrObject--->",WhereOrObject)
     				let updateFreade=false;
     				if(resultsInfo.status==="success")
     				{
@@ -298,6 +298,8 @@ HospitalProgramInfo['medicalSchoolSearchTokens'] = medicalSchoolSearchTokens;
     							let hostinfoId=hospitalInfo?.id
     							let HPIdG=hospitalInfo?.HPId
     							let DataInfoTableToUpdate={"TimeStamp":Date.now(), "TimeStampD": nowDate.toISOString()}
+    							console.log("HospitalProgramInfo.Frieda----->",HospitalProgramInfo.Frieda)
+    							console.log("hospitalInfo.Frieda----->",hospitalInfo.Frieda)
     							if(hostinfoId)
     							{
     								if (!hospitalInfo?.Frieda || String(hospitalInfo.Frieda).trim() === "")
@@ -375,14 +377,30 @@ DataInfoTableToUpdate.HId=HId;
 
     								let rRT=await handleUpdate("HospitalProgramInfo", hostinfoId, DataInfoTableToUpdate);
     								console.log("DataInfoTableToUpdate----->",DataInfoTableToUpdate)
-    								console.log("HPId----->",HPId)
-    								console.log("HId----->",HId)
+    								console.log("DataInfoTableToUpdate.Frieda----->",DataInfoTableToUpdate.Frieda)
+    								console.log("HospitalProgramInfo.Nrmp----->",HospitalProgramInfo.Nrmp)
+    								//console.log("HPId----->",HPId)
+    								//console.log("HId----->",HId)
     								console.log("rRT----->",rRT)
     							}
 
 
 
 							}
+    					}
+    					else
+    					{
+    						let Hpidg=HId+"_"+PId;
+    						HospitalProgramInfo['HId']=HId;
+    						HospitalProgramInfo['PId']=PId;
+    						HospitalProgramInfo['HPId']=Hpidg;
+    						HospitalProgramInfo['HPInfoId']=Hpidg;
+    						HospitalProgramInfo['Verified']="Yes";
+    						HospitalProgramInfo['TimeStamp']=Date.now();
+    						HospitalProgramInfo['TimeStampD']=nowDate.toISOString();
+    						HospitalProgramInfo['VerifiedAdmin']="AutoAdmin@gmail.com";
+    						let resHtt=await handleUpdate("HospitalProgramInfo",Hpidg,HospitalProgramInfo)
+    						console.log("resHtt----->",resHtt)
     					}
     				}
     			}

@@ -517,7 +517,7 @@
               <th>Hospital Name</th>
               <th>City</th>
               <th>State</th>
-              <th>See Other Info</th>
+              <!--<th>See Other Info</th>-->
             </tr>
           </thead>
           <tbody>
@@ -528,7 +528,7 @@
                 <td>{{ note.hospital?.HName }}</td>
                 <td>{{ note.hospital?.City }}</td>
                 <td>{{ note.hospital?.State }}</td>
-                <td>
+                <!--<td>
                   <button
                     class="btn-flat btn-sm btn-outline-primary"
                     (click)="
@@ -541,7 +541,7 @@
                   >
                     View Details
                   </button>
-                </td>
+                </td>-->
               </tr>
               <tr>
                 <td colspan="6">
@@ -625,7 +625,7 @@
               </button>
             </div>
           </ng-template>
-         <!--- <div class="col-6">
+         <div class="col-6">
             <button
               type="button"
               class="btn btn-outline-primary btn-flat float-right"
@@ -636,7 +636,7 @@
               <i class="fa fa-eye"></i>
               Add/See your Notes
             </button>
-          </div>-->
+          </div>
         </div>
         <div class="card card-outline-primary bg-light">
           <h5
@@ -645,16 +645,17 @@
             {{ selectedHospitalData.hospital?.HName }}
           </h5>
         </div>
-        <!--<div
+       <div
           class="form-group p-3 text-center"
           id="collapseNotes"
          [ngbCollapse]="isNotesCollapsed"
-        >-->
-        <div
+        >
+    
+       <!-- <div
           class="form-group p-3 text-center"
           id="collapseNotes"
           *ngIf="CheckForFavourits"
-        >
+        >-->
           <h5 class="font-weight-bold text-primary">Notes</h5>
           <ng-container *ngIf="selectedHospitalData.myNotes; else addNew">
             <textarea

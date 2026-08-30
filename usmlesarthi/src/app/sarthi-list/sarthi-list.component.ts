@@ -949,11 +949,16 @@ private processDashboard() {
             note.hospital = this.hospitalsByProgram[note.PId][note.HId];
         }
       }
+
       this.loading = false;
     } catch (err) {
       await this.takeMeToSpeciality();
       this.toastr.error("Error while fetching your notes, please try again");
     }
+     this.ngZone.run(() => {
+      this.loading = false;
+      this.cdr.detectChanges();
+    });
   }
 
   async updateNote(index, type) {
@@ -969,9 +974,11 @@ private processDashboard() {
           await this.dbservice.updateNoteById(unid, newNote);
         }
         this.toastr.success("Success! Notes updated.");
+        this.toastr.info("Success! Notes updated.")
         return;
       } else {
         let notes = this.selectedHospitalData.myNotes;
+    
         let unid = notes.UNId;
         let newNote = notes.Notes;
         if (newNote == "") {
@@ -981,6 +988,7 @@ private processDashboard() {
           await this.dbservice.updateNoteById(unid, newNote);
         }
         this.toastr.success("Success! Notes updated.");
+        this.toastr.info("Success! Notes updated.")
         return;
       }
     } catch (err) {
@@ -1218,6 +1226,9 @@ private processDashboard() {
       this.loading = true;
       this.landing = "Display";
       console.log("=============Loading==========")
+      console.log("pid=>",pid)
+      console.log("hid=>",hid)
+      console.log("hospital=>",hospital)
       if(typeof hospital.ProgramInfo!="undefined")
       {
         this.selectedHospitalData=hospital.ProgramInfo;
@@ -1263,9 +1274,12 @@ private processDashboard() {
     this.sortDataOnFilter("State", this.shownList);
     this.createFilters();
   }
-  checkValue (val, toCheck) {
+  checkValue (val1, toCheck) {
     let  toCheckNoValue = this.selectedDataNotAvailable;
-    
+    const val=val1.Nrmp;
+    console.log("val1---->",val1.Frieda)
+    console.log("val---->",val)
+    console.log("toCheck---->",toCheck)
     if(typeof toCheckNoValue=="undefined")
     {
       toCheckNoValue=false;
@@ -1714,7 +1728,7 @@ percentageCondition = (field, toCheck) => {
       this.shownList = this.shownList.filter((item) => this.checkVisaFilter(item))
     }
     if (this.selectedNrmp){
-      this.shownList = this.shownList.filter((item) => this.checkValue((item.Nrmp || "").trim(), this.selectedNrmp))
+      this.shownList = this.shownList.filter((item) => this.checkValue(item, this.selectedNrmp))
     }
     if (this.selectedEcfmg){
       this.shownList = this.shownList.filter((item) => this.checkValue((item.ECFMGReq || "").trim(), this.selectedEcfmg))
