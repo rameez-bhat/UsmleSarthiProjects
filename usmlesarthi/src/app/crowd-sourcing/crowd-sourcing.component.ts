@@ -1,6 +1,8 @@
 import {
   Component,
-  OnInit
+  OnInit,
+  NgZone,
+  ChangeDetectorRef,
 } from '@angular/core';
 import {
   HospitalFormData
@@ -54,7 +56,7 @@ export class CrowdSourcingComponent implements OnInit {
   visaList: Visa[];
   canNavigate: boolean = true;
 
-  constructor(private dbService: CrowdSourcingService, private programApi: ProgramService, private hospitalApi: HospitalService, private toastr: ToastrService, private authService: AuthenticationService) {
+  constructor(private dbService: CrowdSourcingService, private programApi: ProgramService, private hospitalApi: HospitalService, private toastr: ToastrService, private authService: AuthenticationService, private ngZone: NgZone, private cdr: ChangeDetectorRef) {
     this.landing = "list";
   }
   async ngOnInit() {
@@ -100,7 +102,10 @@ export class CrowdSourcingComponent implements OnInit {
       console.log(err);
       this.toastr.error("Error while fetching your list, please try again");
     }
-
+this.ngZone.run(() => {
+      this.loading = false;
+      this.cdr.detectChanges();
+    });
   }
 
   async takeMeToForm(hospitalData: any): Promise < any > {
@@ -126,7 +131,11 @@ export class CrowdSourcingComponent implements OnInit {
       }
       this.yearDataArrayKeys=Object.keys(this.hospitalFormData.yearlyData)
     if (this.hospitalFormData.Status == "Not Completed")
-      this.toastr.info("The Preset values are the latest verified values given by our server");
+    this.toastr.info("The Preset values are the latest verified values given by our server");
+    this.ngZone.run(() => {
+      this.loading = false;
+      this.cdr.detectChanges();
+    });
     this.loading = false;
     return false;
     }
@@ -136,6 +145,10 @@ export class CrowdSourcingComponent implements OnInit {
       await this.takeMeToList();
       this.toastr.error("Error while fetching the hospital's info, please try again");
     }
+    this.ngZone.run(() => {
+      this.loading = false;
+      this.cdr.detectChanges();
+    });
   }
 
   async onSubmitForm() {

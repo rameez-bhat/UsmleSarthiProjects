@@ -1254,13 +1254,19 @@ const SelectWithWhereOr = async (mainCollectionName, WhereOrObject) => {
     return {status:"fail","data":{}};
   }
 };
-const SelectWithWhereAnd = async (mainCollectionName, WhereAndObject) => {
+const SelectWithWhereAnd = async (mainCollectionName, WhereAndObject,orderByField = null,orderDirection = "asc") => {
   try {
     // Create an array to hold all the queries
     let myQuery = collection(db, mainCollectionName);
     WhereAndObject.forEach(condition => {
   myQuery = query(myQuery, where(condition.name, condition.condition, condition.value));
 });
+ if (orderByField) {
+      myQuery = query(
+        myQuery,
+        orderBy(orderByField, orderDirection)
+      );
+    }
 	const querySnapshot = await getDocs(myQuery);
     const results = [];
 	querySnapshot.forEach((doc) => {

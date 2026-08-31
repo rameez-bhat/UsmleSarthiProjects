@@ -102,10 +102,11 @@ export class CrowdSourcingService {
   async getHospitalProgramByUId( uid: any): Promise<any>
   {
     const timeStampThisYear = new Date(new Date().getFullYear(), 0, 1).getTime()
-    const timeStampThisYear1 = new Date(2025, 6, 28).getTime()
+    const timeStampThisYear1 = new Date(2026, 6, 28).getTime()
+    const timeStampThreshold = new Date(2026, 6, 28).getTime();
     this.hospitalFormData[uid] = {};
     let docsRef =await this.firestore.collection<HospitalFormData>("HospitalProgramInfo", ref => {
-      return ref.where("UId", "==", uid).where("TimeStamp", ">=", timeStampThisYear1).orderBy("TimeStamp", 'desc') }).get().toPromise();
+      return ref.where("UId", "==", uid).where("AssignedOn", ">=", timeStampThisYear1).orderBy("AssignedOn", 'desc') }).get().toPromise();
     let hids = [];
     for( var i in docsRef.docs) 
     {

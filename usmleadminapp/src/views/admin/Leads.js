@@ -447,9 +447,11 @@ const groupedServices = allServices.reduce((acc, serrives) => {
     let result;
      console.log("fetchPaginatedDataWithJoin--->",direction)
      //await removeOldHospitalProgramEntries(db, 16, false);
-     /*let WhereOrObjectJ=[{"name":"PId","condition":"==","value":"1"}];
-    	const resultsJ = await SelectWithWhereAnd("HospitalProgramInfo", WhereOrObjectJ);
-    	let WhereOrObjectK=[{"name":"PIds","condition":"array-contains","value":"1"}];
+      const timeStampThreshold = new Date(2025, 6, 28).getTime();
+     //let WhereOrObjectJ=[{"name":"UId","condition":"==","value":"RwzHuIzNY6g8XaVqWUneZyeWJ5n1"},{"name":"AssignedOn","condition":">=","value":timeStampThreshold}];
+    	//const resultsJ = await SelectWithWhereAnd("HospitalProgramInfo", WhereOrObjectJ,"AssignedOn","desc");
+      //console.log("resultsJ====>",resultsJ)
+    	/*let WhereOrObjectK=[{"name":"PIds","condition":"array-contains","value":"1"}];
     	const resultsK = await SelectWithWhereAnd("Hospital", WhereOrObjectK);
     	console.log("resultsJ-->",resultsJ)
     	console.log("resultsK-->",resultsK)

@@ -127,6 +127,7 @@
             placeholder="Enter here"
             [(ngModel)]="this.hospitalFormData.reLink"
             [required]="this.user.Role !== 'Admin'"
+            [disabled]="hospitalFormData?.reLink?.trim()"
           />
         </div>
         <div class="form-group ">
@@ -136,11 +137,11 @@
             class="form-control"
             name="friedaLink"
             id="friedaLink"
-            [disabled]="this.user.Role !== 'Admin'"
             aria-describedby="friedaLink"
             placeholder="Enter here"
             [(ngModel)]="this.hospitalFormData.friedaLink"
             [required]="this.user.Role !== 'Admin'"
+            [disabled]="hospitalFormData?.friedaLink?.trim() && this.user.Role !== 'Admin'"
           />
         </div>
         <div class="form-group col-12">
@@ -158,6 +159,7 @@
             placeholder="Enter here"
             [(ngModel)]="this.hospitalFormData.website"
             [required]="this.user.Role !== 'Admin'"
+            [disabled]="hospitalFormData?.website?.trim()"
           />
         </div>
         <div class="form-group">
@@ -168,14 +170,15 @@
             name="ProgramType"
             [(ngModel)]="this.hospitalFormData.ProgramType"
             [required]="this.user.Role !== 'Admin'"
+            [disabled]="hospitalFormData?.ProgramType?.trim() && this.user.Role !== 'Admin'"
           >
             <option class="dropdown-item" value="">Choose an option</option>
             <option class="dropdown-item" value="Community">Community</option>
             <option class="dropdown-item" value="University Hospital">
               University Hospital
             </option>
-            <option class="dropdown-item" value="Comm. affiliated with Univ.">
-              Comm. affiliated with University
+            <option class="dropdown-item" value="Community-based university affiliated">
+              Community-based university affiliated
             </option>
             <option class="dropdown-item" value="Data Not Available">
               Data Not Available
@@ -184,7 +187,7 @@
         </div>
         <div class="form-group">
           <label for="imgpercentage">
-            Total IMG % (Enter -99 if data is not available)<font color="red">(Please obtain from Frieda)</font></label
+            Total IMG % (Leave as it is if not available)<font color="blue">(please obtain from Residency explorer or frieda)</font></label
           >
           <input
             type="number"
@@ -200,7 +203,7 @@
         </div>
         <div class="form-group">
           <label for="imgpercentage">
-            USMD % (Enter -99 if data is not available)<font color="blue">(please obtain from Residency explorer or frieda)</font></label
+            USMD % (Leave as it is if not available)<font color="blue">(please obtain from Residency explorer or frieda)</font></label
           >
           <input
             type="number"
@@ -216,7 +219,7 @@
         </div>
         <div class="form-group">
           <label for="imgpercentage">
-            DO % (Enter -99 if data is not available)</label
+            DO % (Leave as it is if not available)</label
           >
           <input
             type="number"
@@ -232,8 +235,7 @@
         </div>
         <div class="form-group row">
           <div class="col-md-6 col-sm-12">
-            <label for="imgpercentage"
-              >US IMG % (Enter -99 if data is not available)<font color="blue">(please obtain from Residency explorer)</font></label
+            <label for="imgpercentage">US IMG % (Leave as it is if not available)<font color="blue">(please obtain from Residency explorer)</font></label
             >
             <input
               type="number"
@@ -249,7 +251,7 @@
           </div>
           <div class="col-md-6 col-sm-12">
             <label for="imgpercentage"
-              >Non US IMG % (Enter -99 if data is not available)<font color="blue">(please obtain from Residency explorer)</font></label
+              >Non US IMG % (Leave as it is if not available)<font color="blue">(please obtain from Residency explorer)</font></label
             >
             <input
               type="number"
@@ -267,7 +269,7 @@
         <div class="form-group">
           <label for="imgpercentageCarribean"
             >Caribbean IMG Percentage (Enter whole numbers only without % sign.
-            Enter -99 if data is not available)</label
+            Leave as it is if not available)</label
           >
           <input
             type="number"
@@ -282,8 +284,7 @@
         </div>
         <div class="form-group">
           <label for="imgpercentageComments"
-            >Comments about IMG percentage and friendliness (Enter NA if data is
-            not available)</label
+            >Comments about IMG percentage and friendliness (Leave as it is if not available)</label
           >
           <input
             type="text"
@@ -480,7 +481,7 @@
             [(ngModel)]="this.hospitalFormData.FirstYearSpotsComments"
           />
         </div>
-        <div *ngFor="let entry of this.yearDataArrayKeys">
+        <!--<div *ngFor="let entry of this.yearDataArrayKeys">
           <ng-container *ngIf="entry">
         <div class="form-group">
           <label for="TotalApplicantsForTheYear"
@@ -494,6 +495,7 @@
             aria-describedby="TotalApplicantsForTheYear"
             placeholder="Enter Total Applicants"
             [(ngModel)]="this.hospitalFormData.yearlyData[entry].TotalApplicantsForTheYear"
+            
           />
         </div>
         <div class="form-group">
@@ -600,7 +602,7 @@
         </div>
       </div>
       </ng-container>
-      </div>
+      </div>-->
         <!--------------STEP 1 INFORMATION-------------->
         <label class="font-weight-bold h6 text-primary"
           >STEP 1 INFORMATION</label
@@ -965,6 +967,7 @@
               value="Yes"
               [(ngModel)]="this.hospitalFormData.j1VisaNew"
               [required]="this.user.Role !== 'Admin'"
+              [disabled]="hospitalFormData?.j1VisaNew?.trim() && this.user.Role !== 'Admin'"
             />
             Yes
           </label>
@@ -976,6 +979,7 @@
               id="j1VisaNew"
               value="No"
               [(ngModel)]="this.hospitalFormData.j1VisaNew"
+              [disabled]="hospitalFormData?.j1VisaNew?.trim() && this.user.Role !== 'Admin'"
             />
             No
           </label>
@@ -987,6 +991,7 @@
               id="j1VisaNew"
               value="NA"
               [(ngModel)]="this.hospitalFormData.j1VisaNew"
+              [disabled]="hospitalFormData?.j1VisaNew?.trim() && this.user.Role !== 'Admin'"
             />
             Data Not Available
           </label>
@@ -1450,6 +1455,7 @@
               placeholder="Enter the name here"
               [(ngModel)]="this.hospitalFormData.programDirectorNew"
               [required]="this.user.Role !== 'Admin'"
+              [disabled]="hospitalFormData?.programDirectorNew?.trim() && this.user.Role !== 'Admin'"
             >
             </textarea>
           </div>
@@ -1482,6 +1488,7 @@
               placeholder="Enter the name here"
               [(ngModel)]="this.hospitalFormData.personToContactNew"
               [required]="this.user.Role !== 'Admin'"
+               [disabled]="hospitalFormData?.personToContactNew?.trim() && this.user.Role !== 'Admin'"
             >
             </textarea>
           </div>
@@ -1496,6 +1503,7 @@
               placeholder="Enter the teaching site here"
               [(ngModel)]="this.hospitalFormData.teachingSiteNew"
               [required]="this.user.Role !== 'Admin'"
+              [disabled]="hospitalFormData?.teachingSiteNew?.trim() && this.user.Role !== 'Admin'"
             />
           </div>
           <!-- <div class="form-group col-md-12">
@@ -1544,6 +1552,8 @@
               placeholder="Enter here"
               [(ngModel)]="this.hospitalFormData.address"
               [required]="this.user.Role !== 'Admin'"
+              [disabled]="hospitalFormData?.address?.trim() && this.user.Role !== 'Admin'"
+              
             />
           </div>
           
