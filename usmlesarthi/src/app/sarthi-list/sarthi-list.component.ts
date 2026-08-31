@@ -1274,12 +1274,9 @@ private processDashboard() {
     this.sortDataOnFilter("State", this.shownList);
     this.createFilters();
   }
-  checkValue (val1, toCheck) {
+  checkValue (val, toCheck) {
     let  toCheckNoValue = this.selectedDataNotAvailable;
-    const val=val1.Nrmp;
-    console.log("val1---->",val1.Frieda)
-    console.log("val---->",val)
-    console.log("toCheck---->",toCheck)
+    //const val=val1.Nrmp;
     if(typeof toCheckNoValue=="undefined")
     {
       toCheckNoValue=false;
@@ -1570,6 +1567,9 @@ percentageCondition = (field, toCheck) => {
   }
   checkVisaFilter = (programData) => {
     let returnvalue=true;
+    console.log("programData---->",programData)
+    console.log("this.shownVisas[0]---->",this.shownVisas[0])
+    console.log("this.selectedVisas---->",this.selectedVisas)
     if(this.selectedVisas.includes(this.shownVisas[0]) && (!this.checkValue(programData.j1VisaNew, "Yes"))) 
     {
       returnvalue=false;
@@ -1644,7 +1644,6 @@ percentageCondition = (field, toCheck) => {
     {
       this.shownList = this.shownList.filter(item => {
     const hospital = this.hospitalsByProgram[this.selectedPId][item.HId];
-    console.log("this.selectedPId===>",this.selectedPId)
     return !hospital || !hospital.City || this.selectedCities.includes(hospital.City);
 });
       //this.shownList = this.shownList.filter((item) => this.selectedCities.includes(this.hospitalsByProgram[this.selectedPId][item.HId]?.City));
@@ -1724,13 +1723,13 @@ percentageCondition = (field, toCheck) => {
       
     
     if (this.selectedVisas.length){
-      
       this.shownList = this.shownList.filter((item) => this.checkVisaFilter(item))
     }
     if (this.selectedNrmp){
-      this.shownList = this.shownList.filter((item) => this.checkValue(item, this.selectedNrmp))
+      this.shownList = this.shownList.filter((item) => this.checkValue(item.Nrmp, this.selectedNrmp))
     }
     if (this.selectedEcfmg){
+       console.log("here it is ")
       this.shownList = this.shownList.filter((item) => this.checkValue((item.ECFMGReq || "").trim(), this.selectedEcfmg))
     }
     
