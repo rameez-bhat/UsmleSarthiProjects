@@ -103,7 +103,7 @@
           />
           
           <ng-select
-            placeholder="Applicant med country"
+            placeholder="med school country"
             [items]="shownCountries"
             [multiple]="true"
             [(ngModel)]="selectedCountries"
@@ -835,16 +835,15 @@
             <thead>
               <tr>
                 <th>
-                  Do not sponsor H1, do not accept J1(i.e. only accept GC/ US
-                  Citizen), do not accept H4 EAD
+                  Only accepts GC/ US citizen
                 </th>
                 <th>J-1 visa sponsorship through ECFMG</th>
                 <th>H-1B visa</th>
                 <th>F-1 visa (OPT 1st year)</th>
-                <th>
+                <!--<th>
                   Do not sponsor H1, do not accept J1(i.e. only accept GC/ US
                   Citizen), but accept H4 EAD
-                </th>
+                </th>-->
               </tr>
             </thead>
             <tbody id="table2">
@@ -853,7 +852,7 @@
                 <td>{{ getCleanValue(selectedHospitalData.j1VisaNew) }}</td>
                 <td>{{ getCleanValue(selectedHospitalData.h1VisaNew) }}</td>
                 <td>{{ getCleanValue(selectedHospitalData.f1VisaNew) }}</td>
-                <td>{{ getCleanValue(selectedHospitalData.h4VisaNew) }}</td>
+                <!--<td>{{ getCleanValue(selectedHospitalData.h4VisaNew) }}</td>-->
               </tr>
             </tbody>
           </table>
@@ -1246,7 +1245,7 @@
                   <div >
 
                 <br>
-                    <div  *ngIf="selectedHospitalData.medicalSchoolMatches && selectedHospitalData.medicalSchoolMatches.length">
+                    <div  *ngIf="selectedHospitalData.medicalSchoolMatches && selectedHospitalData.medicalSchoolMatches.length; else noMedicalSchoolData">
                       <ng-container>
                         <h3>Most attended medical schools among current residents </h3>
                     <table
@@ -1278,7 +1277,12 @@
 </table>
 
                   </ng-container>
-                </div>
+                    </div>
+                    <ng-template #noMedicalSchoolData>
+                      <div class="alert alert-info">
+                        No medical-school data found for this program.
+                    </div>
+                  </ng-template>
                   </div>
                 </div>
               </div>
@@ -1474,6 +1478,12 @@
                         <td>{{getCleanValue(selectedHospitalData.year3_salary)}}</td>
                         <td>{{getCleanValue(selectedHospitalData.year3_paidSickDays)}}</td>
                         <td>{{getCleanValue(selectedHospitalData.year3_paidVacationDays)}}</td>
+                      </tr>
+                      <tr *ngIf="selectedHospitalData.year4_salary">
+                        <th>Year 4</th>
+                        <td>{{getCleanValue(selectedHospitalData.year4_salary)}}</td>
+                        <td>{{getCleanValue(selectedHospitalData.year4_paidSickDays)}}</td>
+                        <td>{{getCleanValue(selectedHospitalData.year4_paidVacationDays)}}</td>
                       </tr>
                      
                     

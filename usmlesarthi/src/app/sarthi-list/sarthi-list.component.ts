@@ -1567,9 +1567,7 @@ percentageCondition = (field, toCheck) => {
   }
   checkVisaFilter = (programData) => {
     let returnvalue=true;
-    console.log("programData---->",programData)
-    console.log("this.shownVisas[0]---->",this.shownVisas[0])
-    console.log("this.selectedVisas---->",this.selectedVisas)
+
     if(this.selectedVisas.includes(this.shownVisas[0]) && (!this.checkValue(programData.j1VisaNew, "Yes"))) 
     {
       returnvalue=false;

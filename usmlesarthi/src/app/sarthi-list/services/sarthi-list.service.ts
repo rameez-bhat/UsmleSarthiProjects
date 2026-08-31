@@ -108,7 +108,7 @@ export class SarthiListService {
     const shouldFilterDisplayed = [1, 2, 3, 4, 5, 7]
       .includes(Number(programId));
 
-    const cacheKey = `firestore:HospitalProgramInfo:${programId}:v4`;
+    const cacheKey = `firestore:HospitalProgramInfo:${programId}:v5`;
 
     let query: any = this.firestore.firestore
       .collection('HospitalProgramInfo')
@@ -334,7 +334,7 @@ export class SarthiListService {
     }
 
     private async loadFavoriteDocuments(uid: any): Promise<void> {
-      const cacheKey = `firestore:UserFav:${String(uid)}:v4`;
+      const cacheKey = `firestore:UserFav:${String(uid)}:v5`;
       const query = this.firestore.firestore
         .collection('UserFav')
         .where('UId', '==', uid);
