@@ -1527,49 +1527,56 @@ SignalInvited = (field, toCheck) => {
 
   return false;
 };
-percentageCondition = (field, toCheck) => {
-    const parts = toCheck.split(" ");
-    const percentage = parseInt(parts[0]);
-    field=String(field)
-    var numbersVal=null;
-    let fieldPercentage=0
-    if(field==99)
-    {
-      field="NA";
-    }
-    if(field=="99")
-      {
-        field="NA";
-      }
-    if(typeof field!="undefined")
-    {
-      if(isNaN(field))
-      {
-        numbersVal = field.match(/\d+/g);
-      }
-      else
-      {
-        numbersVal=Number(field);
-      }
-      
-    }
-      if(numbersVal!=null && numbersVal.length)
-      {
-        fieldPercentage=Number(numbersVal[0]);
-      }
-      if(numbersVal==null)
-      {
-        fieldPercentage=0;
-      }
-      else if(!isNaN(numbersVal))
-      {
-        fieldPercentage=numbersVal;
-      }
-    //const fieldPercentage = parseInt(field);
-    if (!field || fieldPercentage < 0 || Number.isNaN(fieldPercentage)) 
-      return this.selectedDataNotAvailable;
-    return fieldPercentage >= percentage;
+percentageCondition = (field, toCheck, fullObject = null) => {
+  if (fullObject != null) {
+    field =
+      Number(fullObject.studentType_usimg || 0) +
+      Number(fullObject.studentType_nonusimg || 0);
   }
+
+  const percentageMatch = String(toCheck).match(/\d+/);
+  const percentage = Number(
+    percentageMatch && percentageMatch.length > 0
+      ? percentageMatch[0]
+      : 0
+  );
+
+  if (field === 99 || field === "99") {
+    field = "NA";
+  }
+
+  if (
+    field === null ||
+    typeof field === "undefined" ||
+    field === "" ||
+    field === "NA"
+  ) {
+    return this.selectedDataNotAvailable;
+  }
+
+  const numbers = String(field).match(/\d+/g);
+
+  if (!numbers || numbers.length === 0) {
+    return this.selectedDataNotAvailable;
+  }
+
+  const fieldPercentage = Number(numbers[0]);
+
+  if (isNaN(fieldPercentage) || fieldPercentage < 0) {
+    return this.selectedDataNotAvailable;
+  }
+
+  console.log("US IMG:", fullObject != null ? fullObject.studentType_usimg : "");
+  console.log(
+    "Non-US IMG:",
+    fullObject != null ? fullObject.studentType_nonusimg : ""
+  );
+  //console.log("Combined percentage:", fieldPercentage);
+  //console.log("Condition:", toCheck);
+  //console.log("Required percentage:", percentage);
+
+  return fieldPercentage >= percentage;
+};
   neverFailedConditionCheck = (field, toCheck) => {
     const parts = toCheck.split(" ");
     const percentage = parseInt(parts[0]);
@@ -1778,10 +1785,7 @@ percentageCondition = (field, toCheck) => {
         this.shownList = this.shownList.filter((item) => this.SignalInvited(item.SignalsSent, this.selectedSignalInvited))
       }
     }
-    if (this.selectedUsImg){
-      
-      this.shownList = this.shownList.filter((item) => this.percentageCondition(item.imgpercentage, this.selectedUsImg))
-    }
+    
     if (this.selectedstep1leve1percentEverFailed){
       
       this.shownList = this.shownList.filter((item) => this.neverFailedConditionCheck(item.step1leve1percentEverFailed, this.selectedstep1leve1percentEverFailed))
@@ -1790,9 +1794,28 @@ percentageCondition = (field, toCheck) => {
       
       this.shownList = this.shownList.filter((item) => this.neverFailedConditionCheck(item.step2leve2percentEverFailed, this.selectedstep2leve2percentEverFailed))
     }
+    if(this.isResidencyExplorerProgram)
+    {
+        if (this.selectedUsImg)
+        {
+          this.shownList = this.shownList.filter((item) => this.percentageCondition(item.studentType_usimg, this.selectedUsImg,item))
+        }
+        if (this.selectedNonUsImg)
+        {
+          this.shownList = this.shownList.filter((item) => this.percentageCondition(item.studentType_nonusimg, this.selectedNonUsImg))
+        }
+    }
+    else
+    {
+      if (this.selectedUsImg){
+      
+      this.shownList = this.shownList.filter((item) => this.percentageCondition(item.imgpercentage, this.selectedUsImg))
+    }
     if (this.selectedNonUsImg){
       this.shownList = this.shownList.filter((item) => this.percentageCondition(item.nonUsImgPercentage, this.selectedNonUsImg))
     }
+    }
+    
     }
     catch(err)
     {
