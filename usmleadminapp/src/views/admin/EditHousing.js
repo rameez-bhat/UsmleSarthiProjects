@@ -208,7 +208,6 @@ city:""
 }));
 
 const states=State.getStatesOfCountry(countryCode);
-
 setStateList(states);
 
 setCityList([]);
@@ -224,8 +223,8 @@ setformdata(prev=>({
 state:stateCode,
 city:""
 }));
-
 const cities=City.getCitiesOfState(formdata.country,stateCode);
+
 
 setCityList(cities);
 
@@ -763,7 +762,7 @@ helperText={errors.state}
 
 {stateList.map(s=>(
 
-<MenuItem key={s.isoCode} value={s.name}>{s.name}</MenuItem>
+<MenuItem key={s.isoCode} value={s.isoCode}>{s.name}</MenuItem>
 
 ))}
 

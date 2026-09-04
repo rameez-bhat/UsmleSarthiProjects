@@ -124,6 +124,7 @@ export class SarthiListComponent implements OnInit {
     "Less Than 50%",
     "More Than 50%",
   ]
+  shownEverFaildDropDown = ["Yes","No"]
   selectedCities : any[] = [];
   selectedStates : any[] = [];
   selectedMedicalSchools : any[] = [];
@@ -137,6 +138,10 @@ export class SarthiListComponent implements OnInit {
   selectedSignalInvited  : any;
   selectedNonUsImg : any;
   selectedDataNotAvailable : any;
+  selectedstep1leve1percentEverFailed: any;
+  selectedstep1leve1percentNeverFailed: any;
+  selectedstep2leve2percentEverFailed: any;
+  selectedstep2leve2percentNeverFailed: any;
 //collegesByCountry: any = collegesByCountry;
 
 shownCountries: string[] = Object.keys(collegesByCountry)
@@ -1565,6 +1570,24 @@ percentageCondition = (field, toCheck) => {
       return this.selectedDataNotAvailable;
     return fieldPercentage >= percentage;
   }
+  neverFailedConditionCheck = (field, toCheck) => {
+    const parts = toCheck.split(" ");
+    const percentage = parseInt(parts[0]);
+    if(field>0 && toCheck=="Yes")
+    {
+      return true;
+    }
+    else if(field<=0 && toCheck=="No")
+    {
+      return true;
+    }
+    else
+    {
+      return false;
+    }
+    
+  }
+
   checkVisaFilter = (programData) => {
     let returnvalue=true;
 
@@ -1758,6 +1781,14 @@ percentageCondition = (field, toCheck) => {
     if (this.selectedUsImg){
       
       this.shownList = this.shownList.filter((item) => this.percentageCondition(item.imgpercentage, this.selectedUsImg))
+    }
+    if (this.selectedstep1leve1percentEverFailed){
+      
+      this.shownList = this.shownList.filter((item) => this.neverFailedConditionCheck(item.step1leve1percentEverFailed, this.selectedstep1leve1percentEverFailed))
+    }
+    if (this.selectedstep2leve2percentEverFailed){
+      
+      this.shownList = this.shownList.filter((item) => this.neverFailedConditionCheck(item.step2leve2percentEverFailed, this.selectedstep2leve2percentEverFailed))
     }
     if (this.selectedNonUsImg){
       this.shownList = this.shownList.filter((item) => this.percentageCondition(item.nonUsImgPercentage, this.selectedNonUsImg))

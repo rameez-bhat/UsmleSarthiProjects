@@ -91,6 +91,10 @@ export class HospitalFormData {
         public IMG_USMLE_Step1 : any;
         public Step2ckNonIMGInvited10th : any;
         public Step2ckNonIMGInvited90th : any;
+        public step1leve1percentEverFailed : any;
+        public step1leve1percentNeverFailed : any;
+        public step2leve2percentEverFailed : any;
+        public step2leve2percentNeverFailed : any;
 
     public constructor (
          )

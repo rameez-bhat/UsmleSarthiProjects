@@ -185,6 +185,22 @@
             (change)="filterSearch()" 
           ></ng-select>
         </div>
+         <div class="d-flex flex-column">
+          <ng-select
+            placeholder="Step 1 attempt"
+            [items]="shownEverFaildDropDown"
+            [(ngModel)]="selectedstep1leve1percentEverFailed"
+            (change)="filterSearch()" 
+          ></ng-select>
+        </div>
+        <div class="d-flex flex-column">
+          <ng-select
+            placeholder="Step 2CK attempt"
+            [items]="shownEverFaildDropDown"
+            [(ngModel)]="selectedstep2leve2percentEverFailed"
+            (change)="filterSearch()" 
+          ></ng-select>
+        </div>
         <div class="d-flex flex-column">
           <ng-select
             placeholder="Non US IMG Percentage (Residency Explorer)"
@@ -267,7 +283,7 @@
   </span>
 </th>
 <th (click)="sortTable('signalssent')" style="cursor:pointer">
-  Signals Sent
+  % signals invited for interview
   <span *ngIf="sortColumn === 'signalssent'">
     {{ sortDirection === 'asc' ? '▲' : '▼' }}
   </span>
@@ -962,6 +978,14 @@
                   <tr id="nonUsImgPercentage">
                     <td style="font-weight: bold">DO percentage</td>
                     <td>{{ getCleanValue(selectedHospitalData.studentType_usdograd) }}</td>
+                  </tr>
+                  <tr id="nonUsImgPercentage">
+                    <td style="font-weight: bold">Step 1 Ever Failed %</td>
+                    <td>{{ getCleanValue(selectedHospitalData.step1leve1percentEverFailed) }}</td>
+                  </tr>
+                  <tr id="nonUsImgPercentage">
+                    <td style="font-weight: bold">Step 2 CK Ever Failed %</td>
+                    <td>{{ getCleanValue(selectedHospitalData.step2leve2percentEverFailed) }}</td>
                   </tr>
                   </ng-template>
                   <tr id="imgpercentageComments">
