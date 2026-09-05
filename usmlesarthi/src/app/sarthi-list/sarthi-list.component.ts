@@ -787,7 +787,7 @@ private async measureRequest<T>(name: string, request: Promise<T>): Promise<T> {
   }
 }
 ConvertNumber(num){
-  if(typeof num=="undefined")
+  if(typeof num=="undefined" || String(num).trim()=="")
   {
     num=0;
   }
@@ -1472,7 +1472,6 @@ sortTable(column: string) {
 
     let valueA: any = '';
     let valueB: any = '';
-
     const hospitalA =
       a &&
       a.hospital
@@ -1521,13 +1520,13 @@ sortTable(column: string) {
       case 'signalssent':
         if(Number(this.selectedPId)==1)
         {
-          valueA = Number(a.GoldSentInterviewed);
-          valueB = Number(b.GoldSentInterviewed);
+          valueA = this.ConvertNumber(a.GoldSentInterviewed);
+          valueB = this.ConvertNumber(b.GoldSentInterviewed);
         }
         else
         {
-          valueA = Number(a.SignalsSent);
-          valueB = Number(b.SignalsSent);
+          valueA = this.ConvertNumber(a.SignalsSent);
+          valueB = this.ConvertNumber(b.SignalsSent);
         }
         break;
 
