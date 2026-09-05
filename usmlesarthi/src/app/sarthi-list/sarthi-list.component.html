@@ -171,9 +171,17 @@
           ></ng-select>
           <div class="d-flex flex-column">
           <ng-select
-            placeholder="IMG Percentage (Residency)"
+            placeholder="IMG Percentage (Residency Explorer)"
             [items]="shownPercentage"
             [(ngModel)]="selectedUsImg"
+            (change)="filterSearch()" 
+          ></ng-select>
+        </div>
+        <div class="d-flex flex-column">
+          <ng-select
+            placeholder="Non US IMG Percentage (Residency Explorer)"
+            [items]="shownPercentage"
+            [(ngModel)]="selectedNonUsImg"
             (change)="filterSearch()" 
           ></ng-select>
         </div>
@@ -201,14 +209,7 @@
             (change)="filterSearch()" 
           ></ng-select>
         </div>
-        <div class="d-flex flex-column">
-          <ng-select
-            placeholder="Non US IMG Percentage (Residency Explorer)"
-            [items]="shownPercentage"
-            [(ngModel)]="selectedNonUsImg"
-            (change)="filterSearch()" 
-          ></ng-select>
-        </div>
+        
           <div style="display: flex; align-items: center">
             <input type="checkbox" [(ngModel)]="selectedDataNotAvailable" (change)="filterSearch()" />
             <span style="margin-left: 4px"
@@ -1080,12 +1081,12 @@
                     <td style="font-weight: bold">Maximum</td>
                     <td>{{ getCleanValue(selectedHospitalData.Step1ScoreLastYearMax) }}</td>
                   </tr> -->
-                  <tr id="Step1Accept">
+                  <!--<tr id="Step1Accept">
                     <td style="font-weight: bold; width: 50%">
                       Applicants must have passed Step 1 to be considered
                     </td>
                     <td>{{ getCleanValue(selectedHospitalData.Step1AcceptN,selectedHospitalData.IMG_USMLE_Step1)}}</td>
-                  </tr>
+                  </tr>-->
                   <tr id="Step1Accept">
                     <td style="font-weight: bold; width: 50%">
                       Condition about number of Step 1 attempts
@@ -1105,12 +1106,12 @@
                     <td style="font-weight: bold">Maximum</td>
                     <td>{{ getCleanValue(selectedHospitalData.Step2Max) }}</td>
                   </tr> -->
-                  <tr id="Step1Accept">
+                  <!--<tr id="Step1Accept">
                     <td style="font-weight: bold; width: 50%">
                       Applicants must have passed Step 2 to be considered
                     </td>
                     <td>{{ getCleanValue(selectedHospitalData.Step2AcceptN) }}</td>
-                  </tr>
+                  </tr>-->
                   <tr id="Step2Accept">
                     <td style="font-weight: bold">
                       Condition about number of Step 2 CK attempts
