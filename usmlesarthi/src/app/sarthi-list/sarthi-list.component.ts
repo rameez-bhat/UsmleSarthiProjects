@@ -385,7 +385,7 @@ if(Number(result1)==0)
 
   return 'N/A';
 }
-getCleanValue(value: any, value2: any = null): string {
+/*getCleanValue(value: any, value2: any = null): string {
 
   const invalidValues = [
     '',
@@ -405,6 +405,105 @@ getCleanValue(value: any, value2: any = null): string {
 
   const clean = (val: any): string | null => {
     if (val == null) return null;
+
+    const str = String(val).trim();
+
+    return invalidValues.includes(str.toLowerCase())
+      ? null
+      : str;
+  };
+
+  // Priority: value2
+  const cleanedValue2 = clean(value2);
+
+  if (cleanedValue2 !== null) {
+    return cleanedValue2;
+  }
+
+  // Fallback: value
+  const cleanedValue = clean(value);
+
+  if (cleanedValue !== null) {
+    return cleanedValue;
+  }
+
+  return 'N/A';
+}*/
+getCleanValue(value: any, value2: any = null): string {
+  const invalidValues = [
+    '',
+    '--',
+    'na',
+    '99',
+    '999',
+    'n/a',
+    'not available',
+    'data not available',
+    'data unavailable',
+    'not applicable',
+    'nil',
+    'none',
+    '-',
+  ];
+
+  const extractValue = (val: any): any => {
+    if (val == null) {
+      return null;
+    }
+
+    // Handle:
+    // { Selected: { Value: "...", Name: "..." } }
+    if (
+      typeof val === 'object' &&
+      val.Selected &&
+      typeof val.Selected === 'object'
+    ) {
+      if (
+        val.Selected.Value !== null &&
+        typeof val.Selected.Value !== 'undefined'
+      ) {
+        return val.Selected.Value;
+      }
+
+      if (
+        val.Selected.Name !== null &&
+        typeof val.Selected.Name !== 'undefined'
+      ) {
+        return val.Selected.Name;
+      }
+
+      return null;
+    }
+
+    // Handle:
+    // { Value: "...", Name: "..." }
+    if (typeof val === 'object') {
+      if (
+        val.Value !== null &&
+        typeof val.Value !== 'undefined'
+      ) {
+        return val.Value;
+      }
+
+      if (
+        val.Name !== null &&
+        typeof val.Name !== 'undefined'
+      ) {
+        return val.Name;
+      }
+
+      return null;
+    }
+
+    return val;
+  };
+
+  const clean = (val: any): string | null => {
+    val = extractValue(val);
+
+    if (val == null) {
+      return null;
+    }
 
     const str = String(val).trim();
 
@@ -1443,6 +1542,12 @@ sortTable(column: string) {
           this.ConvertNumber(a.studentType_usimg);
 
         valueB = this.ConvertNumber(b.studentType_usimg);
+        break;
+      case 'tusimg':
+        valueA =
+          this.ConvertNumber(this.ConvertNumber(a.studentType_usimg)+this.ConvertNumber(a.studentType_nonusimg));
+
+        valueB = this.ConvertNumber(this.ConvertNumber(b.studentType_usimg)+this.ConvertNumber(b.studentType_nonusimg));
         break;
 
       case 'nonimg':

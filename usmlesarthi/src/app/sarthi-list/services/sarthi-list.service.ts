@@ -538,7 +538,10 @@ export class SarthiListService {
       let key = (hid + '.' + pid).toString();
       this.interviews[key] = [];
        console.log("dataObject=====>",dataObject)
+       console.log("hid=====>",hid)
+       console.log("pid=====>",pid)
       let docsRef = await this.firestore.collection("Interviews", ref => ref.where("HId", "==", hid).where("PId", "==", pid).orderBy("Date", "desc")).get().toPromise();
+      console.log("docsRef=====>",docsRef)
       let uids = {};
       for (let doc of docsRef.docs) {
         let data = doc.data();
@@ -549,6 +552,7 @@ export class SarthiListService {
       for (let interview of this.interviews[key]) {
         interview[0] = userProfiles[interview[0]];
       }
+      
       dataObject.interviews = this.interviews[key];
       return;
     }

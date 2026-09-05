@@ -269,6 +269,12 @@
 </th>
 </ng-container>
 <ng-template #residencyExplorerHeader>
+  <th (click)="sortTable('tusimg')" style="cursor:pointer">
+  IMG Percentage
+  <span *ngIf="sortColumn === 'tusimg'">
+    {{ sortDirection === 'asc' ? '▲' : '▼' }}
+  </span>
+</th>
   <th (click)="sortTable('usimg')" style="cursor:pointer">
   US IMG Percentage
   <span *ngIf="sortColumn === 'usimg'">
@@ -324,6 +330,9 @@
                 <td>{{hospitalData.nonUsImgPercentage==-99?"NA": hospitalData.nonUsImgPercentage==99?"NA":getCleanValue(hospitalData.nonUsImgPercentage)}}</td>
                  </ng-container>
                 <ng-template #residencyExplorerHeader>
+                  <td>
+                    {{(ConvertNumber(hospitalData.studentType_usimg)+ConvertNumber(hospitalData.studentType_nonusimg))>100?100:ConvertNumber(hospitalData.studentType_usimg)+ConvertNumber(hospitalData.studentType_nonusimg)}}
+                  </td>
                 <td>
                     {{(ConvertNumber(hospitalData.studentType_usimg))>100?100:ConvertNumber(hospitalData.studentType_usimg)}}
                   </td>
@@ -435,9 +444,11 @@
                   <th>IMG Percentage<font color="red">(Frieda)</font></th>
               </ng-container>
               <ng-template #residencyExplorerHeader>
+                <th>IMG Percentage<font color="blue">(Residency Explorer)</font></th>
                 <th>US IMG Percentage<font color="blue">(Residency Explorer)</font></th>
+                <th>NON US IMG Percentage<font color="blue">(Residency Explorer)</font></th>
               </ng-template>
-              <th>NON US IMG Percentage<font color="blue">(Residency Explorer)</font></th>
+              
               <!--<th *ngIf="userProfile.Role == 'Admin' || (!ListUserHasUnverified.length && ListUserHasverified.length)">-->
                 <th>
                 Last Updated
@@ -459,12 +470,12 @@
               </td>
               <ng-container *ngIf="!isResidencyExplorerProgram; else residencyExplorerHeader">
                 <td>{{ getCleanValue(fav.value.ProgramInfo.imgpercentage) }}</td>
-                <td>{{ getCleanValue(fav.value.ProgramInfo.nonUsImgPercentage) }}</td>
                  </ng-container>
                 <ng-template #residencyExplorerHeader>
-                <td>
-                    {{(ConvertNumber(fav.value.ProgramInfo.studentType_usimg))>100?100:ConvertNumber(fav.value.ProgramInfo.studentType_usimg)}}
+                  <td>
+                    {{(ConvertNumber(fav.value.ProgramInfo.studentType_usimg)+ConvertNumber(fav.value.ProgramInfo.studentType_nonusimg))>100?100:ConvertNumber(fav.value.ProgramInfo.studentType_usimg)+ConvertNumber(fav.value.ProgramInfo.studentType_nonusimg)}}
                   </td>
+                <td>{{(ConvertNumber(fav.value.ProgramInfo.studentType_usimg))>100?100:ConvertNumber(fav.value.ProgramInfo.studentType_usimg)}}</td>
                   <td>
                     <!--{{hospitalData.nonUsImgPercentage==-99?"NA": hospitalData.nonUsImgPercentage==99?"NA":hospitalData.nonUsImgPercentage}}-->
                     {{ConvertNumber(fav.value.ProgramInfo.studentType_nonusimg)}}
@@ -754,6 +765,7 @@
         </ng-container>
 
         <ng-template #residencyExplorerHeader>
+          
           <th>
             US IMG Percentage
             <font color="blue">(Residency Explorer)</font>
@@ -981,11 +993,11 @@
                   </tr>
                   <tr id="nonUsImgPercentage">
                     <td style="font-weight: bold">Step 1 Ever Failed %</td>
-                    <td>{{ getCleanValue(selectedHospitalData.step1leve1percentEverFailed) }}</td>
+                    <td>{{ selectedHospitalData.step1leve1percentEverFailed }}</td>
                   </tr>
                   <tr id="nonUsImgPercentage">
                     <td style="font-weight: bold">Step 2 CK Ever Failed %</td>
-                    <td>{{ getCleanValue(selectedHospitalData.step2leve2percentEverFailed) }}</td>
+                    <td>{{ selectedHospitalData.step2leve2percentEverFailed }}</td>
                   </tr>
                   </ng-template>
                   <tr id="imgpercentageComments">
@@ -1078,7 +1090,7 @@
                     <td style="font-weight: bold; width: 50%">
                       Condition about number of Step 1 attempts
                     </td>
-                    <td>{{ getCleanValue(selectedHospitalData.Step1Accept) }} </td>
+                    <td>{{ selectedHospitalData.step1leve1percentEverFailed>=1?"Yes":"No" }} </td>
                   </tr>
                  
                   <tr id="Step2Req">
@@ -1103,7 +1115,7 @@
                     <td style="font-weight: bold">
                       Condition about number of Step 2 CK attempts
                     </td>
-                    <td>{{ getCleanValue(selectedHospitalData.Step2Accept) }}</td>
+                    <td>{{ selectedHospitalData.step2leve2percentEverFailed>=1?"Yes":"No" }} </td>
                   </tr>
                   <!--<tr id="Step2CSReq">
                     <td style="font-weight: bold">OET Requirement</td>
