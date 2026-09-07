@@ -597,7 +597,10 @@ let refDate = new Date(
     for (let doc of collectionRef.docs) {
       let data = doc.data();
       let key = data.HId + "." + data.PId + "." + data.UId;
-      interviewsData[key] = data;
+      interviewsData[key] = {
+      ...data,
+      InterviewInfoId: doc.id,
+    };
     }
     return interviewsData;
   }

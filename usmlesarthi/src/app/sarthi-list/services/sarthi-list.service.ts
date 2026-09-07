@@ -535,13 +535,15 @@ export class SarthiListService {
     async getInterviewProfiles(dataObject) {
       let hid = dataObject.HId;
       let pid = dataObject.PId;
+      let Frieda=dataObject.Frieda;
       let key = (hid + '.' + pid).toString();
       this.interviews[key] = [];
-       console.log("dataObject=====>",dataObject)
-       console.log("hid=====>",hid)
-       console.log("pid=====>",pid)
-      let docsRef = await this.firestore.collection("Interviews", ref => ref.where("HId", "==", hid).where("PId", "==", pid).orderBy("Date", "desc")).get().toPromise();
-      console.log("docsRef=====>",docsRef)
+       //console.log("dataObject=====>",dataObject)
+       //console.log("hid=====>",hid)
+       //console.log("pid=====>",pid)
+      //let docsRef = await this.firestore.collection("Interviews", ref => ref.where("HId", "==", hid).where("PId", "==", pid).orderBy("Date", "desc")).get().toPromise();
+      let docsRef = await this.firestore.collection("Interviews", ref => ref.where("Frieda", "==", Frieda).orderBy("Date", "desc")).get().toPromise();
+      //console.log("docsRef=====>",docsRef)
       let uids = {};
       for (let doc of docsRef.docs) {
         let data = doc.data();

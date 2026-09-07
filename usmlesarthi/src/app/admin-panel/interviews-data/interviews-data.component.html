@@ -49,6 +49,7 @@
           <thead>
             <tr>
               <th scope="col">S.No.</th>
+              <th scope="col">InterviewInfoId</th>
               <th scope="col">Hospital Name</th>
               <th scope="col">Program Type</th>
               <th scope="col">Interview Date</th>
@@ -96,6 +97,7 @@
           <tbody>
             <tr *ngFor="let interview of filteredInterviewsList; index as i">
               <th scope="row">{{ i + 1 }}</th>
+              <th scope="row">{{ interview.id }}</th>
               <td>{{ interview.hospital.HName }}</td>
               <td>{{ programObject[interview.PId].PName }}</td>
               <td>{{ interview.Date }}</td>

@@ -1081,12 +1081,12 @@
                     <td style="font-weight: bold">Maximum</td>
                     <td>{{ getCleanValue(selectedHospitalData.Step1ScoreLastYearMax) }}</td>
                   </tr> -->
-                  <!--<tr id="Step1Accept">
+                  <tr id="Step1Accept">
                     <td style="font-weight: bold; width: 50%">
-                      Applicants must have passed Step 1 to be considered
+                      Does program offer interviews after Step 1 attempt
                     </td>
                     <td>{{ getCleanValue(selectedHospitalData.Step1AcceptN,selectedHospitalData.IMG_USMLE_Step1)}}</td>
-                  </tr>-->
+                  </tr>
                   <tr id="Step1Accept">
                     <td style="font-weight: bold; width: 50%">
                       Condition about number of Step 1 attempts
@@ -1106,15 +1106,15 @@
                     <td style="font-weight: bold">Maximum</td>
                     <td>{{ getCleanValue(selectedHospitalData.Step2Max) }}</td>
                   </tr> -->
-                  <!--<tr id="Step1Accept">
+                  <tr id="Step1Accept">
                     <td style="font-weight: bold; width: 50%">
                       Applicants must have passed Step 2 to be considered
                     </td>
-                    <td>{{ getCleanValue(selectedHospitalData.Step2AcceptN) }}</td>
-                  </tr>-->
+                    <td> {{ getCleanValue(selectedHospitalData.Step2AcceptN,selectedHospitalData.IMG_USMLE_Step2)}}</td>
+                  </tr>
                   <tr id="Step2Accept">
                     <td style="font-weight: bold">
-                      Condition about number of Step 2 CK attempts
+                      Does program offer interviews after Step 2 CK attempt
                     </td>
                     <td>{{ selectedHospitalData.step2leve2percentEverFailed>=1?"Yes":"No" }} </td>
                   </tr>

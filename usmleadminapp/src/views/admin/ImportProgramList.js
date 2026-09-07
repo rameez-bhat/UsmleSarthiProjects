@@ -655,14 +655,18 @@ const SAMPLE_ROWS = [
       for (const row of processedData)
         {
         	console.log("row---->",row)
-        	let date = getFormattedDateTime();
+        	let DocId=row.Documentid;
+        	let Friedaid=row.FriedaId;
+        	
+        	/*let date = getFormattedDateTime();
         	let Ratings=String(row.StarsRating);
         	let Location_Code=String(row.Location_Code);
         	let Student_Name=String(row.Student_Name);
         	let Feedback=String(row.Feedback);
         	let insertData={feedback:Feedback,location_code:Location_Code,ratings:Ratings,student_name:Student_Name,title:"",date:date};
         	let conditionList=[{field:"location_code",operator:"==",value:Location_Code},{field:"student_name",operator:"==",value:Student_Name}]
-        	let res=await handleUpdateOrCreateByConditions("RotationReviews",conditionList,insertData);
+        	let res=await handleUpdateOrCreateByConditions("RotationReviews",conditionList,insertData);*/
+        	let res=await handleUpdate("Interviews",DocId,{Frieda:Friedaid})
         	console.log("Insert Result:", res);
         }
   }
@@ -773,7 +777,7 @@ TooltipsPopovers("success", messageFull, "Status");
                     accept=".xls,.xlsx"
                     id="formFileLg"
                     label="Import Program List Excel 2"
-                    onChange={handleFileUpload}
+                    onChange={handleFileUpload1}
                   />
                   {errors.file && (
                     <CFormFeedback invalid>{errors.file}</CFormFeedback>

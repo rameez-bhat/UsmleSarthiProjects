@@ -49,6 +49,7 @@ export class InterviewsDataComponent implements OnInit {
           ? this.interviewsData[key]
           : {};
       }
+      console.log("this.interviewsList=====>",this.interviewsList)
       this.filteredInterviewsList = [...this.interviewsList];
       this.emails = [
         ...new Set(
