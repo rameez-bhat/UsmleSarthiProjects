@@ -176,7 +176,170 @@ private favoritesPromise: Promise<any> | null = null;
     }
 
   }
-exportProgramsToExcel() {
+  exportProgramsToExcel() {
+  const exportData: any[] = [];
+
+  const filteredPrograms = this.shownList || [];
+
+  filteredPrograms.forEach((program: any) => {
+    const hospital =
+      this.hospitalsByProgram &&
+      this.hospitalsByProgram[this.selectedPId] &&
+      this.hospitalsByProgram[this.selectedPId][program.HId]
+        ? this.hospitalsByProgram[this.selectedPId][program.HId]
+        : {};
+
+    const row: any = {
+      // Basic
+      HospitalName: hospital.HName || '',
+      City: hospital.City || '',
+      State: hospital.State || '',
+      FriedaID: program.Frieda || '',
+
+      USIMGPercentage: program.studentType_usimg || '',
+      NonUSIMGPercentage: program.studentType_nonusimg || '',
+      USMDPercentage: this.ConvertNumber(program.studentType_usmdgrad) || '',
+      USDOPercentage: this.ConvertNumber(program.studentType_usdograd) || '',
+
+      Per_SignalsInvitedForInterview:
+        this.ConvertNumber(this.selectedPId) == 1
+          ? program.GoldSentInterviewed || ''
+          : program.SignalsSent || '',
+
+      LastUpdated: program.Date || '',
+
+      YOG: this.getCleanValueYOG(program.YOG),
+      ERAS: this.getCleanValueYOG(program.Eras),
+
+      // Information from Frieda
+      TeachingSite: program.teachingSiteNew || '',
+      NRMP: program.Nrmp || '',
+      NRMPPrelim: program.NrmpPrelim || '',
+      NRMPCategorical: program.NrmpCategorical || '',
+      NRMPPrimaryCare: program.NrmpPriCase || '',
+      NRMPAdvance: program.NrmpAdvance || '',
+
+      Step1EverFailedPercentage:
+        program.step1leve1percentEverFailed || '',
+
+      Step2CKEverFailedPercentage:
+        program.step2leve2percentEverFailed || '',
+
+      CaribbeanIMGPercentage:
+        program.imgpercentageCarribean || '',
+
+      IMGComments: Array.isArray(program.imgpercentageCommentsMerged)
+        ? program.imgpercentageCommentsMerged.join(' | ')
+        : program.imgpercentageComments || '',
+
+      FirstYearSpots: program.FirstYearSpots || '',
+      FirstYearSpotsPrelim: program.FirstYearSpotsPrelim || '',
+
+      // Score Information
+      PreferredStep1: program.IMG_USMLE_Step1 || '',
+      Step1Minimum: program.Step1ScoreLastYearMin || '',
+      Step1PassRequired: program.Step1AcceptN || '',
+      Step1AttemptsCondition: program.Step1Accept || '',
+
+      PreferredStep2: program.IMG_USMLE_Step2CK || '',
+      Step2Minimum: program.Step2Min || '',
+      Step2PassRequired: program.Step2AcceptN || '',
+      Step2AttemptsCondition: program.Step2Accept || '',
+
+      Step3Requirement: program.Step3Accept || '',
+
+      USMLEComments: Array.isArray(program.USMLEExamCommentsMerged)
+        ? program.USMLEExamCommentsMerged.join(' | ')
+        : program.USMLEExamComments || '',
+
+      // Additional Information
+      ApplicationDeadline: program.AppDeadline || '',
+      LORRequired: program.LORNum || '',
+      HomeCountryLOR: program.LORReq || '',
+      SpanishRequired: program.SpanishReq || '',
+      USCERequiredMonths: program.USCEReq || '',
+      USCENotConsidered: program.USCENotCon || '',
+      USCERequired: program.USCEReqOrPref || '',
+      ECFMGRequired: program.ECFMGReq || '',
+      ResearchOpportunities: program.ResearchOpp || '',
+      ProgramPreference: program.ProgramPref || '',
+
+      ProgramDirector: program.programDirectorNew || '',
+      ContactPerson: program.personToContactNew || '',
+      Address: program.address || '',
+      Website: program.website || '',
+      ResidencyExplorerLink: program.reLink || '',
+      FriedaLink: program.friedaLink || ''
+    };
+
+    // Applicant Characteristics
+    if (program.yearlyData) {
+      Object.keys(program.yearlyData).forEach((year: any) => {
+        const y = program.yearlyData[year] || {};
+
+        row[year + '_ApplicantCount'] =
+          y.TotalApplicantsForTheYear || '';
+
+        row[year + '_InterviewInvites'] =
+          y.TotalAplicantsInvitedForTheYear || '';
+
+        row[year + '_GoldInterviewed'] =
+          y.GoldSentInterviewed || '';
+
+        row[year + '_SilverInterviewed'] =
+          y.SilverInterviewed || '';
+
+        row[year + '_DidNotSignalInterviewed'] =
+          y.DidnotInterviewed || '';
+
+        row[year + '_AlignedInterviewed'] =
+          y.AlignedInterviewed || '';
+
+        row[year + '_NotAlignedInterviewed'] =
+          y.NotalignedInterviewed || '';
+
+        row[year + '_NoPreferenceInterviewed'] =
+          y.NopreferenceInterviewed || '';
+      });
+    }
+
+    exportData.push(row);
+  });
+
+  if (!exportData.length) {
+    this.toastr.info('No filtered programs available to export.');
+    return;
+  }
+
+  const ws: XLSX.WorkSheet =
+    XLSX.utils.json_to_sheet(exportData);
+
+  const wb: XLSX.WorkBook =
+    XLSX.utils.book_new();
+
+  XLSX.utils.book_append_sheet(
+    wb,
+    ws,
+    'Programs'
+  );
+
+  let fileName = 'Programs';
+
+  if (
+    this.programObject &&
+    this.programObject[this.selectedPId] &&
+    this.programObject[this.selectedPId].ProgramName
+  ) {
+    fileName =
+      this.programObject[this.selectedPId].ProgramName;
+  }
+
+  XLSX.writeFile(
+    wb,
+    fileName + '_Filtered.xlsx'
+  );
+}
+/*exportProgramsToExcel() {
 
   const exportData: any[] = [];
 
@@ -198,7 +361,14 @@ exportProgramsToExcel() {
       City: hospital.City || '',
       State: hospital.State || '',
       FriedaID: program.Frieda || '',
-
+      USIMGPercentage: program.studentType_usimg || '',
+      NonUSIMGPercentage: program.studentType_nonusimg || '',
+      USMDPercentage: this.ConvertNumber(program.studentType_usmdgrad) || '',
+      USDOPercentage: this.ConvertNumber(program.studentType_usdograd) || '',
+      Per_SignalsInvitedForInterview: this.selectedPId==1?program.GoldSentInterviewed:program.SignalsSent || '',
+      LastUpdated:program.Date,
+      YOG:this.getCleanValueYOG(program.YOG),
+      ERAS:this.getCleanValueYOG(program.Eras),
       // Information from Frieda
       TeachingSite: program.teachingSiteNew || '',
       NRMP: program.Nrmp || '',
@@ -206,9 +376,8 @@ exportProgramsToExcel() {
       NRMPCategorical: program.NrmpCategorical || '',
       NRMPPrimaryCare: program.NrmpPriCase || '',
       NRMPAdvance: program.NrmpAdvance || '',
-
-      USIMGPercentage: program.usImgPercentage || '',
-      DOPercentage: program.doPercentageNew || '',
+      Step1EverFailedPercentage: program.step1leve1percentEverFailed || '',
+      Step2CKEverFailedPercentage: program.step2leve2percentEverFailed || '',
       CaribbeanIMGPercentage: program.imgpercentageCarribean || '',
 
       IMGComments: Array.isArray(program.imgpercentageCommentsMerged)
@@ -219,12 +388,12 @@ exportProgramsToExcel() {
       FirstYearSpotsPrelim: program.FirstYearSpotsPrelim || '',
 
       // Score Information
-      PreferredStep1: program.Step1Req || '',
+      PreferredStep1: program.IMG_USMLE_Step1 || '',
       Step1Minimum: program.Step1ScoreLastYearMin || '',
       Step1PassRequired: program.Step1AcceptN || '',
       Step1AttemptsCondition: program.Step1Accept || '',
 
-      PreferredStep2: program.Step2Req || '',
+      PreferredStep2: program.IMG_USMLE_Step2CK || '',
       Step2Minimum: program.Step2Min || '',
       Step2PassRequired: program.Step2AcceptN || '',
       Step2AttemptsCondition: program.Step2Accept || '',
@@ -308,7 +477,7 @@ exportProgramsToExcel() {
   }
 
   XLSX.writeFile(wb, fileName + '.xlsx');
-}
+}*/
   async takeMeToSpeciality() {
     try {
       this.loading = true;
