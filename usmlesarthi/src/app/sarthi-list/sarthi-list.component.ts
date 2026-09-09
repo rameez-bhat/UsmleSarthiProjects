@@ -209,7 +209,7 @@ private favoritesPromise: Promise<any> | null = null;
       LastUpdated: program.Date || '',
 
       YOG: this.getCleanValueYOG(program.YOG),
-      ERAS: this.getCleanValueYOG(program.Eras),
+      ERAS: program.Eras,
 
       // Information from Frieda
       TeachingSite: program.teachingSiteNew || '',
