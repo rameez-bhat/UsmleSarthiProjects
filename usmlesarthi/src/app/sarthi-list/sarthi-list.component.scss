@@ -1,5 +1,448 @@
-.ng-select{
-    width: 300px;
+/* =========================================================
+   SARTHI LIST - RESPONSIVE
+   ========================================================= */
+
+:host {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+
+/* ---------------------------------------------------------
+   Main containers
+   --------------------------------------------------------- */
+
+.card,
+.card-body,
+.container-fluid,
+.row {
+  max-width: 100%;
+}
+
+.card-body {
+  padding: 1rem;
+}
+
+
+/* ---------------------------------------------------------
+   Top navigation
+   --------------------------------------------------------- */
+
+.nav.nav-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.nav.nav-pills .nav-item {
+  flex: 1 1 auto;
+  min-width: 120px;
+}
+
+.nav.nav-pills .nav-link {
+  white-space: normal;
+  text-align: center;
+}
+
+
+/* ---------------------------------------------------------
+   Dashboard filters
+   --------------------------------------------------------- */
+
+.input-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+}
+
+.input-group > .form-control,
+.input-group > ng-select,
+.input-group > .d-flex {
+  flex: 1 1 220px;
+  min-width: 180px;
+  max-width: 100%;
+}
+
+
+/* Override inline width:400px on search input */
+.input-group input.form-control {
+  width: auto !important;
+  min-width: 220px;
+  margin-right: 0 !important;
+}
+
+
+/* ng-select responsive */
+.input-group ng-select {
+  width: 220px;
+  min-width: 180px;
+}
+
+::ng-deep .ng-select {
+  width: 100%;
+  max-width: 100%;
+}
+
+::ng-deep .ng-select .ng-select-container {
+  min-height: 38px;
+}
+
+
+/* ---------------------------------------------------------
+   Include data unavailable checkbox
+   --------------------------------------------------------- */
+
+.input-group > div[style*="display: flex"] {
+  flex: 1 1 100%;
+  max-width: 100%;
+  align-items: flex-start !important;
+}
+
+.input-group > div[style*="display: flex"] span {
+  white-space: normal;
+  line-height: 1.4;
+}
+
+
+/* ---------------------------------------------------------
+   Tables
+   --------------------------------------------------------- */
+
+.table-responsive {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table {
+  width: 100%;
+  margin-bottom: 0;
+}
+
+.table th,
+.table td {
+  vertical-align: middle;
+}
+
+
+/*
+ * Keep dashboard table horizontally scrollable.
+ * Without a minimum width, Bootstrap may squeeze every
+ * column until the text becomes unreadable.
+ */
+#sarthi-list {
+  min-width: 1150px;
+}
+
+#favorites-list {
+  min-width: 900px;
+}
+
+
+/* Details tables */
+.table-responsive table:not(#sarthi-list):not(#favorites-list) {
+  min-width: 600px;
+}
+
+
+/* ---------------------------------------------------------
+   Buttons
+   --------------------------------------------------------- */
+
+.btn,
+.btn-flat {
+  white-space: normal;
+}
+
+button {
+  max-width: 100%;
+}
+
+
+/* ---------------------------------------------------------
+   Long values / links
+   --------------------------------------------------------- */
+
+td,
+th {
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+td a {
+  overflow-wrap: anywhere;
+}
+
+
+/* ---------------------------------------------------------
+   Headings
+   --------------------------------------------------------- */
+
+.display-4 {
+  font-size: 2rem;
+}
+
+h3,
+h5 {
+  overflow-wrap: anywhere;
+}
+
+
+/* =========================================================
+   TABLET
+   ========================================================= */
+
+@media (max-width: 991.98px) {
+
+  .card {
+    margin-left: 0.5rem !important;
+    margin-right: 0.5rem !important;
+  }
+
+  .card-body {
+    padding: 0.85rem;
+  }
+
+  .input-group > .form-control,
+  .input-group > ng-select,
+  .input-group > .d-flex {
+    flex: 1 1 calc(50% - 8px);
+    width: calc(50% - 8px);
+    min-width: 0;
+  }
+
+  .input-group > div[style*="display: flex"] {
+    width: 100%;
+    flex-basis: 100%;
+  }
+
+  .nav.nav-pills .nav-item {
+    flex: 1 1 calc(33.333% - 6px);
+  }
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 767.98px) {
+
+  :host {
+    font-size: 14px;
+  }
+
+  .card {
+    margin: 5px !important;
+  }
+
+  .card-body {
+    padding: 10px;
+  }
+
+  .display-4 {
+    font-size: 1.5rem;
+    margin: 5px !important;
+    padding: 5px !important;
+  }
+
+
+  /* Navigation */
+  .nav.nav-pills {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .nav.nav-pills .nav-item {
+    width: 100%;
+    min-width: 100%;
+    flex: 1 1 100%;
+  }
+
+  .nav.nav-pills .nav-link {
+    width: 100%;
+    padding: 8px 10px;
+  }
+
+
+  /* Filters - one per row */
+  .input-group {
+    display: flex !important;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .input-group > .form-control,
+  .input-group > ng-select,
+  .input-group > .d-flex {
+    display: block;
+    flex: none;
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+  }
+
+  .input-group input.form-control {
+    width: 100% !important;
+    min-width: 100% !important;
+    margin: 0 !important;
+  }
+
+  .input-group ng-select {
+    width: 100% !important;
+    min-width: 100% !important;
+  }
+
+  ::ng-deep .input-group .ng-select {
+    width: 100% !important;
+  }
+
+  ::ng-deep .input-group .ng-select-container {
+    width: 100% !important;
+  }
+
+
+  /* Checkbox */
+  .input-group > div[style*="display: flex"] {
+    width: 100% !important;
+    flex-direction: row !important;
+    align-items: flex-start !important;
+  }
+
+  .input-group input[type="checkbox"] {
+    flex: 0 0 auto;
+    margin-top: 4px;
+  }
+
+
+  /* Back + export buttons */
+  .row > .col,
+  .row > [class*="col-"] {
+    min-width: 0;
+  }
+
+  .float-left,
+  .float-right {
+    float: none !important;
+  }
+
+
+  /* Tables */
+  .table-responsive {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    border: 0;
+  }
+
+  .table {
+    font-size: 12px;
+  }
+
+  .table th,
+  .table td {
+    padding: 7px 8px;
+  }
+
+  #sarthi-list {
+    min-width: 1050px;
+  }
+
+  #favorites-list {
+    min-width: 850px;
+  }
+
+
+  /* Hospital detail navigation */
+  .table-responsive .nav.nav-pills {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    justify-content: flex-start !important;
+    padding-bottom: 5px;
+  }
+
+  .table-responsive .nav.nav-pills .nav-item {
+    width: auto;
+    min-width: max-content;
+    flex: 0 0 auto;
+  }
+
+  .table-responsive .nav.nav-pills .nav-link {
+    width: auto;
+    white-space: nowrap;
+  }
+
+
+  /* Notes */
+  textarea.form-control {
+    width: 100%;
+  }
+
+  /* Action buttons in hospital detail */
+  .container-fluid .row .col-6 {
+    flex: 0 0 100%;
+    max-width: 100%;
     margin-bottom: 8px;
-    margin-right: 8px;
+  }
+
+  .container-fluid .row .col-6 button {
+    display: block;
+    width: 100%;
+    float: none !important;
+  }
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+   ========================================================= */
+
+@media (max-width: 575.98px) {
+
+  :host {
+    font-size: 13px;
+  }
+
+  .card {
+    margin: 2px !important;
+    border-radius: 4px;
+  }
+
+  .card-body {
+    padding: 8px;
+  }
+
+  .display-4 {
+    font-size: 1.3rem;
+  }
+
+  h5 {
+    font-size: 1rem;
+  }
+
+  h3 {
+    font-size: 1.1rem;
+  }
+
+  .btn {
+    font-size: 13px;
+    padding: 7px 10px;
+  }
+
+  .table {
+    font-size: 11px;
+  }
+
+  .table th,
+  .table td {
+    padding: 6px;
+  }
 }
