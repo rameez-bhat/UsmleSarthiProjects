@@ -38,6 +38,8 @@ import { getProgramName, getProgramCity, getProgramState } from './features/prog
 import AnswerChoice from './features/assessment/AnswerChoice';
 import Assessment from './features/assessment/Assessment';
 import Result from './features/results/Result';
+import Portfolio from './features/portfolio/Portfolio';
+import FinalizePlan from './features/finalize/FinalizePlan';
 
 import { blankProfile, mapLegacyProfileToSignaling } from './utils/profile';
 import { getCachedPrograms, setCachedPrograms, getTimestampNumber } from './services/programCache';
@@ -727,10 +729,20 @@ export default function App() {
                   );
 
                 if (resultSnapshot.exists()) {
+                  const savedResult:any = resultSnapshot.data();
+                  const derivedStatus = savedResult?.final_priority
+                    ? 'ASSESSED'
+                    : savedResult?.eligibility?.status === 'RESEARCH_REQUIRED'
+                      ? 'RESEARCH_NEEDED'
+                      : savedResult?.eligibility?.status === 'NOT_ALIGNED'
+                        ? 'ELIGIBILITY_MISMATCH'
+                        : item.status || 'IN_PROGRESS';
                   return {
                     ...item,
-                    has_result: true,
-                    result: resultSnapshot.data()
+                    has_result: Boolean(savedResult?.final_priority),
+                    status: derivedStatus,
+                    eligibility_status: savedResult?.eligibility?.status || item.eligibility_status || '',
+                    result: savedResult
                   };
                 }
               } catch (_) {
@@ -1199,26 +1211,15 @@ export default function App() {
 
 
       let existingHasResult = false;
-
+      let existingStatus = 'ADDED';
       try {
-        const existingResultSnapshot =
-          await getDoc(
-            doc(
-              db,
-              'assessments',
-              assessment.id,
-              'programs',
-              programId,
-              'result',
-              'current'
-            )
-          );
-
-        existingHasResult =
-          existingResultSnapshot.exists();
-      } catch (_) {
-        existingHasResult = false;
-      }
+        const existingResultSnapshot = await getDoc(doc(db,'assessments',assessment.id,'programs',programId,'result','current'));
+        if (existingResultSnapshot.exists()) {
+          const oldResult:any = existingResultSnapshot.data();
+          existingHasResult = Boolean(oldResult?.final_priority);
+          existingStatus = existingHasResult ? 'ASSESSED' : oldResult?.eligibility?.status === 'RESEARCH_REQUIRED' ? 'RESEARCH_NEEDED' : oldResult?.eligibility?.status === 'NOT_ALIGNED' ? 'ELIGIBILITY_MISMATCH' : 'IN_PROGRESS';
+        }
+      } catch (_) { existingHasResult = false; }
 
 
       const item: any = {
@@ -1256,10 +1257,7 @@ export default function App() {
         has_result:
           existingHasResult,
 
-        status:
-          existingHasResult
-            ? 'ASSESSED'
-            : 'ADDED'
+        status: existingStatus
 
       };
 
@@ -1285,12 +1283,8 @@ export default function App() {
         );
 
 
-        setSelected(
-          (current: any[]) => [
-            ...current,
-            item
-          ]
-        );
+        setSelected((current:any[]) => [...current,item]);
+        await setDoc(doc(db,'assessments',assessment.id), { selected_count:selected.length+1, workspace_status:'IN_PROGRESS', updated_at:serverTimestamp() }, { merge:true });
 
 
       } catch (e: any) {
@@ -1325,6 +1319,13 @@ export default function App() {
       setMessage('');
 
       try {
+        if (p.forceEdit) {
+          const saved = await loadProgramAnswers(assessment.id, p.program_id);
+          if (saved) { setAnswers(saved.answers); setOverride(saved.override); setAnswerMode('program'); }
+          setScreen('assessment');
+          return;
+        }
+
         if (p.has_result) {
           const resultSnapshot =
             await getDoc(
@@ -1478,12 +1479,9 @@ export default function App() {
     };
 
 
-  const removeProgram =
-    async (p: any) => {
-      if (!assessment) {
-        return;
-      }
-
+  const removeProgram = async (p:any) => {
+      if (!assessment) return;
+      if ((p.has_result || p.status === 'IN_PROGRESS' || p.status === 'RESEARCH_NEEDED') && !window.confirm('This program has saved work. Remove it from the active workspace? The record will be soft-deleted and can be restored later.')) return;
       setMessage('');
 
       try {
@@ -1506,14 +1504,9 @@ export default function App() {
           }
         );
 
-        setSelected(
-          (current: any[]) =>
-            current.filter(
-              (item: any) =>
-                item.program_id !==
-                p.program_id
-            )
-        );
+        const remaining = selected.filter((item:any)=>item.program_id!==p.program_id);
+        setSelected(remaining);
+        await setDoc(doc(db,'assessments',assessment.id), { selected_count:remaining.length, assessed_count:remaining.filter((x:any)=>x.status==='ASSESSED'||x.has_result).length, updated_at:serverTimestamp() }, { merge:true });
 
         if (
           activeProgram?.program_id ===
@@ -1537,22 +1530,20 @@ export default function App() {
     };
 
 
-  const setAnswer =
-    (
-      questionCode: string,
-      answerCode: string
-    ) => {
-
-      setAnswers(
-        (current: any) => ({
-          ...current,
-
-          [questionCode]:
-            answerCode
-        })
-      );
-
-    };
+  const setAnswer = (questionCode: string, answerCode: any) => {
+    setAnswers((current: any) => {
+      const next = { ...current, [questionCode]: answerCode };
+      if (assessment && activeProgram) {
+        setDoc(doc(db,'assessments',assessment.id,'programs',activeProgram.program_id,'answers','current'), { answers: next, override, updated_at: serverTimestamp() }, { merge:true }).catch(console.warn);
+        if (!activeProgram.has_result) {
+          setDoc(doc(db,'assessments',assessment.id,'programs',activeProgram.program_id), { status:'IN_PROGRESS', updated_at:serverTimestamp() }, { merge:true }).catch(console.warn);
+          setSelected((items:any[]) => items.map((item:any)=>item.program_id===activeProgram.program_id ? {...item,status:'IN_PROGRESS'} : item));
+          setActiveProgram((item:any)=>item ? {...item,status:'IN_PROGRESS'} : item);
+        }
+      }
+      return next;
+    });
+  };
 
 
   /*
@@ -1661,31 +1652,26 @@ export default function App() {
       }
     );
 
-    await setDoc(
-      doc(
-        db,
-        'assessments',
-        assessment.id,
-        'programs',
-        activeProgram.program_id
-      ),
-      {
-        has_result: true,
-        status: 'ASSESSED',
-        assessed_at:
-          serverTimestamp(),
-        updated_at:
-          serverTimestamp()
-      },
-      {
-        merge: true
-      }
-    );
+    const workspaceStatus = data.eligibility?.status === 'RESEARCH_REQUIRED'
+      ? 'RESEARCH_NEEDED'
+      : data.eligibility?.status === 'NOT_ALIGNED'
+        ? (answers.E5 && answers.E5 !== 'NO_OVERRIDE' ? 'OVERRIDE_REQUIRED' : 'ELIGIBILITY_MISMATCH')
+        : data.final_priority ? 'ASSESSED' : 'IN_PROGRESS';
+    const hasCompletedResult = workspaceStatus === 'ASSESSED';
+
+    await setDoc(doc(db,'assessments',assessment.id,'programs',activeProgram.program_id), {
+      has_result: hasCompletedResult,
+      status: workspaceStatus,
+      eligibility_status: data.eligibility?.status || '',
+      assessed_at: hasCompletedResult ? serverTimestamp() : null,
+      updated_at: serverTimestamp()
+    }, { merge:true });
 
     const updatedProgram = {
       ...activeProgram,
-      has_result: true,
-      status: 'ASSESSED',
+      has_result: hasCompletedResult,
+      status: workspaceStatus,
+      eligibility_status: data.eligibility?.status || '',
       result: data
     };
 
@@ -1701,13 +1687,23 @@ export default function App() {
             activeProgram.program_id
               ? {
                   ...item,
-                  has_result: true,
-                  status: 'ASSESSED',
+                  has_result: hasCompletedResult,
+                  status: workspaceStatus,
+                  eligibility_status: data.eligibility?.status || '',
                   result: data
                 }
               : item
         )
     );
+
+    const refreshed = selected.map((item:any)=> item.program_id===activeProgram.program_id ? updatedProgram : item);
+    const assessedCount = refreshed.filter((item:any)=>item.status==='ASSESSED' || item.has_result).length;
+    await setDoc(doc(db,'assessments',assessment.id), {
+      selected_count: refreshed.length,
+      assessed_count: assessedCount,
+      workspace_status: assessedCount && assessedCount===refreshed.length ? 'ASSESSED' : 'IN_PROGRESS',
+      updated_at: serverTimestamp()
+    }, { merge:true });
 
     setResult(data);
     setScreen('result');
@@ -1726,6 +1722,12 @@ export default function App() {
 };
 
 
+  const archiveAssessment = async (a:any) => {
+    if (!window.confirm(`Archive the ${a.specialty} assessment?`)) return;
+    await setDoc(doc(db,'assessments',a.id), { archived_at:serverTimestamp(), updated_at:serverTimestamp() }, { merge:true });
+  };
+
+  const editProgramFromPortfolio = async (p:any) => openProgram({...p, forceEdit:true});
 
   return (
     <Shell
@@ -1739,6 +1741,7 @@ export default function App() {
           assessments={assessments}
           createAssessment={createAssessment}
           resume={resume}
+          archiveAssessment={archiveAssessment}
           message={message}
         />
       )}
@@ -1766,6 +1769,8 @@ export default function App() {
           removeProgram={removeProgram}
           message={message}
           specialty={profile.specialty}
+          onCompare={() => setScreen('portfolio')}
+          onBackToAssessments={() => setScreen('dashboard')}
         />
       )}
 
@@ -1808,9 +1813,27 @@ export default function App() {
           onBack={() =>
             setScreen('programs')
           }
-          onEdit={() =>
-            setScreen('assessment')
-          }
+          onEdit={() => openProgram({...activeProgram, forceEdit:true})}
+          onCompare={() => setScreen('portfolio')}
+          canCompare={selected.filter((p:any)=>p.status==='ASSESSED'||p.has_result).length >= 2}
+        />
+      )}
+
+      {screen === 'portfolio' && (
+        <Portfolio
+          programs={selected}
+          onBack={() => setScreen('programs')}
+          onView={viewProgramResult}
+          onEdit={editProgramFromPortfolio}
+          onFinalize={() => setScreen('finalize')}
+        />
+      )}
+
+      {screen === 'finalize' && (
+        <FinalizePlan
+          assessment={assessment}
+          programs={selected}
+          onBack={() => setScreen('portfolio')}
         />
       )}
     </Shell>

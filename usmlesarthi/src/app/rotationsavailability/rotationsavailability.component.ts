@@ -1,4 +1,4 @@
-import { Component, OnInit, TemplateRef, ViewChild,AfterViewInit } from "@angular/core";
+import { Component, OnInit, TemplateRef, ViewChild,AfterViewInit,NgZone,ChangeDetectorRef } from "@angular/core";
 import { NgbCalendar, NgbModal } from "@ng-bootstrap/ng-bootstrap";
 import { ObservershipService } from "../observership/services/observership.service";
 import { ToastrService } from "ngx-toastr";
@@ -150,7 +150,9 @@ export class RotationAvailabilityComponent implements OnInit {
     public auth: AuthenticationService,
     public router: Router,
     public calendar: NgbCalendar,
-    public route: ActivatedRoute
+    public route: ActivatedRoute,
+    private ngZone: NgZone,
+    private cdr: ChangeDetectorRef
   ) {}
 
   async ngOnInit() {
@@ -276,6 +278,10 @@ export class RotationAvailabilityComponent implements OnInit {
     this.setResponsiveView();
     window.addEventListener('resize', () => this.setResponsiveView());
     this.loading = false;
+      this.ngZone.run(() => {
+      this.loading = false;
+      this.cdr.detectChanges();
+    });
   }
     loadCountries() {
 

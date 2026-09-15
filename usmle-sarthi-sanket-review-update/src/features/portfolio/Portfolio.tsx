@@ -1,0 +1,13 @@
+import { useMemo, useState } from 'react';
+import { eligibilityStatusLabel, recommendationLabel, programStatusLabel } from '../../utils/labels';
+
+const score=(v:any)=>v===undefined||v===null?'—':Number(v).toFixed(1);
+export default function Portfolio({ programs, onBack, onView, onEdit, onFinalize }:any){
+  const [sort,setSort]=useState('priority');
+  const rows=useMemo(()=>{const a=[...programs]; if(sort==='priority')a.sort((x:any,y:any)=>(y.result?.final_priority?.score||-1)-(x.result?.final_priority?.score||-1)); if(sort==='name')a.sort((x:any,y:any)=>String(x.program_name).localeCompare(String(y.program_name))); if(sort==='status')a.sort((x:any,y:any)=>programStatusLabel(x.status).localeCompare(programStatusLabel(y.status))); return a;},[programs,sort]);
+  return <>
+    <div className="pageTitle"><div><div className="eyebrow">PORTFOLIO COMPARISON</div><h1>Compare all selected programs</h1><p className="muted">Signal inventory allocation is intentionally deferred for now. Scores, status and student choices can still be reviewed.</p></div><div className="actions"><button className="ghost" onClick={onBack}>Back to workspace</button><button onClick={onFinalize}>Review / export</button></div></div>
+    <div className="card workspaceToolbar"><label>Sort</label><select value={sort} onChange={e=>setSort(e.target.value)}><option value="priority">Final Priority</option><option value="name">Program name</option><option value="status">Status</option></select></div>
+    <div className="card"><div className="tableWrap"><table className="programTable"><thead><tr><th>Program</th><th>Status</th><th>Eligibility</th><th>Application Fit</th><th>Signal Value</th><th>Final Priority</th><th>Confidence</th><th>Recommendation</th><th>Actions</th></tr></thead><tbody>{rows.map((p:any)=>{const r=p.result||{};return <tr key={p.program_id}><td><b>{p.program_name}</b><small>{[p.city,p.state].filter(Boolean).join(', ')}</small><small>FREIDA: {p.Frieda}</small></td><td>{programStatusLabel(p.status)}</td><td>{eligibilityStatusLabel(r.eligibility?.status||p.eligibility_status)}</td><td>{r.application_fit?`${score(r.application_fit.score)} · ${r.application_fit.label}`:'—'}</td><td>{r.signal_value?`${score(r.signal_value.score)} · ${r.signal_value.label}`:'—'}</td><td>{r.final_priority?`${score(r.final_priority.score)} · ${r.final_priority.label}`:'—'}</td><td>{r.confidence||'—'}</td><td>{recommendationLabel(r.recommendation_code)||'—'}</td><td><div className="actions"><button className="secondary" disabled={!p.has_result} onClick={()=>onView(p)}>View</button><button className="ghost" onClick={()=>onEdit(p)}>Edit</button></div></td></tr>;})}</tbody></table></div></div>
+  </>;
+}
