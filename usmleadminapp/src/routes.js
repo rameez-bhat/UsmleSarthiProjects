@@ -47,6 +47,7 @@ const StudentPSCVReview = React.lazy(() => import('./views/admin/StudentsPSCVRev
 const StudentMocks = React.lazy(() => import('./views/admin/StudentMocks'))
 const StudentMatchPlans = React.lazy(() => import('./views/admin/StudentMatchPlans'))
 const RotationReview = React.lazy(() => import('./views/admin/RotationReview'))
+const ReviewListPage = React.lazy(() => import('./views/admin/ReviewListPage'))
 
 const EnquiresFilter = React.lazy(() => import('./views/admin/EnquiresFilter'))
 const UpdateUserPassword = React.lazy(() => import('./views/admin/UpdateUserPassword'))
@@ -174,6 +175,7 @@ const routes = {"public":[
     { path: '/admin/journalist', name: 'Journalist Details',exact: true, element: JournalistsList },
     { path: '/admin/journalist/:mentorId', name: 'Journalist Details',exact: true, element: JournalistsDetails },
     { path: '/admin/rotationreview', name: 'Rotation Review',exact: true, element: RotationReview },
+    { path: '/admin/reviewlistpage', name: 'Rotation Review',exact: true, element: ReviewListPage },
     { path: '/admin/listofmicroservices', name: 'Microservices List',exact: true, element: ListOfMicroservices },
     { path: '/admin/editmicroservices/:microservices_id?', name: 'Edit Microservices',exact: true, element: EditMicroservices },
 ],
