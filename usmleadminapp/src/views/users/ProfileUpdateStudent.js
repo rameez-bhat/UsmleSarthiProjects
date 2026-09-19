@@ -1183,6 +1183,7 @@ const options = uniqueCodes.map(codes => ({
         uid: id
       }
     		handleUpdate("AgentUserConnection",id,dataTobesendAgent);*/
+        console.log("StudentData---->",StudentData)
       		dataTobesend['PhoneCountry']={};
       		dataTobesend['PhoneCountry']=StudentData.PhoneCountry;
       		dataTobesend['phoneNumber']=StudentData.phoneNumber;
@@ -1201,7 +1202,22 @@ const options = uniqueCodes.map(codes => ({
       		console.log("result--->",StudentData)
       		await deleteFieldFromDocument("Users",id,"WorkExperienceData");
       		await deleteFieldFromDocument("Users",id,"USCEDATA");
-      		await handleUpdate("UsersRoles",id,{emailVerified:true,Role:"Default"})
+          const userRoles = await FetchDataFromCollection(
+  "UsersRoles",
+  1,
+  "__name__",
+  "==",
+  id,
+  0
+);
+
+const existingRole = userRoles?.[0]?.Role;
+
+await handleUpdate("UsersRoles", id, {
+  emailVerified: true,
+  ...(!existingRole ? { Role: "Default" } : {}),
+});
+      		//await handleUpdate("UsersRoles",id,{emailVerified:true,Role:"Default"})
 			handleUpdate("Users",id,StudentData).then((result) => {
      		hideLoading();
      		 NoteSectionData.forEach(async(NotesOb,NotesInd) => {
