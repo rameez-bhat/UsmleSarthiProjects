@@ -16,7 +16,7 @@ import {
   CModalFooter,
   CButton
 } from '@coreui/react'
-
+import { getAuth } from "firebase/auth";
 const LoadingContext = createContext();
 const allCountries=[];
 const countryOfMedicalCollege=[];
@@ -125,6 +125,67 @@ const sendWhatsappMessage = async (whatsappNumber,WhatsappMessage) => {
     console.error("❌ Error sending message:", err);
   }
 };
+
+const sendWhatsappMedia = async ({
+  whatsappNumber,
+  file,
+  caption = "",
+}) => {
+  try {
+    const user = getAuth().currentUser;
+
+    if (!user) {
+      return {
+        status: "error",
+        message:
+          "No Firebase user is signed in. Please sign in again.",
+      };
+    }
+
+    const idToken = await user.getIdToken();
+
+    const formData = new FormData();
+
+    formData.append("whatsappNumber", whatsappNumber);
+    formData.append("file", file);
+    formData.append("caption", caption);
+
+    const response = await fetch(
+      "https://sendwhatsappmedia-5rztgyg64q-uc.a.run.app",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: formData,
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok || result.status !== "success") {
+      return {
+        status: "error",
+        message:
+          result.message || "Failed to send WhatsApp media.",
+      };
+    }
+
+    return {
+      status: "success",
+      messageid: result.messageid,
+      mediaId: result.mediaId,
+      mediaType: result.mediaType,
+    };
+  } catch (error) {
+    console.error("WhatsApp media request failed:", error);
+
+    return {
+      status: "error",
+      message: error.message || "Failed to send WhatsApp media.",
+    };
+  }
+};
 function toArray(value) {
   if (Array.isArray(value)) {
     return value;
@@ -181,7 +242,7 @@ console.log("-------->",visible)
 return false;
 }
   return (
-    <LoadingContext.Provider value={{toArray,handleUpdateOrCreateByConditions,ReferralserviceOptions,ReferraldiscountTypes,ReferralemptyServiceRow,sendInstagramMessage,sendWhatsappMessage,getjointabledata,addOrUpdateDocIds,updateAllHospitalProgramInfoDocs,updateWhereFieldEquals,DeleteDocumentWhereMultiple,removePidFromHospital,DeleteDocumentWhere,handleAdd,deleteFieldFromDocumentWhere,fetchAllJoinData,SelectSuperComplexConditionsForView, deleteDuplicateNotes,deleteFieldFromDocument,getMaxStudentUniqueId,copyFieldToAnotherCollection,updateOrAddFieldInCollection,SelectWithComplexConditionsJoin,loading,DatabaseName, showLoading, hideLoading,deletedocumentfromid,handleUpdateEx,SelectWithComplexConditions,SelectWithWhereAnd,restructureRotationDataResearch,restructureRotationDataMatch,getRecordsWithEnrollmentDateAfter,Timestamp,restructureRotationData2,SelectWithWhereOrAndFetchProfiles,copyCollection,restructureRotationData,SelectWithWhereOr,handleUpdateOrCreateByField, copyDocument,FetchUniqueData,fetchPaginatedDataWithJoin,fetchTotalRecordsCount,fetchAdminDataWithJoin,handleUpdate,FetchDataFromCollection,FetchUniqueDataFull,deleteUser,API_KEY,ShowToast,TooltipsPopovers}}>
+    <LoadingContext.Provider value={{sendWhatsappMedia,toArray,handleUpdateOrCreateByConditions,ReferralserviceOptions,ReferraldiscountTypes,ReferralemptyServiceRow,sendInstagramMessage,sendWhatsappMessage,getjointabledata,addOrUpdateDocIds,updateAllHospitalProgramInfoDocs,updateWhereFieldEquals,DeleteDocumentWhereMultiple,removePidFromHospital,DeleteDocumentWhere,handleAdd,deleteFieldFromDocumentWhere,fetchAllJoinData,SelectSuperComplexConditionsForView, deleteDuplicateNotes,deleteFieldFromDocument,getMaxStudentUniqueId,copyFieldToAnotherCollection,updateOrAddFieldInCollection,SelectWithComplexConditionsJoin,loading,DatabaseName, showLoading, hideLoading,deletedocumentfromid,handleUpdateEx,SelectWithComplexConditions,SelectWithWhereAnd,restructureRotationDataResearch,restructureRotationDataMatch,getRecordsWithEnrollmentDateAfter,Timestamp,restructureRotationData2,SelectWithWhereOrAndFetchProfiles,copyCollection,restructureRotationData,SelectWithWhereOr,handleUpdateOrCreateByField, copyDocument,FetchUniqueData,fetchPaginatedDataWithJoin,fetchTotalRecordsCount,fetchAdminDataWithJoin,handleUpdate,FetchDataFromCollection,FetchUniqueDataFull,deleteUser,API_KEY,ShowToast,TooltipsPopovers}}>
     <CToaster ref={toaster} push={toast} placement="top-end" />
     <CModal alignment="center" visible={visible}  onClose={() => setVisible(false)} className={status.toLowerCase()=='error'?'redbordermodel':'greenbordermodel'}>
         <CModalHeader>
