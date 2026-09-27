@@ -21,6 +21,8 @@ export class HospitalService {
   hospitalsList: Hospital[];
   hospitalsByProgram: any = {};
   hospitals: any = [];
+private allHospitalsCache: any = null;
+private allHospitalsRequest: Promise<any> = null;
 private hospitalsCache: Record<string, Record<string, Hospital>> = {};
 
 private hospitalsRequests:
@@ -33,6 +35,99 @@ private hospitalsRequests:
     const hospitals = await this.getHospitalsObjectByProgramRameez(id);
     return { hospitalsByProgram: hospitals, hospitals };
   }
+async getDisplayHospitalsByProgram(programId: any): Promise<any[]> {
+  try {
+    const pid = String(programId);
+
+    // Run both operations in parallel
+    const [programInfoSnapshot, hospitals] = await Promise.all([
+      this.firestore
+        .collection<any>('HospitalProgramInfo', ref =>
+          ref
+            .where('PId', '==', pid)
+            .where('DisplayProgram', '==', 1)
+        )
+        .get()
+        .toPromise(),
+
+      this.getAllHospitalsCached()
+    ]);
+
+    if (!programInfoSnapshot || programInfoSnapshot.empty) {
+      return [];
+    }
+
+    // Create Set of allowed HIds
+    const allowedHIds = new Set(
+      programInfoSnapshot.docs
+        .map(doc => String(doc.data().HId || ''))
+        .filter(Boolean)
+    );
+
+    // Get hospitals locally - NO more Firestore queries
+    return Object.values(hospitals)
+      .filter((hospital: any) =>
+        allowedHIds.has(String(hospital.HId))
+      )
+      .sort((a: any, b: any) =>
+        String(a.HName || '').localeCompare(
+          String(b.HName || '')
+        )
+      );
+
+  } catch (err) {
+    console.error(
+      'Error getting display hospitals:',
+      err
+    );
+
+    return [];
+  }
+}
+private async getAllHospitalsCached(): Promise<any> {
+
+  // Already loaded
+  if (this.allHospitalsCache) {
+    return this.allHospitalsCache;
+  }
+
+  // Request already running
+  if (this.allHospitalsRequest) {
+    return this.allHospitalsRequest;
+  }
+
+  this.allHospitalsRequest = (async () => {
+
+    const snapshot = await this.firestore
+      .collection<any>('Hospital')
+      .get()
+      .toPromise();
+
+    const hospitals: any = {};
+
+    snapshot.docs.forEach(doc => {
+
+      const data: any = doc.data();
+
+      hospitals[doc.id] = {
+        ...data,
+        HId: data.HId || doc.id
+      };
+
+    });
+
+    this.allHospitalsCache = hospitals;
+
+    return hospitals;
+
+  })();
+
+  try {
+    return await this.allHospitalsRequest;
+  } finally {
+    this.allHospitalsRequest = null;
+  }
+}
   async getHospitalsByProgram(id: any): Promise < Hospital[] > {
     let feridaList=[];
     let programId = id.toString();

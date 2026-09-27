@@ -98,6 +98,76 @@ export class AuthenticationService {
       }
     })
   }
+async searchUsers(search: string): Promise<any[]> {
+  try {
+    const value = String(search || '').trim();
+
+    if (value.length < 2) {
+      return [];
+    }
+
+    const displayNameQuery = this.afs
+      .collection<any>('Users', ref =>
+        ref
+          .orderBy('displayName')
+          .startAt(value)
+          .endAt(value + '\uf8ff')
+          .limit(20)
+      )
+      .get()
+      .toPromise();
+
+    const emailQuery = this.afs
+      .collection<any>('Users', ref =>
+        ref
+          .orderBy('email')
+          .startAt(value)
+          .endAt(value + '\uf8ff')
+          .limit(20)
+      )
+      .get()
+      .toPromise();
+
+    const [displayNameSnapshot, emailSnapshot] =
+      await Promise.all([
+        displayNameQuery,
+        emailQuery
+      ]);
+
+    const users: any = {};
+
+    // Results found by displayName
+    displayNameSnapshot.docs.forEach(doc => {
+      const data: any = doc.data();
+
+      users[doc.id] = {
+        ...data,
+        uid: data.uid || doc.id
+      };
+    });
+
+    // Results found by email
+    emailSnapshot.docs.forEach(doc => {
+      const data: any = doc.data();
+
+      users[doc.id] = {
+        ...data,
+        uid: data.uid || doc.id
+      };
+    });
+
+    return Object.values(users)
+      .sort((a: any, b: any) =>
+        String(a.displayName || '').localeCompare(
+          String(b.displayName || '')
+        )
+      );
+
+  } catch (err) {
+    console.error('Error searching users:', err);
+    return [];
+  }
+}
   async getCustomToken(uid: string): Promise<string | null> {
     try {
       const response = await this.http.post<{ customToken: string }>(

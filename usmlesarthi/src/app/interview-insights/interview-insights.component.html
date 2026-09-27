@@ -13,6 +13,78 @@
           See your interviews
         </button>
       </div>
+      <div
+  class="form-group"
+  *ngIf="isAdmin"
+>
+  <label>
+    Select User
+  </label>
+
+  <input
+    type="text"
+    class="form-control"
+    placeholder="Search user by name..."
+    [(ngModel)]="userSearch"
+    (ngModelChange)="onUserSearchChange($event)"
+    autocomplete="off"
+  />
+
+  <small
+    *ngIf="userLoading"
+    class="text-muted"
+  >
+    Searching users...
+  </small>
+
+  <div
+    *ngIf="usersList.length > 0"
+    class="list-group"
+    style="
+      position: absolute;
+      z-index: 9999;
+      width: 95%;
+      max-height: 300px;
+      overflow-y: auto;
+    "
+  >
+
+    <button
+      type="button"
+      class="list-group-item list-group-item-action"
+      *ngFor="let user of usersList"
+      (click)="selectUser(user)"
+    >
+
+      <strong>
+        {{ user.Name || user.displayName }}
+      </strong>
+
+      <br>
+
+      <small class="text-muted">
+        {{ user.email }}
+      </small>
+
+    </button>
+
+  </div>
+
+  <div
+    *ngIf="selectedUser"
+    class="alert alert-info mt-2 mb-0"
+  >
+    Adding interview for:
+
+    <strong>
+      {{
+        selectedUser.Name ||
+        selectedUser.displayName ||
+        selectedUser.email
+      }}
+    </strong>
+  </div>
+</div>
       <div class="form-group">
         <label for="Number of hospitals"
           >Please specify the number of hospitals from where you have received
@@ -174,7 +246,7 @@
         class="btn btn-block btn-primary btn-outline-primary card-footer"
         (click)="postSelections()"
       >
-        Continue
+        Continue1
       </button>
     </ng-template>
   </div>

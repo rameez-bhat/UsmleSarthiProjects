@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit,NgZone,ChangeDetectorRef } from '@angular/core';
 import { ToastrService } from 'ngx-toastr';
 import { Router } from '@angular/router';
 import { ProgramService } from '../common/program.service';
@@ -31,15 +31,62 @@ export class InterviewInsightsComponent implements OnInit {
   selectedInterviewData: any= {};
   interviewsInfo : any[] = [];
   today = new Date();
+  usersList: any[] = [];
+selectedUserId: string = "";
+selectedUser: any = null;
 
-  constructor(private authService: AuthenticationService, private toastr: ToastrService, private router: Router, private programApi: ProgramService, private hospitalApi: HospitalService, public calendar: NgbCalendar, private dbService: InterviewInsightsService) {
+userSearch: string = "";
+userLoading: boolean = false;
+
+  constructor(private authService: AuthenticationService, private toastr: ToastrService, private router: Router, private programApi: ProgramService, private hospitalApi: HospitalService, public calendar: NgbCalendar, private dbService: InterviewInsightsService,private ngZone: NgZone,
+      private cdr: ChangeDetectorRef) {
    }
 
   async ngOnInit() {
     this.userData = await this.authService.userData;
+    console.log("this.userData====>",this.userData)
     await this.takeMeToBasic();
   }
-  
+  private userSearchTimer: any;
+
+onUserSearchChange(value: string) {
+
+  this.userSearch = value;
+
+  clearTimeout(this.userSearchTimer);
+
+  if (!value || value.trim().length < 2) {
+    this.usersList = [];
+    return;
+  }
+
+  this.userSearchTimer = setTimeout(async () => {
+
+    try {
+      this.userLoading = true;
+
+      this.usersList =
+        await this.authService.searchUsers(
+          value.trim()
+        );
+
+    } catch (err) {
+      console.error(err);
+
+      this.toastr.error(
+        'Error while searching users'
+      );
+
+    } finally {
+      this.userLoading = false;
+
+      this.ngZone.run(() => {
+        this.cdr.detectChanges();
+      });
+    }
+
+  }, 400);
+}
   async takeMeToBasic(){
     try{
     this.loading = true;
@@ -53,8 +100,61 @@ export class InterviewInsightsComponent implements OnInit {
     catch(err){
         this.toastr.error("Error while fetching specialities, please try again");
     }
+     this.ngZone.run(() => {
+      this.loading = false;
+      this.cdr.detectChanges();
+    });
+  }
+  selectUser(user: any) {
+
+  this.selectedUser = user;
+  this.selectedUserId = user.uid;
+
+  this.userSearch =
+    user.Name ||
+    user.displayName ||
+    user.email ||
+    user.uid;
+
+  this.usersList = [];
+}
+  /*async getSelects() {
+
+  if (this.isAdmin && !this.selectedUserId) {
+
+    this.toastr.info(
+      "Please select a user"
+    );
+
+    return;
   }
 
+  if (this.numHos <= 0 || this.numHos > 10) {
+
+    this.toastr.info(
+      "Please input a valid number of interviews, between 1-10"
+    );
+
+  } else if (this.speciality == "") {
+
+    this.toastr.info(
+      "Please select a valid program"
+    );
+
+  } else {
+
+    await this.takeMeToSelection();
+
+  }
+}*/
+getTargetUserId() {
+
+  if (this.isAdmin) {
+    return this.selectedUserId;
+  }
+
+  return this.userData.uid;
+}
   async getSelects(){
     if (this.numHos<=0 || this.numHos>10)
       this.toastr.info("Please input a valid number of interviews, between 1-10");
@@ -73,7 +173,8 @@ export class InterviewInsightsComponent implements OnInit {
     {
       this.selectValues.push({ hid:"", date: this.calendar.getToday(), signal: "" });
     }
-    this.hospitalsList = await this.hospitalApi.getHospitalsByProgram(this.speciality);
+    //this.hospitalsList = await this.hospitalApi.getHospitalsByProgram(this.speciality);
+    this.hospitalsList = await this.hospitalApi.getDisplayHospitalsByProgram(this.speciality);
     if (this.hospitalsList.length==0)
     {
       this.toastr.info("No hospitals are currently assigned to the selected program, please select another one");
@@ -84,6 +185,10 @@ export class InterviewInsightsComponent implements OnInit {
     catch(err){
       this.toastr.error("Error while fetching hospitals, please try again");
     }
+    this.ngZone.run(() => {
+      this.loading = false;
+      this.cdr.detectChanges();
+    });
   }
   async postSelections(){
     try{
@@ -117,7 +222,9 @@ export class InterviewInsightsComponent implements OnInit {
         this.loading = false;
         return;
       }
-      allPosts.push(this.dbService.addInterview(this.userData.uid, hid, date, this.speciality, signal));
+      const targetUid = this.getTargetUserId();
+      //allPosts.push(this.dbService.addInterview(this.userData.uid, hid, date, this.speciality, signal));
+      allPosts.push(this.dbService.addInterview(targetUid, hid, date, this.speciality, signal));
     }
     await Promise.all(allPosts)
     this.loading = false;
@@ -127,11 +234,19 @@ export class InterviewInsightsComponent implements OnInit {
     }
     await this.takeMeToList();
   }
+  get isAdmin() {
+  return this.userData &&
+    (
+      this.userData.Role === 'Admin' ||
+      this.userData.role === 'Admin'
+    );
+}
   async takeMeToList(){
     try{
     this.loading = true;
     this.landing = 'list';
-    this.interviewsObject = await this.dbService.getInterviewsByUId(this.userData.uid);
+    const targetUid = this.getTargetUserId();
+    this.interviewsObject = await this.dbService.getInterviewsByUId(targetUid);
     this.interviewsList = Object.values(this.interviewsObject);
     this.interviewsList.sort((a, b)=> new Date(a.Date).getTime() - new Date(b.Date).getTime());
     if (this.interviewsList.length==0)
@@ -141,6 +256,10 @@ export class InterviewInsightsComponent implements OnInit {
     catch(err){
       this.toastr.error("Error while fetching your interviews, please try again");
     }
+    this.ngZone.run(() => {
+      this.loading = false;
+      this.cdr.detectChanges();
+    });
   }
   async takeMeToInfo(interview, index){
     try{
@@ -157,6 +276,10 @@ export class InterviewInsightsComponent implements OnInit {
     catch(err){
       this.toastr.error("Error while getting details for the hospital, please try again");
     }
+    this.ngZone.run(() => {
+      this.loading = false;
+      this.cdr.detectChanges();
+    });
   }
   isAllowedToAccess(interview, index)
   {
@@ -198,9 +321,10 @@ export class InterviewInsightsComponent implements OnInit {
       await this.takeMeToList();
       return;
     }
+    const targetUid = this.getTargetUserId();
     if(this.selectedInterview.ProvidedInfo=="No"){
       this.selectedInterviewData = {
-        UId: this.userData.uid,
+        UId: targetUid,
         PId: this.selectedInterview.PId,
         HId: this.selectedInterview.HId,
         InterviewType: "",
@@ -231,6 +355,10 @@ export class InterviewInsightsComponent implements OnInit {
       this.landing = "list";
     }
     this.loading = false;
+    this.ngZone.run(() => {
+      this.loading = false;
+      this.cdr.detectChanges();
+    });
   }
   catch(err){
     this.toastr.error("Error while preparing the information form, please try again");
@@ -240,7 +368,9 @@ export class InterviewInsightsComponent implements OnInit {
   {
     try{
       this.loading = true;
-    await this.dbService.addInterviewData(this.selectedInterviewData, this.selectedInterview);
+      console.log("this.selectedInterviewData=====>",this.selectedInterviewData)
+      console.log("this.selectedInterview=====>",this.selectedInterview)
+   // await this.dbService.addInterviewData(this.selectedInterviewData, this.selectedInterview);
     this.toastr.success("Data has been added successfully");
     this.loading = false;
     }

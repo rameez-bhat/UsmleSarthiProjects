@@ -36,6 +36,7 @@ export class InterviewInsightsService {
       throw err;
     });
   }
+  
   async getInterviewsByUId(uid){
     this.uid = uid;
     this.interviews = {};
