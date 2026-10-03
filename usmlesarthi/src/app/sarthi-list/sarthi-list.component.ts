@@ -1567,7 +1567,7 @@ private processDashboard() {
     if (toCheckNoValue && (!field || field=== 'Data not available')){
       return true;
     }
-    if (toCheck === "YOG not a constrain" && (field=="YOG not a constrain" || field=="No cap on the number of years"))
+    if (toCheck === "YOG not a constrain" && (field=="YOG not a constrain" || field=="No cap on the number of years" || field==0 || field=="0"))
       {
         return true;
       }
