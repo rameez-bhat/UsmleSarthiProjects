@@ -222,6 +222,12 @@ const getNavigation = (user) => {
             icon: <CIcon icon={cilBabyCarriage} customClassName="nav-icon" />,
             name: 'Add Resources',
             to: '/admin/studentresources',
+          },
+          {
+            component: CNavItem,
+            icon: <CIcon icon={cilBabyCarriage} customClassName="nav-icon" />,
+            name: 'Add Updates',
+            to: '/admin/studentupdates',
           }
         ],
       },
@@ -692,6 +698,12 @@ const getNavigation = (user) => {
       icon: <CIcon icon={cilEco} customClassName="nav-icon" />,
       name: 'PS/CV Reviews',
       to: '/user/studentpscvreview',
+    },
+    {
+      component: CNavItem,
+      icon: <CIcon icon={cilEco} customClassName="nav-icon" />,
+      name: 'Sarthi Updates',
+      to: '/user/studentupdatelist',
     }
     ],
   }

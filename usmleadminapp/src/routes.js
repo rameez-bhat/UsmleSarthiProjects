@@ -48,6 +48,7 @@ const StudentMocks = React.lazy(() => import('./views/admin/StudentMocks'))
 const StudentMatchPlans = React.lazy(() => import('./views/admin/StudentMatchPlans'))
 const RotationReview = React.lazy(() => import('./views/admin/RotationReview'))
 const ReviewListPage = React.lazy(() => import('./views/admin/ReviewListPage'))
+const StudentUpdates = React.lazy(() => import('./views/admin/StudentUpdates'))
 
 const EnquiresFilter = React.lazy(() => import('./views/admin/EnquiresFilter'))
 const UpdateUserPassword = React.lazy(() => import('./views/admin/UpdateUserPassword'))
@@ -87,6 +88,7 @@ const Enqueries = React.lazy(() => import('./views/users/Enqueries'))
 const Referrals = React.lazy(() => import('./views/users/Referrals'))
 const ReferralsAdmin = React.lazy(() => import('./views/admin/Referrals'))
 const StudentResourceList = React.lazy(() => import('./views/users/StudentResourceList'))
+const StudentUpdateList = React.lazy(() => import('./views/users/StudentUpdateList'))
 const StudentResourceView = React.lazy(() => import('./views/users/StudentResourceView'))
 const MockServices = React.lazy(() => import('./views/users/MockServices'))
 const MatchPlans = React.lazy(() => import('./views/users/MatchPlans'))
@@ -165,6 +167,7 @@ const routes = {"public":[
     { path: '/admin/referraledit/:serviceId?', name: 'Referral Edit',exact: true, element: ReferralEdit },
     { path: '/admin/studentpscvreview/:id', name: 'Student PSCV Review',exact: true, element: StudentPSCVReview },
     { path: '/admin/studentresources/:id?', name: 'Student Resources',exact: true, element: StudentResources },
+    { path: '/admin/studentupdates/:id?', name: 'Student Updates',exact: true, element: StudentUpdates },
     { path: '/admin/studentmocks/:id?', name: 'Student Mocks',exact: true, element: StudentMocks },
     { path: '/admin/studentmatchplans/:id?', name: 'Student Match Plans',exact: true, element: StudentMatchPlans },
     { path: '/admin/issuetracker/:id?', name: 'Issue Tracker',exact: true, element: IssueTracker },
@@ -210,6 +213,7 @@ const routes = {"public":[
     { path: '/admin/listofallservicestudents/', name: 'ListOfAllServiceStudents',exact: true, element: ListOfAllServiceStudents },
     { path: '/user/studentresourceview/:index', name: 'StudentResourceView',exact: true, element: StudentResourceView },
     { path: '/user/studentresourcelist', name: 'StudentResourceList',exact: true, element: StudentResourceList },
+    { path: '/user/studentupdatelist', name: 'StudentResourceList',exact: true, element: StudentUpdateList },
     { path: '/user/mockservices/:id?', name: 'Student Mocks',exact: true, element: MockServices },
     { path: '/user/matchplans/:id?', name: 'Your Plan For Match',exact: true, element: MatchPlans },
     { path: '/user/studentpscvreview/:id?', name: 'Student PSCV Review',exact: true, element: StudentPSCVReviewUser },
@@ -244,6 +248,7 @@ const routes = {"public":[
     { path: '/admin/listofallservicestudents/', name: 'ListOfAllServiceStudents',exact: true, element: ListOfAllServiceStudents },
     { path: '/user/studentresourceview/:index', name: 'StudentResourceView',exact: true, element: StudentResourceView },
     { path: '/user/studentresourcelist', name: 'StudentResourceList',exact: true, element: StudentResourceList },
+    { path: '/user/studentupdatelist', name: 'StudentResourceList',exact: true, element: StudentUpdateList },
     { path: '/user/mockservices/:id?', name: 'Student Mocks',exact: true, element: MockServices },
     { path: '/user/matchplans/:id?', name: 'Your Plan For Match',exact: true, element: MatchPlans },
     { path: '/user/studentpscvreview/:id?', name: 'Student PSCV Review',exact: true, element: StudentPSCVReviewUser },
@@ -276,6 +281,7 @@ const routes = {"public":[
     { path: '/admin/listofallresearchstudents/', name: 'ListOfAllResearchStudents',exact: true, element: ListOfAllResearchStudents },
     { path: '/user/studentresourceview/:index', name: 'Student Resource View',exact: true, element: StudentResourceView },
     { path: '/user/studentresourcelist', name: 'Student Resource List',exact: true, element: StudentResourceList },
+    { path: '/user/studentupdatelist', name: 'StudentResourceList',exact: true, element: StudentUpdateList },
     { path: '/user/mockservices/:id?', name: 'Student Mocks',exact: true, element: MockServices },
     { path: '/user/matchplans/:id?', name: 'Your Plan For Match',exact: true, element: MatchPlans },
     { path: '/user/studentpscvreview/:id?', name: 'Student PSCV Review',exact: true, element: StudentPSCVReviewUser },
