@@ -11,6 +11,8 @@ const PlatinumMentorShip = ({ ListOfPanelists,MatchPlanListObject, MatchValues, 
   label: objec.displayName+"("+objec.email+")"
 
 }));*/
+console.log("MatchValues=====>",MatchValues)
+console.log("MatchPlanListObject=====>",MatchPlanListObject)
 const mappedPanelists = Object.entries(ListOfPanelists).map(([email, objec]) => ({
   value: objec.email,
   label: objec.displayName + " (" + objec.email + ")"
@@ -23,6 +25,39 @@ const panelistOptions = [
   ...mappedPanelists,
   { value: "changed", label: "Mentor Changed" }
 ];
+const getDayjsDate = (date) => {
+  if (!date) return null;
+
+  try {
+    // Firestore Timestamp
+    if (typeof date?.toDate === "function") {
+      return dayjs(date.toDate());
+    }
+
+    // Firestore Timestamp-like object
+    if (date?.seconds !== undefined) {
+      return dayjs(date.seconds * 1000);
+    }
+
+    // JavaScript Date
+    if (date instanceof Date) {
+      return dayjs(date);
+    }
+
+    // Existing string dates
+    if (typeof date === "string") {
+      const parsed = dayjs(date);
+      return parsed.isValid() ? parsed : null;
+    }
+
+    // Already a Dayjs object or other supported value
+    const parsed = dayjs(date);
+    return parsed.isValid() ? parsed : null;
+  } catch (error) {
+    console.error("Invalid date:", date, error);
+    return null;
+  }
+};
   const renderMeetings = () => {
     const meetings = MatchValues?.Platinum?.Meetings || {};
 	return Object.entries(meetings).map(([meetingKey, MeetingsObj], Paymentindex) => 
@@ -65,17 +100,9 @@ const panelistOptions = [
                 <Box sx={{ display: 'flex', p: 0, borderRadius: 1 ,border:1}}>
                   <Typography variant="subtitle1" color="textSecondary" sx={{ flexGrow: 1,  p: 1, borderRadius: 1 }}>Meeting Date:</Typography>
                   <Typography variant="body1" sx={{  p: 1, borderRadius: 1 }}><DatePicker
-        defaultValue={
-  MeetingsObj?.MeetingWithPhysicianMentor?.Relation?.MeetingDate
-    ? (
-        typeof MeetingsObj.MeetingWithPhysicianMentor.Relation.MeetingDate === "string"
-          ? dayjs(MeetingsObj.MeetingWithPhysicianMentor.Relation.MeetingDate)
-          : dayjs(
-              MeetingsObj.MeetingWithPhysicianMentor.Relation.MeetingDate.toDate()
-            )
-      )
-    : null
-}
+  defaultValue={getDayjsDate(
+    MeetingsObj?.MeetingWithPhysicianMentor?.Relation?.MeetingDate
+  )}
         onChange={(event) => HandlePlatinumMeetingsChange(event,'MeetingWithPhysicianMentor',true,"MeetingDate",Paymentindex)}
         dateFormat="dd/mm/yyyy" // Customize date format as needed
         scrollableYearDropdown  // Make year dropdown scrollable
@@ -111,15 +138,9 @@ const panelistOptions = [
                   <Typography variant="subtitle1" color="textSecondary" sx={{ flexGrow: 1,  p: 1, borderRadius: 1 }}>Next Notify Date:</Typography>
                   <Typography variant="body1" sx={{  p: 1, borderRadius: 1 }}><DatePicker
     
-defaultValue={
-  MeetingsObj?.MeetingNextNotifyDate
-    ? (
-        typeof MeetingsObj.MeetingNextNotifyDate?.toDate === "function"
-          ? dayjs(MeetingsObj.MeetingNextNotifyDate.toDate())
-          : dayjs(MeetingsObj.MeetingNextNotifyDate)
-      )
-    : null
-}
+  defaultValue={getDayjsDate(
+    MeetingsObj?.MeetingNextNotifyDate
+  )}
         onChange={(event) => HandlePlatinumMeetingsChange(event,'MeetingNextNotifyDate',false,"",Paymentindex)}
         dateFormat="dd/mm/yyyy" // Customize date format as needed
         scrollableYearDropdown  // Make year dropdown scrollable
@@ -156,7 +177,9 @@ defaultValue={
                 <Box sx={{ display: 'flex', p: 0, borderRadius: 1 ,border:1}}>
                   <Typography variant="subtitle1" color="textSecondary" sx={{ flexGrow: 1,  p: 1, borderRadius: 1 }}>Completion Date:</Typography>
                   <Typography variant="body1" sx={{  p: 1, borderRadius: 1 }}><DatePicker
-        defaultValue={MeetingsObj?.MeetingWithPhysicianMentor?.['Relation']?.['CompletionDate']?dayjs(MeetingsObj?.MeetingWithPhysicianMentor?.['Relation']?.['CompletionDate']):null}
+                  defaultValue={getDayjsDate(
+    MeetingsObj?.MeetingWithPhysicianMentor?.Relation?.CompletionDate
+  )}
         onChange={(event) => HandlePlatinumMeetingsChange(event,'MeetingWithPhysicianMentor',true,"CompletionDate",Paymentindex)}
         dateFormat="dd/mm/yyyy" // Customize date format as needed
         scrollableYearDropdown  // Make year dropdown scrollable

@@ -52,7 +52,19 @@ import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 
-import { Timestamp } from "firebase/firestore";
+import {
+  Timestamp,
+  collection,
+  query,
+  where,
+  getDocs,
+  doc,
+  getDoc,
+  setDoc,
+  writeBatch
+} from "firebase/firestore";
+
+import { db } from "../../firebase";
 
 import { useLoading } from "../../layout/LoadingContext";
 
@@ -64,19 +76,7 @@ let MatchPlanLists = {};
 
 const UserDetails = () => {
 
-  const {
-
-    showLoading,
-
-    hideLoading,
-
-    SelectWithComplexConditions,
-
-    FetchDataFromCollection,
-
-    handleUpdate
-
-  } = useLoading();
+  const { showLoading, hideLoading } = useLoading();
 
   /*
 
@@ -95,14 +95,6 @@ const UserDetails = () => {
     setMatchPlanListObject
 
   ] = useState({});
-
-  const [
-
-    filtersReady,
-
-    setFiltersReady
-
-  ] = useState(false);
 
   const [
 
@@ -178,29 +170,27 @@ const UserDetails = () => {
 
   |--------------------------------------------------------------------------
 
-  | DATE HELPER
+  | UNIVERSAL DATE PARSER
 
   |--------------------------------------------------------------------------
 
   |
 
-  | Ant Design RangePicker MUST receive Dayjs.
+  | Supports:
 
   |
 
-  | This function safely handles:
+  | 1. Dayjs
 
-  |
+  | 2. JS Date
 
-  | - Dayjs
+  | 3. Firestore Timestamp
 
-  | - Firebase Timestamp
+  | 4. { seconds, nanoseconds }
 
-  | - Serialized Firebase Timestamp
+  | 5. { _seconds, _nanoseconds }
 
-  | - JavaScript Date
-
-  | - Date string
+  | 6. String date
 
   |
 
@@ -210,7 +200,15 @@ const UserDetails = () => {
 
   const toDayjs = value => {
 
-    if (!value) {
+    if (
+
+      value === null ||
+
+      value === undefined ||
+
+      value === ""
+
+    ) {
 
       return null;
 
@@ -218,35 +216,19 @@ const UserDetails = () => {
 
     /*
 
-     \* Already Dayjs
-
-     */
-
-    if (dayjs.isDayjs(value)) {
-
-      return value;
-
-    }
-
-    /*
-
-     \* Firebase Timestamp
+     * Already Dayjs
 
      */
 
     if (
 
-      typeof value?.toDate === "function"
+      dayjs.isDayjs(value)
 
     ) {
 
-      const converted =
+      return value.isValid()
 
-        dayjs(value.toDate());
-
-      return converted.isValid()
-
-        ? converted
+        ? value
 
         : null;
 
@@ -254,15 +236,15 @@ const UserDetails = () => {
 
     /*
 
-     \* Serialized Firestore timestamp
+     * Firebase Timestamp
 
      */
 
     if (
 
-      value?.seconds !== undefined &&
+      typeof value?.toDate ===
 
-      value?.seconds !== null
+      "function"
 
     ) {
 
@@ -270,7 +252,7 @@ const UserDetails = () => {
 
         dayjs(
 
-          Number(value.seconds) * 1000
+          value.toDate()
 
         );
 
@@ -284,7 +266,215 @@ const UserDetails = () => {
 
     /*
 
-     \* Normal Date/string/etc.
+     * Serialized Timestamp:
+
+     *
+
+     * {
+
+     *   seconds: 1784952000,
+
+     *   nanoseconds: 0
+
+     * }
+
+     */
+
+    if (
+
+      typeof value ===
+
+        "object" &&
+
+      value?.seconds !==
+
+        undefined &&
+
+      value?.seconds !==
+
+        null
+
+    ) {
+
+      const milliseconds =
+
+        Number(
+
+          value.seconds
+
+        ) *
+
+          1000 +
+
+        Math.floor(
+
+          Number(
+
+            value.nanoseconds ||
+
+              0
+
+          ) / 1000000
+
+        );
+
+      const converted =
+
+        dayjs(
+
+          milliseconds
+
+        );
+
+      return converted.isValid()
+
+        ? converted
+
+        : null;
+
+    }
+
+    /*
+
+     * Alternate serialized Timestamp:
+
+     *
+
+     * {
+
+     *   _seconds: ...,
+
+     *   _nanoseconds: ...
+
+     * }
+
+     */
+
+    if (
+
+      typeof value ===
+
+        "object" &&
+
+      value?._seconds !==
+
+        undefined &&
+
+      value?._seconds !==
+
+        null
+
+    ) {
+
+      const milliseconds =
+
+        Number(
+
+          value._seconds
+
+        ) *
+
+          1000 +
+
+        Math.floor(
+
+          Number(
+
+            value._nanoseconds ||
+
+              0
+
+          ) / 1000000
+
+        );
+
+      const converted =
+
+        dayjs(
+
+          milliseconds
+
+        );
+
+      return converted.isValid()
+
+        ? converted
+
+        : null;
+
+    }
+
+    /*
+
+     * JavaScript Date
+
+     */
+
+    if (
+
+      value instanceof Date
+
+    ) {
+
+      const converted =
+
+        dayjs(value);
+
+      return converted.isValid()
+
+        ? converted
+
+        : null;
+
+    }
+
+    /*
+
+     * String date
+
+     *
+
+     * Example:
+
+     *
+
+     * Wed, 17 Jun 2026 04:00:00 GMT
+
+     */
+
+    if (
+
+      typeof value ===
+
+      "string"
+
+    ) {
+
+      const trimmed =
+
+        value.trim();
+
+      if (!trimmed) {
+
+        return null;
+
+      }
+
+      const converted =
+
+        dayjs(trimmed);
+
+      return converted.isValid()
+
+        ? converted
+
+        : null;
+
+    }
+
+    /*
+
+     * Final fallback
 
      */
 
@@ -304,17 +494,163 @@ const UserDetails = () => {
 
   |--------------------------------------------------------------------------
 
-  | RANGE PICKER VALUE
+  | GET ACTUAL MEETING DATE
 
   |--------------------------------------------------------------------------
 
   |
 
-  | Never pass Firebase Timestamp directly
-
-  | into Ant Design RangePicker.
+  | New records:
 
   |
+
+  | Relation.MeetingDate
+
+  |
+
+  | Older records may only contain:
+
+  |
+
+  | Relation.CompletionDate
+
+  |
+
+  | Therefore:
+
+  |
+
+  | MeetingDate first
+
+  | CompletionDate fallback
+
+  |
+
+  |--------------------------------------------------------------------------
+
+  */
+
+  const getMeetingDate =
+
+    meeting => {
+
+      const mentorMeeting =
+
+        meeting
+
+          ?.MeetingWithPhysicianMentor;
+
+      /*
+
+       * Only completed meetings
+
+       */
+
+      if (
+
+        mentorMeeting?.Value !==
+
+        "Completed"
+
+      ) {
+
+        return null;
+
+      }
+
+      const relation =
+
+        mentorMeeting
+
+          ?.Relation;
+
+      if (!relation) {
+
+        return null;
+
+      }
+
+      /*
+
+       * IMPORTANT:
+
+       *
+
+       * Prefer MeetingDate.
+
+       *
+
+       * CompletionDate is only
+
+       * fallback for older records.
+
+       */
+
+      const rawDate =
+
+        relation?.MeetingDate ??
+
+        relation?.CompletionDate ??
+
+        null;
+
+      if (!rawDate) {
+
+        return null;
+
+      }
+
+      return toDayjs(
+
+        rawDate
+
+      );
+
+    };
+
+  /*
+
+  |--------------------------------------------------------------------------
+
+  | GET MEETING DATE KEY
+
+  |--------------------------------------------------------------------------
+
+  */
+
+  const getMeetingDateKey =
+
+    meeting => {
+
+      const date =
+
+        getMeetingDate(
+
+          meeting
+
+        );
+
+        
+
+      if (!date) {
+
+        return null;
+
+      }
+
+      return date.format(
+
+        "YYYY-MM-DD"
+
+      );
+
+    };
+
+  /*
+
+  |--------------------------------------------------------------------------
+
+  | RANGE PICKER VALUE
 
   |--------------------------------------------------------------------------
 
@@ -332,7 +668,11 @@ const UserDetails = () => {
 
         ) ||
 
-        filters.meetingsDate.length !== 2
+        filters
+
+          .meetingsDate
+
+          .length !== 2
 
       ) {
 
@@ -344,7 +684,9 @@ const UserDetails = () => {
 
         toDayjs(
 
-          filters.meetingsDate[0]
+          filters
+
+            .meetingsDate[0]
 
         );
 
@@ -352,7 +694,9 @@ const UserDetails = () => {
 
         toDayjs(
 
-          filters.meetingsDate[1]
+          filters
+
+            .meetingsDate[1]
 
         );
 
@@ -376,7 +720,11 @@ const UserDetails = () => {
 
       ];
 
-    }, [filters?.meetingsDate]);
+    }, [
+
+      filters?.meetingsDate
+
+    ]);
 
   /*
 
@@ -398,231 +746,231 @@ const UserDetails = () => {
 
   |--------------------------------------------------------------------------
 
-  | LOAD DATA WHEN FILTERS ARE READY
+  | INITIALIZE
 
   |--------------------------------------------------------------------------
 
   */
-
-  useEffect(() => {
-
-    if (!filtersReady) {
-
-      return;
-
-    }
-
-    loadData();
-
-  }, [
-
-    filters,
-
-    filtersReady
-
-  ]);
 
   /*
-
   |--------------------------------------------------------------------------
-
-  | INITIALIZE PAGE
-
+  | ONE-TIME / SAFE MEETING DATE MIGRATION
   |--------------------------------------------------------------------------
-
+  |
+  | Converts ONLY string date values to Firestore Timestamp.
+  | Existing Timestamp values are left untouched.
+  |
+  | Fields checked in every Meeting<number> that exists:
+  |
+  | 1. MeetingWithPhysicianMentor.Relation.CompletionDate
+  | 2. MeetingWithPhysicianMentor.Relation.MeetingDate
+  | 3. MeetingNextNotifyDate
+  |
+  | This is safe to leave enabled because after a value becomes a Timestamp,
+  | typeof value !== "string", so it will not be written again.
+  |--------------------------------------------------------------------------
   */
 
-  const initializePage =
-
-    async () => {
-
-      showLoading();
-
-      try {
-
-        /*
-
-         \* Load Match Plans
-
-         */
-
-        const MatchPlanList =
-
-          await FetchDataFromCollection(
-
-            "MatchPlans",
-
-            200,
-
-            "Type",
-
-            "==",
-
-            "Match",
-
-            0
-
-          );
-
-        const obj = {};
-
-        MatchPlanList.forEach(
-
-          item => {
-
-            obj[item.id] =
-
-              item;
-
-          }
-
-        );
-
-        setMatchPlanListObject(
-
-          obj
-
-        );
-
-        MatchPlanLists =
-
-          obj;
-
-        /*
-
-         \* Load saved filters
-
-         */
-
-        const saved =
-
-          await FetchDataFromCollection(
-
-            "SavedFilters",
-
-            20,
-
-            "filtertype",
-
-            "==",
-
-            "listofallmatchmentor",
-
-            0
-
-          );
-
-        console.log(
-
-          "saved======>",
-
-          saved
-
-        );
-
-        if (saved.length) {
-
-          const savedFilters = {
-
-            ...saved[0]
-
-          };
-
-          /*
-
-           \* Convert saved Firebase timestamps
-
-           \* to Dayjs BEFORE storing in UI state.
-
-           */
-
-          if (
-
-            Array.isArray(
-
-              savedFilters.meetingsDate
-
-            ) &&
-
-            savedFilters.meetingsDate.length === 2
-
-          ) {
-
-            const start =
-
-              toDayjs(
-
-                savedFilters
-
-                  .meetingsDate[0]
-
-              );
-
-            const end =
-
-              toDayjs(
-
-                savedFilters
-
-                  .meetingsDate[1]
-
-              );
-
-            savedFilters.meetingsDate =
-
-              start && end
-
-                ? [
-
-                    start,
-
-                    end
-
-                  ]
-
-                : null;
-
-          }
-
-          setFilters(
-
-            savedFilters
-
-          );
-
-        } else {
-
-          /*
-
-           \* No saved filters. The filtersReady effect
-
-           \* will perform the initial load once.
-
-           */
-
-          setFilters({});
-
-        }
-
-      } catch (error) {
-
-        console.error(
-
-          "initializePage error:",
-
-          error
-
-        );
-
-      } finally {
-
-        setFiltersReady(true);
-
-        hideLoading();
-
+  const migrateMeetingStringDatesToTimestamp = async () => {
+    const userServicesRef = collection(db, "UserServices");
+    const snapshot = await getDocs(userServicesRef);
+
+    let scannedUsers = 0;
+    let updatedUsers = 0;
+    let convertedFields = 0;
+    let invalidFields = 0;
+
+    // Firestore batches allow up to 500 writes. Keep some room below that.
+    const MAX_BATCH_WRITES = 450;
+    let batch = writeBatch(db);
+    let batchWriteCount = 0;
+
+    const commitBatchIfNeeded = async force => {
+      if (batchWriteCount === 0) return;
+
+      if (force || batchWriteCount >= MAX_BATCH_WRITES) {
+        await batch.commit();
+        batch = writeBatch(db);
+        batchWriteCount = 0;
+      }
+    };
+
+    for (const docSnap of snapshot.docs) {
+      scannedUsers++;
+
+      const userData = docSnap.data();
+      const meetings = userData?.Match?.Platinum?.Meetings;
+
+      if (!meetings || typeof meetings !== "object") {
+        continue;
       }
 
+      const updates = {};
+
+      const meetingKeys = Object.keys(meetings)
+        .filter(key => /^Meeting\d+$/.test(key))
+        .sort(
+          (a, b) =>
+            Number(a.replace("Meeting", "")) -
+            Number(b.replace("Meeting", ""))
+        );
+
+      const addTimestampUpdate = (
+        fieldPath,
+        value,
+        meetingKey,
+        fieldName
+      ) => {
+        // IMPORTANT: only migrate strings.
+        // Existing Firestore Timestamp / Date / object values are untouched.
+        if (typeof value !== "string") {
+          return;
+        }
+
+        const trimmed = value.trim();
+
+        if (!trimmed) {
+          return;
+        }
+
+        const parsedDate = new Date(trimmed);
+
+        if (Number.isNaN(parsedDate.getTime())) {
+          invalidFields++;
+
+          console.warn(
+            "Invalid meeting date - not converted:",
+            {
+              userId: docSnap.id,
+              meeting: meetingKey,
+              field: fieldName,
+              value
+            }
+          );
+
+          return;
+        }
+
+        updates[fieldPath] = Timestamp.fromDate(parsedDate);
+        convertedFields++;
+      };
+
+      meetingKeys.forEach(meetingKey => {
+        const meeting = meetings?.[meetingKey];
+
+        if (!meeting || typeof meeting !== "object") {
+          return;
+        }
+
+        const relation =
+          meeting
+            ?.MeetingWithPhysicianMentor
+            ?.Relation;
+
+        addTimestampUpdate(
+          `Match.Platinum.Meetings.${meetingKey}.MeetingWithPhysicianMentor.Relation.CompletionDate`,
+          relation?.CompletionDate,
+          meetingKey,
+          "CompletionDate"
+        );
+
+        addTimestampUpdate(
+          `Match.Platinum.Meetings.${meetingKey}.MeetingWithPhysicianMentor.Relation.MeetingDate`,
+          relation?.MeetingDate,
+          meetingKey,
+          "MeetingDate"
+        );
+
+        addTimestampUpdate(
+          `Match.Platinum.Meetings.${meetingKey}.MeetingNextNotifyDate`,
+          meeting?.MeetingNextNotifyDate,
+          meetingKey,
+          "MeetingNextNotifyDate"
+        );
+      });
+
+      if (Object.keys(updates).length > 0) {
+        batch.update(
+          doc(db, "UserServices", docSnap.id),
+          updates
+        );
+
+        batchWriteCount++;
+        updatedUsers++;
+
+        console.log(
+          "Meeting dates scheduled for conversion:",
+          docSnap.id,
+          updates
+        );
+
+        await commitBatchIfNeeded(false);
+      }
+    }
+
+    await commitBatchIfNeeded(true);
+
+    console.log("Meeting date migration completed:", {
+      scannedUsers,
+      updatedUsers,
+      convertedFields,
+      invalidFields
+    });
+
+    return {
+      scannedUsers,
+      updatedUsers,
+      convertedFields,
+      invalidFields
     };
+  };
+
+  const initializePage = async () => {
+    showLoading();
+    try {
+      /*
+       * First normalize old meeting string dates.
+       *
+       * This must run before the meeting-date Firestore queries because
+       * Firestore Timestamp range queries will not match old string values.
+       */
+      //await migrateMeetingStringDatesToTimestamp();
+
+      const matchPlansSnapshot = await getDocs(
+        query(collection(db, "MatchPlans"), where("Type", "==", "Match"))
+      );
+      const matchPlanList = matchPlansSnapshot.docs.map(docSnap => ({
+        id: docSnap.id,
+        ...docSnap.data()
+      }));
+      const obj = {};
+      matchPlanList.forEach(item => { obj[item.id] = item; });
+      setMatchPlanListObject(obj);
+      MatchPlanLists = obj;
+
+      let savedFilters = {};
+      const savedFilterSnapshot = await getDoc(
+        doc(db, "SavedFilters", "listofallmatchmentor")
+      );
+      if (savedFilterSnapshot.exists()) {
+        savedFilters = { id: savedFilterSnapshot.id, ...savedFilterSnapshot.data() };
+        if (Array.isArray(savedFilters.meetingsDate) && savedFilters.meetingsDate.length === 2) {
+          const start = toDayjs(savedFilters.meetingsDate[0]);
+          const end = toDayjs(savedFilters.meetingsDate[1]);
+          savedFilters.meetingsDate = start && end
+            ? [start.startOf("day"), end.endOf("day")]
+            : null;
+        }
+      }
+      setFilters(savedFilters);
+      await loadData(savedFilters, false);
+    } catch (error) {
+      console.error("initializePage error:", error);
+      setData([]);
+    } finally {
+      hideLoading();
+    }
+  };
 
   /*
 
@@ -634,33 +982,223 @@ const UserDetails = () => {
 
   */
 
-  const buildConditions = () => {
-    const baseConditions = [];
-    console.log("filters=======>", filters);
+  const mergeUserProfiles = async serviceUsers => {
+    if (!serviceUsers.length) return [];
 
-    if (filters.Plan) {
-      const plans = Array.isArray(filters.Plan) ? filters.Plan : [filters.Plan];
-      if (plans.length === 1) {
-        baseConditions.push({ name: "Match.Plan.Name", condition: "==", value: plans[0] });
-      } else if (plans.length > 1) {
-        baseConditions.push({ name: "Match.Plan.Name", condition: "in", value: plans });
+    const usersSnapshot = await getDocs(collection(db, "Users"));
+    const profileMap = new Map();
+
+    usersSnapshot.docs.forEach(docSnap => {
+      const profile = { id: docSnap.id, ...docSnap.data() };
+      [docSnap.id, profile?.uid, profile?.UserId, profile?.userId]
+        .filter(Boolean)
+        .forEach(key => profileMap.set(String(key), profile));
+    });
+
+    return serviceUsers.map(serviceUser => {
+      let profile = serviceUser?.profile || null;
+      if (!profile) {
+        const keys = [serviceUser?.uid, serviceUser?.UserId, serviceUser?.userId, serviceUser?.id].filter(Boolean);
+        for (const key of keys) {
+          if (profileMap.has(String(key))) {
+            profile = profileMap.get(String(key));
+            break;
+          }
+        }
       }
+      return { ...serviceUser, profile: profile || {} };
+    });
+  };
+
+  const getUsersDirectlyFromFirestore = async activeFilters => {
+    const userServicesRef = collection(db, "UserServices");
+    const plans = activeFilters?.Plan
+      ? (Array.isArray(activeFilters.Plan) ? activeFilters.Plan : [activeFilters.Plan])
+      : [];
+    const planConstraints = [];
+
+    if (plans.length === 1) {
+      planConstraints.push(where("Match.Plan.Name", "==", plans[0]));
+    } else if (plans.length > 1) {
+      planConstraints.push(where("Match.Plan.Name", "in", plans.slice(0, 30)));
     }
 
-    // Meeting date filtering is done locally because MeetingDate and
-    // CompletionDate can be stored in different date formats.
-    if (!baseConditions.length) {
-      baseConditions.push({ name: "Match.Notes", condition: "!=", value: "Rameez" });
+    const hasMeetingDateFilter =
+      Array.isArray(activeFilters?.meetingsDate) &&
+      activeFilters.meetingsDate.length === 2;
+
+    if (!hasMeetingDateFilter) {
+      const constraints = [...planConstraints];
+      if (!constraints.length) constraints.push(where("Match.Notes", "!=", "Rameez"));
+      const snapshot = await getDocs(query(userServicesRef, ...constraints));
+      return mergeUserProfiles(snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() })));
     }
 
-    return [baseConditions];
+    const start = toDayjs(activeFilters.meetingsDate[0]);
+    const end = toDayjs(activeFilters.meetingsDate[1]);
+    if (!start || !end) return [];
+
+    const startTimestamp = Timestamp.fromDate(start.startOf("day").toDate());
+    const endTimestamp = Timestamp.fromDate(end.endOf("day").toDate());
+
+    const requests = Array.from({ length: 7 }, (_, meetingIndex) => {
+      const basePath = `Match.Platinum.Meetings.Meeting${meetingIndex}.MeetingWithPhysicianMentor`;
+      const meetingDatePath = `${basePath}.Relation.MeetingDate`;
+      return getDocs(query(
+        userServicesRef,
+        ...planConstraints,
+        where(meetingDatePath, ">=", startTimestamp),
+        where(meetingDatePath, "<=", endTimestamp)
+      )).then(snapshot => ({ meetingIndex, snapshot }));
+    });
+
+    const queryResults = await Promise.all(requests);
+    const matchedUsers = new Map();
+
+    queryResults.forEach(({ meetingIndex, snapshot }) => {
+      snapshot.docs.forEach(docSnap => {
+        const rawUser = { id: docSnap.id, ...docSnap.data() };
+        const meeting = rawUser?.Match?.Platinum?.Meetings?.[`Meeting${meetingIndex}`];
+        if (meeting?.MeetingWithPhysicianMentor?.Value !== "Completed") return;
+
+        const existing = matchedUsers.get(docSnap.id);
+        if (existing) {
+          existing.MatchedMeetingIndexes.push(meetingIndex);
+        } else {
+          matchedUsers.set(docSnap.id, { ...rawUser, MatchedMeetingIndexes: [meetingIndex] });
+        }
+      });
+    });
+
+    const serviceUsers = Array.from(matchedUsers.values());
+    console.log("MEETING RANGE:", { start: startTimestamp.toDate(), end: endTimestamp.toDate() });
+    console.log("MATCHED USERS:", serviceUsers.length);
+    return mergeUserProfiles(serviceUsers);
   };
 
   /*
 
   |--------------------------------------------------------------------------
 
-  | APPLY / SAVE FILTERS
+  | PREPARE FILTER FOR SAVING
+
+  |--------------------------------------------------------------------------
+
+  */
+
+  const prepareFiltersForSave =
+
+    activeFilters => {
+
+      const filtersToSave =
+
+        {
+
+          ...activeFilters
+
+        };
+
+      if (
+
+        Array.isArray(
+
+          activeFilters
+
+            ?.meetingsDate
+
+        ) &&
+
+        activeFilters
+
+          .meetingsDate
+
+          .length === 2
+
+      ) {
+
+        const start =
+
+          toDayjs(
+
+            activeFilters
+
+              .meetingsDate[0]
+
+          );
+
+        const end =
+
+          toDayjs(
+
+            activeFilters
+
+              .meetingsDate[1]
+
+          );
+
+        if (
+
+          start &&
+
+          end
+
+        ) {
+
+          filtersToSave
+
+            .meetingsDate = [
+
+            Timestamp.fromDate(
+
+              start
+
+                .startOf(
+
+                  "day"
+
+                )
+
+                .toDate()
+
+            ),
+
+            Timestamp.fromDate(
+
+              end
+
+                .endOf(
+
+                  "day"
+
+                )
+
+                .toDate()
+
+            )
+
+          ];
+
+        } else {
+
+          filtersToSave
+
+            .meetingsDate =
+
+            null;
+
+        }
+
+      }
+
+      return filtersToSave;
+
+    };
+
+  /*
+
+  |--------------------------------------------------------------------------
+
+  | APPLY FILTER
 
   |--------------------------------------------------------------------------
 
@@ -670,157 +1208,59 @@ const UserDetails = () => {
 
     async () => {
 
+      showLoading();
+
       try {
 
         console.log(
 
-          "filters======>",
+          "UI FILTERS:",
 
           filters
 
         );
 
-        /*
+        const filtersToSave =
 
-         \* IMPORTANT:
+          prepareFiltersForSave(
 
-         \*
-
-         \* Do not modify filters directly.
-
-         \*
-
-         \* Make a copy for Firestore.
-
-         */
-
-        const filtersToSave = {
-
-          ...filters
-
-        };
-
-        /*
-
-         \* Convert dates only in saved copy.
-
-         */
-
-        if (
-
-          Array.isArray(
-
-            filters.meetingsDate
-
-          ) &&
-
-          filters.meetingsDate.length === 2
-
-        ) {
-
-          const start =
-
-            toDayjs(
-
-              filters.meetingsDate[0]
-
-            );
-
-          const end =
-
-            toDayjs(
-
-              filters.meetingsDate[1]
-
-            );
-
-          if (
-
-            start &&
-
-            end
-
-          ) {
-
-            filtersToSave.meetingsDate = [
-
-              Timestamp.fromDate(
-
-                start
-
-                  .startOf("day")
-
-                  .toDate()
-
-              ),
-
-              Timestamp.fromDate(
-
-                end
-
-                  .endOf("day")
-
-                  .toDate()
-
-              )
-
-            ];
-
-          } else {
-
-            filtersToSave.meetingsDate =
-
-              null;
-
-          }
-
-        }
-
-        console.log(
-
-          "filtersToSave======>",
-
-          filtersToSave
-
-        );
-
-        /*
-
-         \* Save filters
-
-         */
-
-        const resF =
-
-          await handleUpdate(
-
-            "SavedFilters",
-
-            "listofallmatchmentor",
-
-            filtersToSave
+            filters
 
           );
 
         console.log(
 
-          "resF======>",
+          "FILTERS TO SAVE:",
 
-          resF
+          filtersToSave
 
         );
 
+        await setDoc(
+        doc(db, "SavedFilters", "listofallmatchmentor"),
+        { ...filtersToSave, filtertype: "listofallmatchmentor" },
+        { merge: true }
+      );
+
         /*
 
-         \* Trigger reload.
+         * IMPORTANT:
 
-         \*
+         *
 
-         \* React state still contains Dayjs.
+         * Load with current UI
+
+         * filters, not filtersToSave.
 
          */
 
-        setFiltersReady(true);
+        await loadData(
+
+          filters,
+
+          false
+
+        );
 
       } catch (error) {
 
@@ -832,9 +1272,50 @@ const UserDetails = () => {
 
         );
 
+      } finally {
+
+        hideLoading();
+
       }
 
     };
+
+  /*
+
+  |--------------------------------------------------------------------------
+
+  | PROCESS USER MEETINGS
+
+  |--------------------------------------------------------------------------
+
+  */
+
+  const processUserWithoutNotes = user => {
+    const meetingsSource = user?.Match?.Platinum?.Meetings || {};
+    const meetings = Array.isArray(meetingsSource)
+      ? meetingsSource
+      : Object.keys(meetingsSource)
+          .filter(key => /^Meeting\d+$/.test(key))
+          .sort((a, b) => Number(a.replace("Meeting", "")) - Number(b.replace("Meeting", "")))
+          .map(key => meetingsSource[key]);
+
+    let totalMentorMeetings = 0;
+    let lastMeetingDate = null;
+    meetings.forEach(meeting => {
+      const meetingDate = getMeetingDateKey(meeting);
+      if (!meetingDate) return;
+      totalMentorMeetings++;
+      if (!lastMeetingDate || meetingDate > lastMeetingDate) lastMeetingDate = meetingDate;
+    });
+
+    return {
+      ...user,
+      NotesCount: {},
+      TotalNotes: 0,
+      TotalMentorMeetings: totalMentorMeetings,
+      LastMentorMeetingDate: lastMeetingDate
+    };
+  };
 
   /*
 
@@ -846,100 +1327,179 @@ const UserDetails = () => {
 
   */
 
-  const getMeetingDates = meeting => {
-    const relation = meeting?.MeetingWithPhysicianMentor?.Relation;
-    if (!relation) return [];
-
-    const meetingDate = toDayjs(relation?.MeetingDate);
-    const completionDate = toDayjs(relation?.CompletionDate);
-    return [meetingDate, completionDate].filter(Boolean);
-  };
-
-  const isMeetingInSelectedDateRange = (meeting, start, end) => {
-    const mentorMeeting = meeting?.MeetingWithPhysicianMentor;
-    if (mentorMeeting?.Value !== "Completed") return false;
-
-    return getMeetingDates(meeting).some(
-      date => !date.isBefore(start) && !date.isAfter(end)
-    );
-  };
-
-  const filterUsersByMeetingDate = users => {
-    if (!Array.isArray(filters?.meetingsDate) || filters.meetingsDate.length !== 2) {
-      return users;
-    }
-
-    const start = toDayjs(filters.meetingsDate[0])?.startOf("day");
-    const end = toDayjs(filters.meetingsDate[1])?.endOf("day");
-    if (!start || !end) return users;
-
-    return users.filter(user => {
-      const meetings = Array.isArray(user?.Match?.Platinum?.Meetings)
-        ? user.Match.Platinum.Meetings
-        : [];
-      return meetings.some(meeting => isMeetingInSelectedDateRange(meeting, start, end));
-    });
-  };
-
-  const processUserWithoutNotes = user => {
-    const meetings = Array.isArray(user?.Match?.Platinum?.Meetings)
-      ? user.Match.Platinum.Meetings
-      : [];
-
-    let totalMentorMeetings = 0;
-    let lastMeetingDate = null;
-
-    meetings.forEach(meeting => {
-      const mentorMeeting = meeting?.MeetingWithPhysicianMentor;
-      if (mentorMeeting?.Value !== "Completed") return;
-
-      totalMentorMeetings++;
-      getMeetingDates(meeting).forEach(date => {
-        if (!lastMeetingDate || date.isAfter(lastMeetingDate)) {
-          lastMeetingDate = date;
-        }
-      });
-    });
-
-    return {
-      ...user,
-      NotesCount: {},
-      TotalNotes: 0,
-      TotalMentorMeetings: totalMentorMeetings,
-      LastMentorMeetingDate: lastMeetingDate ? lastMeetingDate.toDate() : null
-    };
-  };
-
-  const loadData = async () => {
+  const loadData = async (activeFilters = {}, manageLoader = true) => {
+    if (manageLoader) showLoading();
     try {
-      showLoading();
-      const conditions = buildConditions();
-      console.log("conditions=======>", conditions);
-
-      const result = await SelectWithComplexConditions("UserServices", conditions, "Users");
-      if (result?.status !== "success") {
-        setData([]);
-        return;
-      }
-
-      const users = Array.isArray(result?.data) ? result.data : [];
-      console.log("UserServices loaded:", users.length);
-
-      // A user matches if EITHER MeetingDate OR CompletionDate of any
-      // completed physician-mentor meeting is inside the selected range.
-      const meetingFilteredUsers = filterUsersByMeetingDate(users);
-      const processedUsers = meetingFilteredUsers.map(processUserWithoutNotes);
-
-      console.log("Users after meeting date filter:", processedUsers.length);
-      setData(processedUsers);
-    } catch (err) {
-      console.error("loadData error:", err);
+      const users = await getUsersDirectlyFromFirestore(activeFilters);
+      console.log("TOTAL USERS LOADED:", users.length);
+      setData(users.map(processUserWithoutNotes));
+    } catch (error) {
+      console.error("loadData error:", error);
       setData([]);
     } finally {
-      setFiltersReady(false);
-      hideLoading();
+      if (manageLoader) hideLoading();
     }
   };
+
+  /*
+
+  |--------------------------------------------------------------------------
+
+  | CLEAR FILTER
+
+  |--------------------------------------------------------------------------
+
+  */
+
+  const clearFilter =
+
+    async key => {
+
+      const updatedFilters =
+
+        {
+
+          ...filters,
+
+          [key]: null
+
+        };
+
+      setFilters(
+
+        updatedFilters
+
+      );
+
+      showLoading();
+
+      try {
+
+        const filtersToSave =
+
+          prepareFiltersForSave(
+
+            updatedFilters
+
+          );
+
+        await setDoc(
+        doc(db, "SavedFilters", "listofallmatchmentor"),
+        { ...filtersToSave, filtertype: "listofallmatchmentor" },
+        { merge: true }
+      );
+
+        await loadData(
+
+          updatedFilters,
+
+          false
+
+        );
+
+      } catch (error) {
+
+        console.error(
+
+          "clearFilter error:",
+
+          error
+
+        );
+
+      } finally {
+
+        hideLoading();
+
+      }
+
+    };
+
+  /*
+
+  |--------------------------------------------------------------------------
+
+  | RESET SINGLE FILTER
+
+  |--------------------------------------------------------------------------
+
+  */
+
+  const resetSingleFilter =
+
+    async key => {
+
+      const updatedFilters =
+
+        {
+
+          ...filters,
+
+          [key]: null
+
+        };
+
+      if (
+
+        key === "status"
+
+      ) {
+
+        updatedFilters.status =
+
+          "";
+
+      }
+
+      setFilters(
+
+        updatedFilters
+
+      );
+
+      showLoading();
+
+      try {
+
+        const filtersToSave =
+
+          prepareFiltersForSave(
+
+            updatedFilters
+
+          );
+
+        await setDoc(
+        doc(db, "SavedFilters", "listofallmatchmentor"),
+        { ...filtersToSave, filtertype: "listofallmatchmentor" },
+        { merge: true }
+      );
+
+        await loadData(
+
+          updatedFilters,
+
+          false
+
+        );
+
+      } catch (error) {
+
+        console.error(
+
+          "resetSingleFilter error:",
+
+          error
+
+        );
+
+      } finally {
+
+        hideLoading();
+
+      }
+
+    };
 
   /*
 
@@ -989,268 +1549,6 @@ const UserDetails = () => {
 
   |--------------------------------------------------------------------------
 
-  | CLEAR SINGLE FILTER
-
-  |--------------------------------------------------------------------------
-
-  */
-
-  const resetSingleFilter =
-
-    async key => {
-
-      const updatedFilters = {
-
-        ...filters,
-
-        [key]: null
-
-      };
-
-      if (
-
-        key === "status"
-
-      ) {
-
-        updatedFilters.status =
-
-          "";
-
-      }
-
-      setFilters(
-
-        updatedFilters
-
-      );
-
-      /*
-
-       \* Convert dates if required before
-
-       \* saving.
-
-       */
-
-      const filtersToSave = {
-
-        ...updatedFilters
-
-      };
-
-      if (
-
-        Array.isArray(
-
-          filtersToSave.meetingsDate
-
-        ) &&
-
-        filtersToSave.meetingsDate
-
-          .length === 2
-
-      ) {
-
-        const start =
-
-          toDayjs(
-
-            filtersToSave
-
-              .meetingsDate[0]
-
-          );
-
-        const end =
-
-          toDayjs(
-
-            filtersToSave
-
-              .meetingsDate[1]
-
-          );
-
-        if (
-
-          start &&
-
-          end
-
-        ) {
-
-          filtersToSave.meetingsDate = [
-
-            Timestamp.fromDate(
-
-              start
-
-                .startOf("day")
-
-                .toDate()
-
-            ),
-
-            Timestamp.fromDate(
-
-              end
-
-                .endOf("day")
-
-                .toDate()
-
-            )
-
-          ];
-
-        }
-
-      }
-
-      await handleUpdate(
-
-        "SavedFilters",
-
-        "listofallmatchmentor",
-
-        filtersToSave
-
-      );
-
-    };
-
-  /*
-
-  |--------------------------------------------------------------------------
-
-  | CLEAR FILTER
-
-  |--------------------------------------------------------------------------
-
-  */
-
-  const clearFilter =
-
-    async key => {
-
-      const updatedFilters = {
-
-        ...filters,
-
-        [key]: null
-
-      };
-
-      setFilters(
-
-        updatedFilters
-
-      );
-
-      const filtersToSave = {
-
-        ...updatedFilters
-
-      };
-
-      /*
-
-       \* Convert any remaining meeting
-
-       \* dates before save.
-
-       */
-
-      if (
-
-        Array.isArray(
-
-          filtersToSave.meetingsDate
-
-        ) &&
-
-        filtersToSave.meetingsDate
-
-          .length === 2
-
-      ) {
-
-        const start =
-
-          toDayjs(
-
-            filtersToSave
-
-              .meetingsDate[0]
-
-          );
-
-        const end =
-
-          toDayjs(
-
-            filtersToSave
-
-              .meetingsDate[1]
-
-          );
-
-        if (
-
-          start &&
-
-          end
-
-        ) {
-
-          filtersToSave.meetingsDate = [
-
-            Timestamp.fromDate(
-
-              start
-
-                .startOf("day")
-
-                .toDate()
-
-            ),
-
-            Timestamp.fromDate(
-
-              end
-
-                .endOf("day")
-
-                .toDate()
-
-            )
-
-          ];
-
-        }
-
-      }
-
-      await handleUpdate(
-
-        "SavedFilters",
-
-        "listofallmatchmentor",
-
-        filtersToSave
-
-      );
-
-      setFiltersReady(true);
-
-    };
-
-  /*
-
-  |--------------------------------------------------------------------------
-
   | PAYMENT HELPERS
 
   |--------------------------------------------------------------------------
@@ -1277,23 +1575,33 @@ const UserDetails = () => {
 
         )
 
-          .filter(
+          .map(
 
-            p =>
+            p => {
 
-              p?.PaymentDate
+              const date =
 
-                ?.seconds
+                toDayjs(
+
+                  p?.PaymentDate
+
+                );
+
+              return date
+
+                ? date.valueOf()
+
+                : null;
+
+            }
 
           )
 
-          .map(
+          .filter(
 
-            p =>
+            value =>
 
-              p.PaymentDate
-
-                .seconds
+              value !== null
 
           );
 
@@ -1335,7 +1643,13 @@ const UserDetails = () => {
 
         ).reduce(
 
-          (sum, p) =>
+          (
+
+            sum,
+
+            payment
+
+          ) =>
 
             sum +
 
@@ -1343,7 +1657,7 @@ const UserDetails = () => {
 
               Number(
 
-                p?.Amount
+                payment?.Amount
 
               ) ||
 
@@ -1451,21 +1765,25 @@ const UserDetails = () => {
 
               aVal =
 
-                a?.Match
+                toDayjs(
 
-                  ?.EnrollmentDate
+                  a?.Match
 
-                  ?.seconds ||
+                    ?.EnrollmentDate
+
+                )?.valueOf() ||
 
                 0;
 
               bVal =
 
-                b?.Match
+                toDayjs(
 
-                  ?.EnrollmentDate
+                  b?.Match
 
-                  ?.seconds ||
+                    ?.EnrollmentDate
+
+                )?.valueOf() ||
 
                 0;
 
@@ -1555,13 +1873,17 @@ const UserDetails = () => {
 
               aVal =
 
-                a?.TotalMentorMeetings ||
+                a
+
+                  ?.TotalMentorMeetings ||
 
                 0;
 
               bVal =
 
-                b?.TotalMentorMeetings ||
+                b
+
+                  ?.TotalMentorMeetings ||
 
                 0;
 
@@ -1769,17 +2091,13 @@ const UserDetails = () => {
 
           ) {
 
-            return (
-
-              sortConfig.direction ===
+            return sortConfig.direction ===
 
               "ascending"
 
-                ? -1
+              ? -1
 
-                : 1
-
-            );
+              : 1;
 
           }
 
@@ -1789,17 +2107,13 @@ const UserDetails = () => {
 
           ) {
 
-            return (
-
-              sortConfig.direction ===
+            return sortConfig.direction ===
 
               "ascending"
 
-                ? 1
+              ? 1
 
-                : -1
-
-            );
+              : -1;
 
           }
 
@@ -1823,7 +2137,7 @@ const UserDetails = () => {
 
   |--------------------------------------------------------------------------
 
-  | FORMAT FIREBASE DATE
+  | FORMAT GENERAL DATE
 
   |--------------------------------------------------------------------------
 
@@ -1831,9 +2145,9 @@ const UserDetails = () => {
 
   const convertDate =
 
-    timestamp => {
+    value => {
 
-      if (!timestamp) {
+      if (!value) {
 
         return "";
 
@@ -1841,87 +2155,41 @@ const UserDetails = () => {
 
       /*
 
-       \* Numeric seconds
+       * getLatestPaymentDate
+
+       * returns milliseconds.
 
        */
 
       if (
 
-        typeof timestamp ===
+        typeof value ===
 
         "number"
 
       ) {
 
-        return dayjs(
+        const date =
 
-          timestamp * 1000
+          dayjs(value);
 
-        ).format(
+        return date.isValid()
 
-          "MM-DD-YYYY"
+          ? date.format(
 
-        );
+              "MM-DD-YYYY"
 
-      }
+            )
 
-      /*
-
-       \* Firebase Timestamp
-
-       */
-
-      if (
-
-        typeof timestamp?.toDate ===
-
-        "function"
-
-      ) {
-
-        return dayjs(
-
-          timestamp.toDate()
-
-        ).format(
-
-          "MM-DD-YYYY"
-
-        );
-
-      }
-
-      /*
-
-       \* Serialized timestamp
-
-       */
-
-      if (
-
-        timestamp?.seconds
-
-      ) {
-
-        return dayjs(
-
-          timestamp.seconds *
-
-            1000
-
-        ).format(
-
-          "MM-DD-YYYY"
-
-        );
+          : "";
 
       }
 
       const date =
 
-        dayjs(timestamp);
+        toDayjs(value);
 
-      return date.isValid()
+      return date
 
         ? date.format(
 
@@ -1930,6 +2198,76 @@ const UserDetails = () => {
           )
 
         : "";
+
+    };
+
+  /*
+
+  |--------------------------------------------------------------------------
+
+  | FORMAT MEETING DATE
+
+  |--------------------------------------------------------------------------
+
+  |
+
+  | LastMentorMeetingDate is already:
+
+  |
+
+  | YYYY-MM-DD
+
+  |
+
+  | Do NOT convert it to JS Date.
+
+  |
+
+  |--------------------------------------------------------------------------
+
+  */
+
+  const formatMeetingDate =
+
+    value => {
+
+      if (!value) {
+
+        return "-";
+
+      }
+
+      const parts =
+
+        String(value)
+
+          .split("-");
+
+      if (
+
+        parts.length !== 3
+
+      ) {
+
+        return value;
+
+      }
+
+      const [
+
+        year,
+
+        month,
+
+        day
+
+      ] = parts;
+
+      return (
+
+        `${month}/${day}/${year}`
+
+      );
 
     };
 
@@ -2021,29 +2359,33 @@ const UserDetails = () => {
 
               }
 
-              onChange={e =>
+              onChange={
 
-                setFilters(
+                e =>
 
-                  prev => ({
+                  setFilters(
 
-                    ...prev,
+                    prev => ({
 
-                    Plan:
+                      ...prev,
 
-                      e.target
+                      Plan:
 
-                        .value
+                        e.target
 
-                  })
+                          .value
 
-                )
+                    })
+
+                  )
 
               }
 
               SelectProps={{
 
-                multiple: true,
+                multiple:
+
+                  true,
 
                 renderValue:
 
@@ -2137,7 +2479,11 @@ const UserDetails = () => {
 
                   <MenuItem
 
-                    key={key}
+                    key={
+
+                      key
+
+                    }
 
                     value={
 
@@ -2311,7 +2657,9 @@ const UserDetails = () => {
 
               style={{
 
-                width: "100%"
+                width:
+
+                  "100%"
 
               }}
 
@@ -2361,25 +2709,13 @@ const UserDetails = () => {
 
                   }
 
-                  const start =
+                  /*
 
-                    dates[0]
+                   * Keep Dayjs in
 
-                      .startOf(
+                   * React state.
 
-                        "day"
-
-                      );
-
-                  const end =
-
-                    dates[1]
-
-                      .endOf(
-
-                        "day"
-
-                      );
+                   */
 
                   setFilters(
 
@@ -2387,25 +2723,27 @@ const UserDetails = () => {
 
                       ...prev,
 
-                      /*
+                      meetingsDate:
 
-                       \* IMPORTANT:
+                        [
 
-                       \*
+                          dates[0]
 
-                       \* Keep Dayjs in
+                            .startOf(
 
-                       \* React state.
+                              "day"
 
-                       */
+                            ),
 
-                      meetingsDate: [
+                          dates[1]
 
-                        start,
+                            .endOf(
 
-                        end
+                              "day"
 
-                      ]
+                            )
+
+                        ]
 
                     })
 
@@ -2423,7 +2761,9 @@ const UserDetails = () => {
 
             />
 
-            {filters.meetingsDate && (
+            {filters
+
+              ?.meetingsDate && (
 
               <Button
 
@@ -2827,7 +3167,31 @@ const UserDetails = () => {
 
               >
 
-                Latest Payment Date
+                Latest Payment Date{" "}
+
+                {sortConfig.key ===
+
+                  "PaymentDate" &&
+
+                  (
+
+                    sortConfig.direction ===
+
+                    "ascending"
+
+                      ? (
+
+                        <ArrowUpwardIcon />
+
+                      )
+
+                      : (
+
+                        <ArrowDownwardIcon />
+
+                      )
+
+                  )}
 
               </TableCell>
 
@@ -2965,7 +3329,31 @@ const UserDetails = () => {
 
               >
 
-                Total Payment Amount
+                Total Payment Amount{" "}
+
+                {sortConfig.key ===
+
+                  "PaymentAmount" &&
+
+                  (
+
+                    sortConfig.direction ===
+
+                    "ascending"
+
+                      ? (
+
+                        <ArrowUpwardIcon />
+
+                      )
+
+                      : (
+
+                        <ArrowDownwardIcon />
+
+                      )
+
+                  )}
 
               </TableCell>
 
@@ -3017,13 +3405,9 @@ const UserDetails = () => {
 
                     <a
 
-                      href={
+                      href={`/admin/userdetails/${user?.profile?.uid}`}
 
-                        `/admin/userdetails/${user?.profile?.uid}`
-
-                      }
-
-                      target="\_blank"
+                      target="_blank"
 
                       rel="noreferrer"
 
@@ -3205,7 +3589,9 @@ const UserDetails = () => {
 
                         "nowrap",
 
-                      width: "1%",
+                      width:
+
+                        "1%",
 
                       verticalAlign:
 
@@ -3319,7 +3705,9 @@ const UserDetails = () => {
 
                         "nowrap",
 
-                      width: "1%",
+                      width:
+
+                        "1%",
 
                       verticalAlign:
 
@@ -3329,7 +3717,9 @@ const UserDetails = () => {
 
                   >
 
-                    {user?.TotalMentorMeetings
+                    {user
+
+                      ?.TotalMentorMeetings
 
                       ? (
 
@@ -3365,19 +3755,13 @@ const UserDetails = () => {
 
                           <br />
 
-                          {user.LastMentorMeetingDate
+                          {formatMeetingDate(
 
-                            ? dayjs(
+                            user
 
-                                user.LastMentorMeetingDate
+                              .LastMentorMeetingDate
 
-                              ).format(
-
-                                "MM/DD/YYYY"
-
-                              )
-
-                            : "-"}
+                          )}
 
                         </>
 
