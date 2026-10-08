@@ -146,7 +146,7 @@
                 >
                   <option value="" disabled>Choose a hospital</option>
                   <option [value]="hospital.HId" *ngFor="let hospital of hospitalsList">
-                    {{ hospital.HName }} ({{ hospital.City }})
+                    {{ hospital.HName }} ({{ hospital.City }})({{hospital.Frieda}})
                   </option>
                 </select>
               </td>

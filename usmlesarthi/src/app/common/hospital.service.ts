@@ -35,7 +35,108 @@ private hospitalsRequests:
     const hospitals = await this.getHospitalsObjectByProgramRameez(id);
     return { hospitalsByProgram: hospitals, hospitals };
   }
+
+
 async getDisplayHospitalsByProgram(programId: any): Promise<any[]> {
+  try {
+    const pid = String(programId);
+
+    // Load HospitalProgramInfo and cached hospitals in parallel
+    const [programInfoSnapshot, hospitals] = await Promise.all([
+      this.firestore
+        .collection<any>('HospitalProgramInfo', ref =>
+          ref
+            .where('PId', '==', pid)
+            .where('DisplayProgram', '==', 1)
+        )
+        .get()
+        .toPromise(),
+
+      this.getAllHospitalsCached()
+    ]);
+
+    if (!programInfoSnapshot || programInfoSnapshot.empty) {
+      return [];
+    }
+
+    // Group HospitalProgramInfo records by HId
+    const programInfoByHId = new Map<string, any[]>();
+
+    programInfoSnapshot.docs.forEach(doc => {
+      const info = doc.data();
+      const hId = String(info.HId == null ? '' : info.HId).trim();
+
+      if (!hId) {
+        return;
+      }
+
+      const existing = programInfoByHId.get(hId) || [];
+
+      existing.push({
+        ...info,
+        HPInfoId: doc.id
+      });
+
+      programInfoByHId.set(hId, existing);
+    });
+
+    const matchedHospitals: any[] = [];
+
+    // Match Hospital.HId with HospitalProgramInfo.HId
+    Object.values(hospitals).forEach((hospital: any) => {
+      const hId = String(
+        hospital.HId == null ? '' : hospital.HId
+      ).trim();
+
+      const matchingInfos = programInfoByHId.get(hId);
+
+      if (!matchingInfos || !matchingInfos.length) {
+        return;
+      }
+
+      // Return one result for each matching program record.
+      // A hospital may have multiple program records.
+      matchingInfos.forEach(info => {
+        matchedHospitals.push({
+          ...hospital,
+
+          HId: hId,
+
+          // Attach Frieda from HospitalProgramInfo
+          Frieda: info.Frieda,
+
+          // Attach program-specific fields
+          PId: info.PId,
+          HPId: info.HPId,
+          HPInfoId: info.HPInfoId,
+
+          // Preserve full program information
+          ProgramInfo: info
+        });
+      });
+    });
+
+    // Sort by hospital name
+    matchedHospitals.sort((a: any, b: any) =>
+      String(a.HName || '').localeCompare(
+        String(b.HName || '')
+      )
+    );
+
+    return matchedHospitals;
+
+  } catch (err) {
+    console.error(
+      'Error getting display hospitals:',
+      err
+    );
+
+    return [];
+  }
+}
+
+
+/*async getDisplayHospitalsByProgram(programId: any): Promise<any[]> {
   try {
     const pid = String(programId);
 
@@ -83,7 +184,7 @@ async getDisplayHospitalsByProgram(programId: any): Promise<any[]> {
 
     return [];
   }
-}
+}*/
 private async getAllHospitalsCached(): Promise<any> {
 
   // Already loaded

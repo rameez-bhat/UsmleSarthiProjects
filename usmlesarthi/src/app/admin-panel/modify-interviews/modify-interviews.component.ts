@@ -1,6 +1,6 @@
 import {
   Component,
-  OnInit
+  OnInit,NgZone,ChangeDetectorRef
 } from '@angular/core';
 import {
   AdminServicesService
@@ -24,7 +24,7 @@ export class ModifyInterviewsComponent implements OnInit {
   interviewsList: any = []; 
   landing: string;
   programObject: any = {};
-  constructor(private dbService: AdminServicesService, private toastr: ToastrService, private interviewsApi: InterviewInsightsService, private programApi: ProgramService) {
+  constructor(private dbService: AdminServicesService, private toastr: ToastrService, private interviewsApi: InterviewInsightsService, private programApi: ProgramService,private ngZone: NgZone,private cdr: ChangeDetectorRef) {
     this.loading = false;
     this.landing = "users";
   }
@@ -37,6 +37,7 @@ export class ModifyInterviewsComponent implements OnInit {
     try {
       this.loading = true;
       this.users = await this.dbService.getSomeUsers(userVal);
+      console.log("this.users=====>",this.users)
       this.usersList = Object.values(this.users);
       for (let i in this.usersList) {
         this.usersList[i].newRole = "";
@@ -45,7 +46,36 @@ export class ModifyInterviewsComponent implements OnInit {
     } catch (err) {
       this.toastr.error("Error while fetching users list, please try again");
     }
+    this.ngZone.run(() => {
+      this.loading = false;
+      this.cdr.detectChanges();
+    });
   }
+  parseInterviewDate(value: any): Date | null {
+  if (!value) return null;
+
+  if (value instanceof Date) {
+    return isNaN(value.getTime()) ? null : value;
+  }
+
+  // Support Firestore Timestamp
+  if (typeof value.toDate === 'function') {
+    const date = value.toDate();
+    return isNaN(date.getTime()) ? null : date;
+  }
+
+  let dateString = String(value).trim();
+
+  // Fix malformed 5-digit year, e.g. 32026 -> 2026
+  dateString = dateString.replace(
+    /\b\d(?=\d{4}$)/,
+    ''
+  );
+
+  const date = new Date(dateString);
+
+  return isNaN(date.getTime()) ? null : date;
+}
   async fetchAll() {
     try {
       this.loading = true;
@@ -59,14 +89,16 @@ export class ModifyInterviewsComponent implements OnInit {
       this.toastr.error("Error while fetching users list, please try again");
     }
   }
-  async seeInterviews(uid){
+  /*async seeInterviews(uid){
     try{
       this.loading = true;
       this.landing = "list";
       this.interviews = await this.interviewsApi.getInterviewsByUId(uid);
       this.programObject= await this.programApi.getProgramObject();
       this.interviewsList = Object.values(this.interviews);
+      console.log("this.interviewsList====>",this.interviewsList)
       this.interviewsList.sort((a, b)=> new Date(a.Date).getTime() - new Date(b.Date).getTime());
+      console.log("this.interviewsList1====>",this.interviewsList)
       for(let i in this.interviewsList){
         let date = new Date(this.interviewsList[i].Date);
         this.interviewsList[i].newDate = { day: date.getDate(), month: date.getMonth()+1, year: date.getFullYear()};
@@ -82,7 +114,67 @@ export class ModifyInterviewsComponent implements OnInit {
       this.toastr.error("Error while fetching user's interviews, please try again");
     }
 
+  }*/
+ async seeInterviews(uid: any) {
+  try {
+    this.loading = true;
+    this.landing = "list";
+
+    this.interviews = await this.interviewsApi.getInterviewsByUId(uid);
+    this.programObject = await this.programApi.getProgramObject();
+
+    this.interviewsList = Object.values(this.interviews || {});
+
+    this.interviewsList = this.interviewsList.map((interview: any) => {
+      const date = this.parseInterviewDate(interview.Date);
+
+      return {
+        ...interview,
+        newDate: date
+          ? {
+              day: date.getDate(),
+              month: date.getMonth() + 1,
+              year: date.getFullYear()
+            }
+          : null
+      };
+    });
+
+    this.interviewsList.sort((a: any, b: any) => {
+      const dateA = this.parseInterviewDate(a.Date);
+      const dateB = this.parseInterviewDate(b.Date);
+
+      if (!dateA && !dateB) return 0;
+      if (!dateA) return 1;
+      if (!dateB) return -1;
+
+      return dateA.getTime() - dateB.getTime();
+    });
+
+    console.log("Sorted Interviews:", this.interviewsList);
+
+    if (this.interviewsList.length === 0) {
+      this.toastr.info(
+        "This user currently has not added any interviews yet"
+      );
+      this.landing = "users";
+    }
+
+  } catch (err) {
+    console.error(err);
+
+    this.toastr.error(
+      "Error while fetching user's interviews, please try again"
+    );
+
+  } finally {
+    this.loading = false;
   }
+  this.ngZone.run(() => {
+      this.loading = false;
+      this.cdr.detectChanges();
+    });
+}
   async saveNewDate(interview){
     try{
       await this.interviewsApi.saveNewDateInterview(interview);

@@ -220,12 +220,11 @@ const navigate = useNavigate();
         const userDataSelectedAgent = await FetchDataFromCollection("AgentUserConnection", 20, "uid", "==", id, 0);
         console.log("userDataSelectedAgent--->",userDataSelectedAgent)
         const resultServices = await FetchDataFromCollection("ReferralDiscounts",200,"service","!=","",0);
-         const userDataSelectedInterviews = await FetchDataFromCollection("InterviewsInfo", 20, "UId", "==", id, 0);
+         const userDataSelectedInterviews = await FetchDataFromCollection("Interviews", 20, "UId", "==", id, 0);
         if(userDataSelectedInterviews.length > 0)
         {
           interviewData=userDataSelectedInterviews[0];
         }
-        console.log("resultServices--->",resultServices)
         let ServicesList=[];
         if(userDataSelected[0])
         {
