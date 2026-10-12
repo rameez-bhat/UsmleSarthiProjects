@@ -368,7 +368,7 @@ const handleCancel = () => {
 
     <div className="RotationAddedPayment " >
        	<div className="TitleDiv">
-            <Typography  sx={{ flexGrow: 1, backgroundColor: '#b2ebf2', p: 1, borderRadius: 2 }}><b>Follow Up Section:</b>  </Typography>
+            <Typography  sx={{ flexGrow: 1, backgroundColor: '#b2ebf2', p: 1, borderRadius: 2 }}><b>Meeting Notes Section:</b>  </Typography>
         </div>
        <div className="VisaLetter">
   			<Grid container spacing={1} sx={{ p: 1 }}>
