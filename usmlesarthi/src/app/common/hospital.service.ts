@@ -37,11 +37,12 @@ private hospitalsRequests:
   }
 
 
+
 async getDisplayHospitalsByProgram(programId: any): Promise<any[]> {
   try {
     const pid = String(programId);
 
-    // Load HospitalProgramInfo and cached hospitals in parallel
+    // Load program information and hospitals in parallel
     const [programInfoSnapshot, hospitals] = await Promise.all([
       this.firestore
         .collection<any>('HospitalProgramInfo', ref =>
@@ -59,71 +60,83 @@ async getDisplayHospitalsByProgram(programId: any): Promise<any[]> {
       return [];
     }
 
-    // Group HospitalProgramInfo records by HId
-    const programInfoByHId = new Map<string, any[]>();
+    // Store only one program record per hospital HId
+    const programInfoByHId = new Map<string, any>();
 
     programInfoSnapshot.docs.forEach(doc => {
-      const info = doc.data();
-      const hId = String(info.HId == null ? '' : info.HId).trim();
+      const info: any = doc.data();
+
+      const hId = String(
+        info.HId == null ? '' : info.HId
+      ).trim();
 
       if (!hId) {
         return;
       }
 
-      const existing = programInfoByHId.get(hId) || [];
-
-      existing.push({
+      const newInfo = {
         ...info,
         HPInfoId: doc.id
-      });
+      };
 
-      programInfoByHId.set(hId, existing);
+      const existingInfo = programInfoByHId.get(hId);
+
+      // Keep the latest record if duplicates exist
+      if (!existingInfo) {
+        programInfoByHId.set(hId, newInfo);
+      } else {
+        const existingTime = Number(existingInfo.TimeStamp || 0);
+        const newTime = Number(info.TimeStamp || 0);
+
+        if (newTime > existingTime) {
+          programInfoByHId.set(hId, newInfo);
+        }
+      }
     });
 
-    const matchedHospitals: any[] = [];
+    // Use Map to guarantee unique hospitals
+    const uniqueHospitals = new Map<string, any>();
 
-    // Match Hospital.HId with HospitalProgramInfo.HId
     Object.values(hospitals).forEach((hospital: any) => {
       const hId = String(
         hospital.HId == null ? '' : hospital.HId
       ).trim();
 
-      const matchingInfos = programInfoByHId.get(hId);
-
-      if (!matchingInfos || !matchingInfos.length) {
+      if (!hId || uniqueHospitals.has(hId)) {
         return;
       }
 
-      // Return one result for each matching program record.
-      // A hospital may have multiple program records.
-      matchingInfos.forEach(info => {
-        matchedHospitals.push({
-          ...hospital,
+      const info = programInfoByHId.get(hId);
 
-          HId: hId,
+      if (!info) {
+        return;
+      }
 
-          // Attach Frieda from HospitalProgramInfo
-          Frieda: info.Frieda,
+      uniqueHospitals.set(hId, {
+        ...hospital,
 
-          // Attach program-specific fields
-          PId: info.PId,
-          HPId: info.HPId,
-          HPInfoId: info.HPInfoId,
+        HId: hId,
 
-          // Preserve full program information
-          ProgramInfo: info
-        });
+        // Frieda linked from HospitalProgramInfo
+        Frieda: info.Frieda,
+
+        // Program information
+        PId: info.PId,
+        HPId: info.HPId,
+        HPInfoId: info.HPInfoId,
+
+        // Complete linked program record
+        ProgramInfo: info
       });
     });
 
-    // Sort by hospital name
-    matchedHospitals.sort((a: any, b: any) =>
-      String(a.HName || '').localeCompare(
-        String(b.HName || '')
-      )
-    );
-
-    return matchedHospitals;
+    // Return unique hospitals sorted alphabetically
+    return Array.from(uniqueHospitals.values())
+      .sort((a: any, b: any) =>
+        String(a.HName || '').localeCompare(
+          String(b.HName || '')
+        )
+      );
 
   } catch (err) {
     console.error(
@@ -134,6 +147,7 @@ async getDisplayHospitalsByProgram(programId: any): Promise<any[]> {
     return [];
   }
 }
+
 
 
 /*async getDisplayHospitalsByProgram(programId: any): Promise<any[]> {
