@@ -221,9 +221,10 @@ const navigate = useNavigate();
         console.log("userDataSelectedAgent--->",userDataSelectedAgent)
         const resultServices = await FetchDataFromCollection("ReferralDiscounts",200,"service","!=","",0);
          const userDataSelectedInterviews = await FetchDataFromCollection("Interviews", 20, "UId", "==", id, 0);
+         console.log("userDataSelectedInterviews=====>",userDataSelectedInterviews)
         if(userDataSelectedInterviews.length > 0)
         {
-          interviewData=userDataSelectedInterviews[0];
+          interviewData=userDataSelectedInterviews;
         }
         let ServicesList=[];
         if(userDataSelected[0])
@@ -1798,7 +1799,7 @@ const handlePlanChange = (event) => {
                  <Grid item xs={6}>
                 <Box sx={{ display: 'flex', p: 0, borderRadius: 1 }}>
                   <Typography variant="subtitle1" color="textSecondary" sx={{ flexGrow: 1, backgroundColor: '#b2ebf2', p: 1, borderRadius: 1 }}>Number of Interviews:</Typography>
-                  <Typography variant="body1" sx={{ backgroundColor: '#b2f2d9', p: 1, borderRadius: 1 }}>{interviewData?.NumInterviews || 0}</Typography>
+                  <Typography variant="body1" sx={{ backgroundColor: '#b2f2d9', p: 1, borderRadius: 1 }}>{interviewData?.length || 0}</Typography>
                 </Box>
               </Grid>
                 <Grid item xs={2}>
