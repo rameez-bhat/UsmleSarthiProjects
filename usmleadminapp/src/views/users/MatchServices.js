@@ -468,23 +468,34 @@ const convertMatchArrayToObject = (matchData) => {
   return matchDatain;
 };
 
+const formatMeetingDate = (value) => {
+  if (value === null || value === undefined || value === '') {
+    return '';
+  }
 
+  let dateValue = value;
 
+  // Firestore Timestamp instance.
+  if (typeof value?.toDate === 'function') {
+    dateValue = value.toDate();
+  }
+  // Serialized Firestore Timestamp.
+  else if (
+    typeof value === 'object' &&
+    typeof value.seconds === 'number'
+  ) {
+    dateValue = new Date(
+      value.seconds * 1000 +
+      (value.nanoseconds ?? 0) / 1000000
+    );
+  }
 
+  const parsedDate = dayjs(dateValue);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+  return parsedDate.isValid()
+    ? parsedDate.format(dateFormat)
+    : 'Invalid date';
+};
 
 
 
@@ -653,136 +664,144 @@ const convertMatchArrayToObject = (matchData) => {
 </>
 )}
 
- {Array.isArray(UserServicesTaken?.Match?.Platinum?.Meetings)
-    ? UserServicesTaken.Match.Platinum.Meetings
-    : Object.values(UserServicesTaken?.Match?.Platinum?.Meetings || {}).map((value, index) => (
+{(
+  Array.isArray(UserServicesTaken?.Match?.Platinum?.Meetings)
+    ? UserServicesTaken.Match.Platinum.Meetings.map(
+        (value, index) => [`Meeting${index}`, value]
+      )
+    : Object.entries(
+        UserServicesTaken?.Match?.Platinum?.Meetings || {}
+      ).sort(([a], [b]) =>
+        a.localeCompare(b, undefined, { numeric: true })
+      )
+).map(([meetingKey, value], index) => {
+  const mentor = value?.MeetingWithPhysicianMentor;
+  const relation = mentor?.Relation;
+  const duration =
+    value?.MeetingWithPhysicianMentorDuration?.Value;
 
-<>
-  <Grid item xs={6}>
-    <Box sx={{ display: 'flex', p: 0, borderRadius: 1 }}>
-      <Typography
-        variant="body1"
-        sx={{ backgroundColor: '#b2f2d9', p: 1, borderRadius: 1 }}
-      >
-        Meeting With physician Mentor:
-      </Typography>
-      <Typography
-        variant="subtitle1"
-        color="textSecondary"
-        sx={{ flexGrow: 1, backgroundColor: '#b2ebf2', p: 1, borderRadius: 1 }}
-      >
-        {value?.MeetingWithPhysicianMentor?.Value}
-      </Typography>
-    </Box>
-  </Grid>
+  const fields = [
+    {
+      label: 'Meeting With Physician Mentor:',
+      content: mentor?.Value || 'Not specified',
+      show: true,
+    },
+    {
+      label: 'Meeting Date:',
+      content: formatMeetingDate(relation?.MeetingDate),
+      show:
+        relation?.MeetingDate != null &&
+        relation.MeetingDate !== '',
+    },
+    {
+      label: 'Completion Date:',
+      content: formatMeetingDate(relation?.CompletionDate),
+      show:
+        relation?.CompletionDate != null &&
+        relation.CompletionDate !== '',
+    },
+    {
+      label: 'Meeting Duration:',
+      content: `${duration} Minutes Approx`,
+      show: duration != null && duration !== '',
+    },
+    {
+      label: 'Topic Discussed:',
+      content: relation?.TopicDiscussed,
+      show: Boolean(relation?.TopicDiscussed),
+    },
+    {
+      label: 'Completion Note:',
+      content: relation?.CompletionNotes,
+      show: Boolean(relation?.CompletionNotes),
+    },
+  ];
 
- {value?.MeetingWithPhysicianMentor?.Relation && (
- <>
- {value?.MeetingWithPhysicianMentor?.Relation?.MeetingDate && (
-    <Grid item xs={6}>
-    <Box sx={{ display: 'flex', p: 0, borderRadius: 1 }}>
-      <Typography
-        variant="body1"
-        sx={{ backgroundColor: '#b2f2d9', p: 1, borderRadius: 1 }}
+  return (
+    <Grid item xs={12} key={meetingKey}>
+      <Box
+        component="section"
+        sx={{
+          mb: 2,
+          border: '1px solid #cbd5e1',
+          borderRadius: 2,
+          overflow: 'hidden',
+          backgroundColor: '#ffffff',
+        }}
       >
-        Meeting Date:
-      </Typography>
-      <Typography
-        variant="subtitle1"
-        color="textSecondary"
-        sx={{ flexGrow: 1, backgroundColor: '#b2ebf2', p: 1, borderRadius: 1 }}
-      >
-        {dayjs(value?.MeetingWithPhysicianMentor?.Relation?.MeetingDate).format(dateFormat)}
-      </Typography>
-    </Box>
-  </Grid>
+        <Box
+          sx={{
+            px: 2,
+            py: 1.5,
+            backgroundColor: '#e8f0fe',
+            borderBottom: '1px solid #cbd5e1',
+          }}
+        >
+          <Typography
+            component="h3"
+            variant="subtitle1"
+            sx={{ fontWeight: 700, color: '#1e3a5f' }}
+          >
+            Meeting {index + 1}
+          </Typography>
+        </Box>
 
-  )}
-  {value?.MeetingWithPhysicianMentor?.Relation?.CompletionDate && (
-    <Grid item xs={6}>
-    <Box sx={{ display: 'flex', p: 0, borderRadius: 1 }}>
-      <Typography
-        variant="body1"
-        sx={{ backgroundColor: '#b2f2d9', p: 1, borderRadius: 1 }}
-      >
-        Completion Date:
-      </Typography>
-      <Typography
-        variant="subtitle1"
-        color="textSecondary"
-        sx={{ flexGrow: 1, backgroundColor: '#b2ebf2', p: 1, borderRadius: 1 }}
-      >
-        {dayjs(value?.MeetingWithPhysicianMentor?.Relation?.CompletionDate).format(dateFormat)}
-      </Typography>
-    </Box>
-  </Grid>
+        <Grid container spacing={2} sx={{ p: 2 }}>
+          {fields
+            .filter((field) => field.show)
+            .map((field) => (
+              <Grid
+                item
+                xs={12}
+                md={6}
+                key={field.label}
+              >
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: {
+                      xs: 'column',
+                      sm: 'row',
+                    },
+                    height: '100%',
+                    borderRadius: 1,
+                    overflow: 'hidden',
+                  }}
+                >
+                  <Typography
+                    variant="body1"
+                    sx={{
+                      backgroundColor: '#b2f2d9',
+                      p: 1,
+                      fontWeight: 600,
+                      flexShrink: 0,
+                    }}
+                  >
+                    {field.label}
+                  </Typography>
 
-  )}
-  {value?.MeetingWithPhysicianMentorDuration?.Value && (
-    <Grid item xs={6}>
-    <Box sx={{ display: 'flex', p: 0, borderRadius: 1 }}>
-      <Typography
-        variant="body1"
-        sx={{ backgroundColor: '#b2f2d9', p: 1, borderRadius: 1 }}
-      >
-        Meeting Duration:
-      </Typography>
-      <Typography
-        variant="subtitle1"
-        color="textSecondary"
-        sx={{ flexGrow: 1, backgroundColor: '#b2ebf2', p: 1, borderRadius: 1 }}
-      >
-        {value?.MeetingWithPhysicianMentorDuration?.Value ? value?.MeetingWithPhysicianMentorDuration?.Value+" Minutes Approx":''}
-      </Typography>
-    </Box>
-  </Grid>
-
-  )}
-  {value?.MeetingWithPhysicianMentor?.Relation?.TopicDiscussed && (
-    <Grid item xs={6}>
-    <Box sx={{ display: 'flex', p: 0, borderRadius: 1 }}>
-      <Typography
-        variant="body1"
-        sx={{ backgroundColor: '#b2f2d9', p: 1, borderRadius: 1 }}
-      >
-        Topic Discussed:
-      </Typography>
-      <Typography
-        variant="subtitle1"
-        color="textSecondary"
-        sx={{ flexGrow: 1, backgroundColor: '#b2ebf2', p: 1, borderRadius: 1 }}
-      >
-        {value?.MeetingWithPhysicianMentor?.Relation?.TopicDiscussed}
-      </Typography>
-    </Box>
-  </Grid>
-
-  )}
-  {value?.MeetingWithPhysicianMentor?.Relation?.CompletionNotes && (
-    <Grid item xs={6}>
-    <Box sx={{ display: 'flex', p: 0, borderRadius: 1 }}>
-      <Typography
-        variant="body1"
-        sx={{ backgroundColor: '#b2f2d9', p: 1, borderRadius: 1 }}
-      >
-        Completion Note:
-      </Typography>
-      <Typography
-        variant="subtitle1"
-        color="textSecondary"
-        sx={{ flexGrow: 1, backgroundColor: '#b2ebf2', p: 1, borderRadius: 1 }}
-      >
-        {value?.MeetingWithPhysicianMentor?.Relation?.CompletionNotes}
-      </Typography>
-    </Box>
-  </Grid>
-
-  )}
- </>
-
- )}
-</>
-))}
+                  <Typography
+                    variant="subtitle1"
+                    color="textSecondary"
+                    sx={{
+                      flexGrow: 1,
+                      minWidth: 0,
+                      backgroundColor: '#b2ebf2',
+                      p: 1,
+                      whiteSpace: 'pre-wrap',
+                      overflowWrap: 'anywhere',
+                    }}
+                  >
+                    {field.content}
+                  </Typography>
+                </Box>
+              </Grid>
+            ))}
+        </Grid>
+      </Box>
+    </Grid>
+  );
+})}
 
 
 

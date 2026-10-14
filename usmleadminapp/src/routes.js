@@ -32,6 +32,8 @@ const UnVerifiedPrograms = React.lazy(() => import('./views/admin/UnVerifiedProg
 const ListOfAllMatchStudents = React.lazy(() => import('./views/admin/ListOfAllMatchStudents'))
 const ListOfAllMatchMentor = React.lazy(() => import('./views/admin/ListOfAllMatchMentor'))
 const RotationQueries = React.lazy(() => import('./views/admin/RotationQueries'))
+const Queries = React.lazy(() => import('./views/admin/Queries'))
+const AnsweredQueries = React.lazy(() => import('./views/admin/AnsweredQueries'))
 const AnsweredRotationQueries = React.lazy(() => import('./views/admin/AnsweredRotationQueries'))
 const MatchQueries = React.lazy(() => import('./views/admin/MatchQueries'))
 const AnsweredMatchQueries = React.lazy(() => import('./views/admin/AnsweredMatchQueries'))
@@ -141,12 +143,14 @@ const routes = {"public":[
     { path: '/admin/listofallservicestudents/', name: 'ListOfAllServiceStudents',exact: true, element: ListOfAllServiceStudents },
     { path: '/admin/crosssellfilter/', name: 'CrossSellFilter',exact: true, element: CrossSellFilter },
     { path: '/admin/leads', name: 'Leads',exact: true, element: Leads },
-    { path: '/admin/rotationqueries', name: 'RotationQueries',exact: true, element: RotationQueries },
-    { path: '/admin/answeredrotationqueries', name: 'AnsweredRotationQueries',exact: true, element: AnsweredRotationQueries },
-    { path: '/admin/matchqueries', name: 'MatchQueries',exact: true, element: MatchQueries },
-    { path: '/admin/answeredmatchqueries', name: 'AnsweredMatchQueries',exact: true, element: AnsweredMatchQueries },
-    { path: '/admin/researchqueries', name: 'ResearchQueries',exact: true, element: ResearchQueries },
-    { path: '/admin/answeredresearchqueries', name: 'AnsweredResearchQueries',exact: true, element: AnsweredResearchQueries },
+    //{ path: '/admin/rotationqueries', name: 'RotationQueries',exact: true, element: RotationQueries },
+    //{ path: '/admin/answeredrotationqueries', name: 'AnsweredRotationQueries',exact: true, element: AnsweredRotationQueries },
+    { path: '/admin/queries', name: 'Queries',exact: true, element: Queries },
+    { path: '/admin/answeredqueries', name: 'AnsweredQueries',exact: true, element: AnsweredQueries },
+    //{ path: '/admin/matchqueries', name: 'MatchQueries',exact: true, element: MatchQueries },
+    //{ path: '/admin/answeredmatchqueries', name: 'AnsweredMatchQueries',exact: true, element: AnsweredMatchQueries },
+    //{ path: '/admin/researchqueries', name: 'ResearchQueries',exact: true, element: ResearchQueries },
+    //{ path: '/admin/answeredresearchqueries', name: 'AnsweredResearchQueries',exact: true, element: AnsweredResearchQueries },
     { path: '/admin/reply/:id?', name: 'AnswerQuestions',exact: true, element: AnswerQuestions },
     { path: '/admin/enquirylist', name: 'EnquiresFilter',exact: true, element: EnquiresFilter },
     { path: '/admin/updateuserpassword', name: 'updateuserpassword',exact: true, element: UpdateUserPassword },

@@ -67,7 +67,7 @@ const getNavigation = (user) => {
         to: '/base',
         icon: <CIcon icon={cilBellExclamation} customClassName="nav-icon" />,
        items: [
-          {
+         /* {
             component: CNavItem,
             icon: <CIcon icon={cilCropRotate} customClassName="nav-icon" />,
             name: 'Answered Rotation Queries',
@@ -102,6 +102,18 @@ const getNavigation = (user) => {
              icon: <CIcon icon={cilCommand} customClassName="nav-icon" />,
             name: 'Research Queries',
             to: '/admin/researchqueries',
+          }*/
+          {
+            component: CNavItem,
+             icon: <CIcon icon={cilCommand} customClassName="nav-icon" />,
+            name: 'Anwsered Queries',
+            to: '/admin/answeredqueries',
+          },
+          {
+            component: CNavItem,
+             icon: <CIcon icon={cilCommand} customClassName="nav-icon" />,
+            name: 'Queries',
+            to: '/admin/queries',
           }
         ],
       },
