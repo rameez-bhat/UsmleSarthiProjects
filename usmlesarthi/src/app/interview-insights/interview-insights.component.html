@@ -54,27 +54,9 @@
           <span *ngIf="selectedUser.email"> — {{ selectedUser.email }}</span>
         </div>
       </div>
-
-      <div class="form-group">
-        <label for="numHos">
-          Please specify the number of hospitals from where you have received interview invitations:
-        </label>
-        <input
-          type="number"
-          class="form-control"
-          name="numHos"
-          id="numHos"
-          placeholder="Number of hospitals"
-          [(ngModel)]="numHos"
-          max="10"
-          min="1"
-          required
-        />
-      </div>
-
       <div class="form-group">
         <label for="Speciality">
-          Please select the specialty for which you have received the interviews:
+          Please select the specialty for which you have received the interviews (select one specialty at at time):
         </label>
         <select
           class="form-control"
@@ -89,6 +71,24 @@
           </option>
         </select>
       </div>
+      <div class="form-group">
+        <label for="numHos">
+          Please specify the number of hospitals in the above specialty where you have received interview invitations so far (note, you can add more later):
+        </label>
+        <input
+          type="number"
+          class="form-control"
+          name="numHos"
+          id="numHos"
+          placeholder="Number of hospitals"
+          [(ngModel)]="numHos"
+          max="10"
+          min="1"
+          required
+        />
+      </div>
+
+      
 
       <button
         class="btn btn-block btn-primary btn-outline-primary card-footer"
@@ -238,6 +238,7 @@
             <tr>
               <th>S.No.</th>
               <th>Hospital Name</th>
+              <th>Frieda Id</th>
               <th>Specialty</th>
               <th>Interview Date</th>
               <th>State</th>
@@ -252,6 +253,7 @@
             <tr *ngFor="let interview of interviewsList; index as i">
               <th scope="row">{{ i + 1 }}</th>
               <td>{{ interview.hospital?.HName }}</td>
+              <td>{{ interview?.Frieda}}</td>
               <td>{{ programObject[interview.PId]?.PName }}</td>
               <td>{{ interview.Date }}</td>
               <td>{{ interview.hospital?.State }}</td>

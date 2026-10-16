@@ -1703,7 +1703,7 @@ const handlePlanChange = (event) => {
 
     <div className="RotationAddedPayment MatchPayment" >
        	<div className="TitleDiv">
-            <Typography  sx={{ flexGrow: 1, backgroundColor: '#b2ebf2', p: 1, borderRadius: 2 }}><b>Select Service:</b>  </Typography>
+            <Typography  sx={{ flexGrow: 1, backgroundColor: '#b2ebf2', p: 1, borderRadius: 2 }}><b>Select Service Enrolled:</b>  </Typography>
         </div>
        <div className="VisaLetter">
   			<Grid container spacing={1} sx={{ p: 3 }}>
@@ -2290,37 +2290,7 @@ const handlePlanChange = (event) => {
                   {errors.PrimarySpecialtyApplyThisSeason && <span className="validationerror">{errors.PrimarySpecialtyApplyThisSeason}</span>}
                 </FormControl>
               </Grid>
-                   <Grid item xs={6}>
-              <div className="InputLabel">Primary specialty applying this season</div>
-                <FormControl fullWidth>
-                  <InputLabel ></InputLabel>
-                  <Select
-                  disabled={LockProfile}
-                  multiple
-                    value={toArray(StudentData?.PrimarySpecialtyApplyThisSeason)}
-                    label="Primary specialty applying this season"
-                    onChange={(event) => handleChangeStudentDetails(event,'PrimarySpecialtyApplyThisSeason')}
-                  >
-					<MenuItem  value=''>=Select=</MenuItem>
-                    <MenuItem  value='Internal Medicine'>Internal Medicine</MenuItem>
-                    <MenuItem  value='Family Medicine'>Family Medicine</MenuItem>
-                    <MenuItem  value='General Surgery'>General Surgery</MenuItem>
-                    <MenuItem  value='Child Neurology'>Child Neurology</MenuItem>
-                    <MenuItem  value='Obstetrics and Gynecology'>Obstetrics and Gynecology</MenuItem>
-                    <MenuItem  value='Transitional Year'>Transitional Year</MenuItem>
-                    <MenuItem  value='Radiology Diagnostic'>Radiology Diagnostic</MenuItem>
-                    <MenuItem  value='Internal Medicine/ Pediatrics'>Internal Medicine/ Pediatrics</MenuItem>
-                    <MenuItem  value='Neurology'>Neurology</MenuItem>
-                    <MenuItem  value='Pediatrics'>Pediatrics</MenuItem>
-                    <MenuItem  value='Psychiatry'>Psychiatry</MenuItem>
-                    <MenuItem  value='Anesthesiology'>Anesthesiology</MenuItem>
-                    <MenuItem  value='Pathology'>Pathology</MenuItem>
-                    <MenuItem  value='Prelim Program'>Prelim Program</MenuItem>
-                    <MenuItem  value='Other'>Other</MenuItem>
-                  </Select>
-                  {errors.PrimarySpecialtyApplyThisSeason && <span className="validationerror">{errors.PrimarySpecialtyApplyThisSeason}</span>}
-                </FormControl>
-              </Grid>
+                   
 				{toArray(StudentData?.PrimarySpecialtyApplyThisSeason).includes("Other") &&(
 			 <Grid item xs={6}>
             	<div className="InputLabel" >Speciality Others Explain</div>
@@ -2551,7 +2521,7 @@ const handlePlanChange = (event) => {
 )}
 
 
-<Grid item xs={6}>
+{/*<Grid item xs={6}>
       <div className="InputLabel">If You Are A Repeating Applicant, Mention Years(s) In Which You Have Applied, Speciality And Any Interview</div>
       <TextField
         variant="outlined"
@@ -2563,7 +2533,7 @@ const handlePlanChange = (event) => {
         sx={{ my: 0, "margin-bottom": "4px" }}
       />
       {errors.ProfileRepeating && <span className="validationerror">{errors.ProfileRepeating}</span>}
-    </Grid>
+    </Grid>*/}
 </Grid>
               </div>
   			</div>
@@ -2784,10 +2754,10 @@ const handlePlanChange = (event) => {
                     <MenuItem  value='Ongoing'>Ongoing</MenuItem>
                     <MenuItem  value='Completed'>Completed</MenuItem>
                   </Select>
-                  {errors.ResearchSpecility && <span className="validationerror">{errors.ResearchSpecility}</span>}
+                  {errors.Status && <span className="validationerror">{errors.Status}</span>}
                 </FormControl>
               </Grid>
-              <Grid item xs={6}>
+              /*<Grid item xs={6}>
               <div className="InputLabel">USCE Notes</div>
                 <FormControl fullWidth>
                   <InputLabel ></InputLabel>
@@ -2800,9 +2770,9 @@ const handlePlanChange = (event) => {
                     <MenuItem  value='Job'>Job</MenuItem>
                     <MenuItem  value='Exam prep'>Exam prep</MenuItem>
                   </Select>
-                  {errors.ResearchSpecility && <span className="validationerror">{errors.ResearchSpecility}</span>}
+                  {errors.uscenotesdrop && <span className="validationerror">{errors.uscenotesdrop}</span>}
                 </FormControl>
-              </Grid>
+              </Grid>*/
               <Grid item xs={6}>
             	<div className="InputLabel" >Notes</div>
                   <TextField

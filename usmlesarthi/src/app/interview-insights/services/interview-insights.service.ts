@@ -15,17 +15,19 @@ export class InterviewInsightsService {
     this.interviewUpdated = true;
    }
 
-  async addInterview(uid, hid, date, pid, signal){
+  async addInterview(uid, hid, date, pid, signal,frieda=""){
     let checkRef = await this.firestore.collection("Interviews", ref=> ref.where("UId", "==", uid).where("PId","==", pid).where("HId", '==', hid)).get().toPromise();
     if(!checkRef.empty)
     {
       this.toastr.info("You have already added the hosptial with the same specialty for the interview");
       return;
     }
+  
     let docsRef = await this.firestore.collection("Interviews").add({
       UId: uid,
       HId: hid,
-      PId: pid, 
+      PId: pid,
+      Frieda: frieda,
       Date: new Date(Date.UTC(date.year, date.month - 1, date.day)).getTime(),
       ProvidedInfo: "No",
       signal

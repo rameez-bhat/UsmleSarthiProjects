@@ -189,10 +189,10 @@ ReferralserviceOptions.push("Rotation Application");
   	console.log("id--->",id)
   	console.log("userDataSelected--->",userDataSelected)
         const userDataSelectedAgent = await FetchDataFromCollection("AgentUserConnection", 20, "uid", "==", id, 0);
-        const userDataSelectedInterviews = await FetchDataFromCollection("InterviewsInfo", 20, "UId", "==", id, 0);
+        const userDataSelectedInterviews = await FetchDataFromCollection("Interviews", 20, "UId", "==", id, 0);
         if(userDataSelectedInterviews.length > 0)
         {
-          interviewData=userDataSelectedInterviews[0];
+          interviewData=userDataSelectedInterviews;
         }
           if(typeof userDataSelected[0]?.ReferralObject!="undefined" && typeof userDataSelected[0]?.ReferralObject?.Settings!="undefined")
         	{
@@ -1532,7 +1532,7 @@ const handleSubmit = async () => {
                 <Grid item xs={6}>
                 <Box sx={{ display: 'flex', p: 0, borderRadius: 1 }}>
                   <Typography variant="subtitle1" color="textSecondary" sx={{ flexGrow: 1, backgroundColor: '#b2ebf2', p: 1, borderRadius: 1 }}>Number of Interviews:</Typography>
-                  <Typography variant="body1" sx={{ backgroundColor: '#b2f2d9', p: 1, borderRadius: 1 }}>{interviewData?.NumInterviews || 0}</Typography>
+                  <Typography variant="body1" sx={{ backgroundColor: '#b2f2d9', p: 1, borderRadius: 1 }}>{interviewData?.length || 0}</Typography>
                 </Box>
               </Grid>
             
@@ -2043,7 +2043,6 @@ const handleSubmit = async () => {
 			  <Typography  sx={{ flexGrow: 1, backgroundColor: '#b2ebf2', p: 1, borderRadius: 2 }}><b>USCE:</b>  </Typography>
 			</div>
 			{Object.entries(StudentData?.['USCEDATA'] || {}).map(([subKey, subValue]) => {
-console.log("subKey---->",subKey)
 subKey=subKey.replace("USCENO","");
 subKey=subKey.replace("-Infinity","");
 if(isNaN(subKey))

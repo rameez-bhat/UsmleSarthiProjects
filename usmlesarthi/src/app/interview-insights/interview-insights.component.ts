@@ -341,8 +341,17 @@ export class InterviewInsightsComponent implements OnInit {
           this.toastr.info('Please select the signaling response');
           return;
         }
-      }
+         // Get selected hospital details
+      const hospital = this.hospitalsList.find(
+        (h: any) => h.HId === hid
+      );
 
+      if (!hospital) {
+        this.toastr.error('Selected hospital not found');
+        return;
+      }
+      select.Frieda = hospital.Frieda ? hospital.Frieda: '';
+      }
       const allPosts: any[] = [];
 
       for (const select of this.selectValues) {
@@ -352,7 +361,8 @@ export class InterviewInsightsComponent implements OnInit {
             select.hid,
             select.date,
             this.speciality,
-            select.signal
+            select.signal,
+            select.Frieda
           )
         );
       }

@@ -24,10 +24,12 @@ import {
   or,
   where,
 } from 'firebase/firestore'
+import { useLoading } from '../../layout/LoadingContext';
 import { useNavigate } from 'react-router-dom'
 import { db } from '../../firebase' // <-- your firebase init exporting `db` (Firestore)
 
 export default function CoreUIFirestoreTable({ collectionName="MatchPlans", pageSize = 100 }) {
+const { showLoading, hideLoading, TooltipsPopovers,DeleteDocumentWhere } = useLoading();
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
