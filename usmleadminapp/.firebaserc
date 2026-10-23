@@ -1,5 +1,15 @@
 {
   "projects": {
     "default": "usmlesarthi-residency-match"
-  }
+  },
+  "targets": {
+    "usmlesarthi-residency-match": {
+      "hosting": {
+        "usmlesarthischeduling": [
+          "usmlesarthischeduling"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }

@@ -17,7 +17,7 @@ export class InterviewInsightsComponent implements OnInit {
   speciality: string = '';
   numHos: number = 0;
   loading: boolean = false;
-
+  ListofPIDs: any = [1,2,3,4,5,7]
   programObject: any = {};
   programList: any[] = [];
 
@@ -234,8 +234,16 @@ export class InterviewInsightsComponent implements OnInit {
           signal: ''
         });
       }
-
-      this.hospitalsList = await this.hospitalApi.getDisplayHospitalsByProgram(this.speciality);
+console.log("this.speciality====>",this.speciality)
+      if( this.ListofPIDs.includes(Number(this.speciality)))
+      {
+        this.hospitalsList = await this.hospitalApi.getDisplayHospitalsByProgram(this.speciality);
+      }
+      else
+      {
+        this.hospitalsList = await this.hospitalApi.getHospitalsByProgram(this.speciality);
+      }
+     
 
       if (!this.hospitalsList || this.hospitalsList.length === 0) {
         this.toastr.info('No hospitals are currently assigned to the selected specialty, please select another one');

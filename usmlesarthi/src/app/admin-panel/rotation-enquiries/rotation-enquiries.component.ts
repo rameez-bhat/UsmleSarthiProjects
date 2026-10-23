@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, NgZone, ChangeDetectorRef } from '@angular/core';
 import { ToastrService } from 'ngx-toastr';
 import { AdminServicesService } from '../services/admin-services.service';
 import * as XLSX from 'xlsx'; 
@@ -22,7 +22,8 @@ export class RotationEnquiriesComponent implements OnInit {
   reportDateFrom : any;
   reportDateTo: any;
 
-  constructor(private dbService: AdminServicesService, private toastr: ToastrService) { }
+  constructor(private dbService: AdminServicesService, private toastr: ToastrService,private ngZone: NgZone,
+      private cdr: ChangeDetectorRef) { }
 
   async ngOnInit() {
     await this.updateList ();
@@ -47,6 +48,10 @@ export class RotationEnquiriesComponent implements OnInit {
       console.log(err);
       this.toastr.error("Error while fetching queries. Please try again")
     }
+    this.ngZone.run(() => {
+        this.loading = false;
+        this.cdr.detectChanges();
+      });
   }
   async SearchByEnquiryNo (SelYear,SelEnqNo){
     try {
@@ -148,7 +153,77 @@ export class RotationEnquiriesComponent implements OnInit {
     return Object.keys(this.selected).length;
   }
 
-  async generateReport(status: string){
+async generateReport(status: string) {
+
+  if (this.loading) {
+    return;
+  }
+
+  if (!this.reportDateFrom || !this.reportDateTo) {
+    this.toastr.error("Please select From and To dates");
+    return;
+  }
+
+  try {
+    this.loading = true;
+
+    const from = this.reportDateFrom;
+    const to = this.reportDateTo;
+
+    const fromTimestamp = Date.UTC(
+      from.year,
+      from.month - 1,
+      from.day
+    );
+
+    // Exclusive upper bound: midnight after selected To date.
+    const toTimestamp = Date.UTC(
+      to.year,
+      to.month - 1,
+      to.day + 1
+    );
+
+    if (fromTimestamp >= toTimestamp) {
+      this.toastr.error("Invalid date range");
+      return;
+    }
+
+    console.time("Report fetch");
+
+    this.lastEnquiries =
+      await this.dbService.getRotationEnquiriesReport(
+        status,
+        fromTimestamp,
+        toTimestamp - 1
+      );
+
+    console.timeEnd("Report fetch");
+
+    if (!this.lastEnquiries.length) {
+      this.toastr.info("No enquiries found");
+      return;
+    }
+
+    const fileName =
+      `Rotation_Enquiries_${from.year}-${from.month}-${from.day}` +
+      `_to_${to.year}-${to.month}-${to.day}_${status}.xlsx`;
+
+    this.exportRotationsToExcel(fileName);
+
+  } catch (error) {
+    console.error("Report generation failed:", error);
+
+    this.toastr.error(
+      "Error generating report. Please try again."
+    );
+
+  } finally {
+    this.loading = false;
+    this.cdr.detectChanges();
+  }
+}
+
+  /*async generateReport(status: string){
     try{
       this.loading = true;
       const daysFrom = new Date(Date.UTC(this.reportDateFrom.year, this.reportDateFrom.month - 1, this.reportDateFrom.day));
@@ -168,24 +243,113 @@ export class RotationEnquiriesComponent implements OnInit {
       console.log(err.message);
       this.toastr.error("Error while fetching payments, please try again");
     }
-  }
+  }*/
+  async getRecentRotationQueries(
+  status: string,
+  fromDateTime: number,
+  toDateTime: number
+) {
+  return this.getRotationEnquiriesReport(
+    status,
+    fromDateTime,
+    toDateTime
+  );
+}
 
-  exportRotationsToExcel(fileName): void 
-    {
-      if(this.lastEnquiries.length==0){
-        this.toastr.info("You cannot export an empty table");
-        return;
-      }
-       /* table id is passed over here */   
-       let element = document.getElementById('Last-Queries-List'); 
-       const ws: XLSX.WorkSheet =XLSX.utils.table_to_sheet(element);
+async getRecentRotationQueriesForAllStatus(
+  fromDateTime: number,
+  toDateTime: number
+) {
+  return this.getRotationEnquiriesReport(
+    "all",
+    fromDateTime,
+    toDateTime
+  );
+}
 
-       /* generate workbook and add the worksheet */
-       const wb: XLSX.WorkBook = XLSX.utils.book_new();
-       XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+  
 
-       /* save to file */
-       XLSX.writeFile(wb, fileName);
+exportRotationsToExcel(fileName: string): void {
+  try {
+    if (!this.lastEnquiries || this.lastEnquiries.length === 0) {
+      this.toastr.info("You cannot export an empty table");
+      return;
     }
+
+    const exportData = this.lastEnquiries.map(
+      (enquiry: any, index: number) => ({
+        "S.No": index + 1,
+
+        "Enquiry No":
+          String(enquiry.inquiryYear || "") +
+          String(enquiry.inquiryID || ""),
+
+        "Date": enquiry.timestamp || "",
+
+        "Status": enquiry.status || "",
+
+        "User Name":
+          enquiry.user && enquiry.user.displayName
+            ? enquiry.user.displayName
+            : "",
+
+        "User Email":
+          enquiry.user && enquiry.user.email
+            ? enquiry.user.email
+            : "",
+
+        "Rotation":
+          enquiry.rotation && enquiry.rotation.title
+            ? enquiry.rotation.title
+            : "",
+
+        "Location Code":
+          enquiry.rotation && enquiry.rotation.location_code
+            ? enquiry.rotation.location_code
+            : "",
+
+        "Start Date": enquiry.startDate || "",
+
+        "Query": enquiry.query || "",
+
+        "Reply": enquiry.replyquery || ""
+      })
+    );
+
+    const ws: XLSX.WorkSheet = XLSX.utils.json_to_sheet(exportData);
+
+    ws["!cols"] = [
+      { wch: 8 },
+      { wch: 18 },
+      { wch: 15 },
+      { wch: 15 },
+      { wch: 25 },
+      { wch: 30 },
+      { wch: 35 },
+      { wch: 18 },
+      { wch: 15 },
+      { wch: 60 },
+      { wch: 60 }
+    ];
+
+    const wb: XLSX.WorkBook = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(
+      wb,
+      ws,
+      "Rotation Enquiries"
+    );
+
+    XLSX.writeFile(wb, fileName);
+
+    this.toastr.success("Report exported successfully");
+
+  } catch (error) {
+    console.error("Excel export error:", error);
+    this.toastr.error("Failed to export Excel report");
+  }
+}
+
+
 
 }

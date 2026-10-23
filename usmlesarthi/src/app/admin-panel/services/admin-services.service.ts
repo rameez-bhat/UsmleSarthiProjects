@@ -766,7 +766,79 @@ let refDate = new Date(
     );
     return data;
   }
-  async getRotationQueries(status = "") {
+    async getRotationQueries(status = "") {
+    const twoMonthsAgo = new Date();
+  twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
+
+  // Firestore timestamp is stored as milliseconds (int64)
+  const fromTimestamp = twoMonthsAgo.getTime();
+    let docsRef;
+     docsRef = await this.firestore
+    .collection("Enquiries", (ref) => {
+      let query: firebase.firestore.Query = ref.where(
+        "timestamp",
+        ">=",
+        fromTimestamp
+      );
+
+      if (status !== "") {
+        query = query.where("status", "==", status);
+      }
+
+      return query.orderBy("timestamp", "desc");
+    })
+    .get()
+    .toPromise();
+    let data = [];
+    let uids = {};
+    let rids = {};
+
+    for (let doc of docsRef.docs) {
+      let docData = doc.data();
+      docData.id = doc.id;
+      let utcDate = new Date(docData.startDate);
+      let timestamp = new Date(docData.timestamp);
+      docData.startDate = this.getUSDate(
+        new Date(
+          utcDate.getUTCFullYear(),
+          utcDate.getUTCMonth(),
+          utcDate.getUTCDate()
+        )
+      );
+      docData.timestamp = this.getUSDate(
+        new Date(
+          timestamp.getUTCFullYear(),
+          timestamp.getUTCMonth(),
+          timestamp.getUTCDate()
+        )
+      );
+      uids[docData.uid] = 1;
+      rids[docData.rotationId] = 1;
+      data.push(docData);
+    }
+
+    let result = await Promise.all([
+      this.getUsersByUIds(Object.keys(uids)),
+      this.getRotationsByRIds(Object.keys(rids)),
+    ]);
+    for (let docData of data) {
+      docData.user = result[0][docData.uid] ? result[0][docData.uid] : {};
+      docData.rotation = result[1][docData.rotationId]
+        ? result[1][docData.rotationId]
+        : {};
+    }
+    data.sort(
+      (a, b) =>
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
+    return data;
+  }
+  async getRotationQueriesBK(status = "") {
+    const twoMonthsAgo = new Date();
+  twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
+
+  // Firestore timestamp is stored as milliseconds (int64)
+  const fromTimestamp = twoMonthsAgo.getTime();
     let docsRef;
     if (status == "")
       docsRef = await this.firestore.collection("Enquiries").get().toPromise();
@@ -819,8 +891,135 @@ let refDate = new Date(
     );
     return data;
   }
+async getRotationEnquiriesReport(
+  status: string,
+  fromDateTime: number,
+  toDateTime: number
+): Promise<any[]> {
 
-  async getRecentRotationQueries(status = "", fromDateTIme, toDateTime) {
+  console.time("Enquiries report total");
+
+  const snapshot = await this.firestore
+    .collection("Enquiries", ref => {
+      let query: firebase.firestore.Query = ref
+        .where("timestamp", ">=", fromDateTime)
+        .where("timestamp", "<=", toDateTime);
+
+      if (status && status.toLowerCase() !== "all") {
+        query = query.where("status", "==", status);
+      }
+
+      return query.orderBy("timestamp", "desc");
+    })
+    .get()
+    .toPromise();
+
+  console.log("Enquiries fetched:", snapshot.size);
+
+  if (snapshot.empty) {
+    console.timeEnd("Enquiries report total");
+    return [];
+  }
+
+  const data: any[] = [];
+  const uids = new Set<string>();
+  const rids = new Set<string>();
+
+  snapshot.docs.forEach(doc => {
+    const enquiry: any = {
+      ...doc.data(),
+      id: doc.id
+    };
+
+    enquiry._timestampMs = Number(enquiry.timestamp);
+
+    if (enquiry.uid) {
+      uids.add(enquiry.uid);
+    }
+
+    if (enquiry.rotationId) {
+      rids.add(enquiry.rotationId);
+    }
+
+    data.push(enquiry);
+  });
+
+  console.time("Users and rotations");
+
+  const [users, rotations] = await Promise.all([
+    uids.size
+      ? this.getUsersByUIds(Array.from(uids))
+      : Promise.resolve({}),
+
+    rids.size
+      ? this.getRotationsByRIds(Array.from(rids))
+      : Promise.resolve({})
+  ]);
+
+  console.timeEnd("Users and rotations");
+
+  for (const enquiry of data) {
+
+    enquiry.user = users[enquiry.uid] || {};
+    enquiry.rotation = rotations[enquiry.rotationId] || {};
+
+    if (enquiry.startDate) {
+      const date = new Date(enquiry.startDate);
+
+      if (!isNaN(date.getTime())) {
+        enquiry.startDate = this.getUSDate(
+          new Date(
+            date.getUTCFullYear(),
+            date.getUTCMonth(),
+            date.getUTCDate()
+          )
+        );
+      }
+    }
+
+    if (Number.isFinite(enquiry._timestampMs)) {
+      const date = new Date(enquiry._timestampMs);
+
+      enquiry.timestamp = this.getUSDate(
+        new Date(
+          date.getUTCFullYear(),
+          date.getUTCMonth(),
+          date.getUTCDate()
+        )
+      );
+    }
+  }
+
+  // Firestore already orders by numeric timestamp descending.
+  console.timeEnd("Enquiries report total");
+
+  return data;
+}
+
+async getRecentRotationQueries(
+  status: string,
+  fromDateTime: number,
+  toDateTime: number
+) {
+  return this.getRotationEnquiriesReport(
+    status,
+    fromDateTime,
+    toDateTime
+  );
+}
+
+async getRecentRotationQueriesForAllStatus(
+  fromDateTime: number,
+  toDateTime: number
+) {
+  return this.getRotationEnquiriesReport(
+    "all",
+    fromDateTime,
+    toDateTime
+  );
+}
+
+  /*async getRecentRotationQueries(status = "", fromDateTIme, toDateTime) {
     let docsRef = await this.firestore
       .collection("Enquiries", (ref) =>
         ref
@@ -873,9 +1072,9 @@ let refDate = new Date(
         new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
     );
     return data;
-  }
+  }*/
 
-  async getRecentRotationQueriesForAllStatus(fromDateTIme, toDateTime) {
+  /*async getRecentRotationQueriesForAllStatus(fromDateTIme, toDateTime) {
     let docsRef = await this.firestore
       .collection("Enquiries", (ref) =>
         ref
@@ -927,7 +1126,7 @@ let refDate = new Date(
         new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
     );
     return data;
-  }
+  }*/
   async getRotationByWhere(FieldName,FieldCondition,FieldValue) {
     let docsRef;
     docsRef = await this.firestore
