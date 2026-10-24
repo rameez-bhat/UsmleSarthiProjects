@@ -249,7 +249,7 @@ async generateReport(status: string) {
   fromDateTime: number,
   toDateTime: number
 ) {
-  return this.getRotationEnquiriesReport(
+  return this.dbService.getRotationEnquiriesReport(
     status,
     fromDateTime,
     toDateTime
@@ -260,7 +260,7 @@ async getRecentRotationQueriesForAllStatus(
   fromDateTime: number,
   toDateTime: number
 ) {
-  return this.getRotationEnquiriesReport(
+  return this.dbService.getRotationEnquiriesReport(
     "all",
     fromDateTime,
     toDateTime
