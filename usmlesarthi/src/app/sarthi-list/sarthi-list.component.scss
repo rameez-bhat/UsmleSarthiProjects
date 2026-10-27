@@ -25,7 +25,42 @@
   padding: 1rem;
 }
 
+/* Allow selected medical school names to wrap */
+.medical-school-select .ng-value-container {
+  flex-wrap: wrap !important;
+}
 
+.medical-school-select .ng-value {
+  max-width: 100%;
+  white-space: normal !important;
+}
+
+.medical-school-select .ng-value-label {
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+  line-height: 1.4;
+}
+
+/* Allow dropdown option names to wrap */
+.medical-school-select .ng-dropdown-panel .ng-option {
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+  line-height: 1.5;
+  height: auto !important;
+}
+
+/* Allow the select control to grow vertically */
+.medical-school-select .ng-select-container {
+  height: auto !important;
+  min-height: 36px;
+}
+:host ::ng-deep .medical-school-select .ng-value-label,
+:host ::ng-deep .medical-school-select .ng-dropdown-panel .ng-option {
+  white-space: normal !important;
+  overflow-wrap: anywhere !important;
+  line-height: 1.5;
+}
 /* ---------------------------------------------------------
    Top navigation
    --------------------------------------------------------- */

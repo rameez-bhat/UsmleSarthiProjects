@@ -389,6 +389,12 @@ const getNavigation = (user) => {
             name: 'Add Physician',
             to: '/admin/adddoctor',
           },
+          {
+            component: CNavItem,
+            icon: <CIcon icon={cilMedicalCross} customClassName="nav-icon" />,
+            name: 'Physician Payment Report',
+            to: '/admin/physicianpaymentreport',
+          }
         ],
       },
       {
