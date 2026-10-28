@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { live, api } from "../firebase";
+import { live } from "../firebase";
+import { selectedUsersDirect } from "../user-search-direct";
 import { zones } from "../shared/utils";
 export function HostSlotEditor({
   hostUids,
@@ -13,9 +14,7 @@ export function HostSlotEditor({
   useEffect(() => {
     let active = true;
     if (live && hostUids.length) {
-      api("SelectedUsers", {
-        uids: hostUids,
-      })
+      selectedUsersDirect(hostUids)
         .then((data) => {
           if (active)
             setHosts(Object.fromEntries(data.users.map((h) => [h.uid, h])));

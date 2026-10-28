@@ -604,7 +604,61 @@ let refDate = new Date(
     }
     return interviewsData;
   }
+async deleteInterview(interview: any): Promise<void> {
+  if (!interview || !interview.id) {
+    throw new Error("Invalid interview ID");
+  }
 
+  const batch = this.firestore.firestore.batch();
+
+  // Main interview record
+  const interviewRef = this.firestore
+    .collection("Interviews")
+    .doc(interview.id)
+    .ref;
+
+  batch.delete(interviewRef);
+
+  // Corresponding interview information record
+  const infoId =
+    interview.data && interview.data.InterviewInfoId
+      ? interview.data.InterviewInfoId
+      : null;
+
+  if (infoId) {
+    const infoRef = this.firestore
+      .collection("InterviewsInfo")
+      .doc(infoId)
+      .ref;
+
+    batch.delete(infoRef);
+  } else {
+    // Find corresponding interview information if ID is unavailable
+    const infoSnapshot = await this.firestore
+      .collection("InterviewsInfo", (ref) =>
+        ref
+          .where("HId", "==", interview.HId)
+          .where("PId", "==", interview.PId)
+          .where("UId", "==", interview.UId)
+      )
+      .get()
+      .toPromise();
+
+    // Delete only if there is exactly one matching information record.
+    // Multiple matches require manual disambiguation.
+    if (infoSnapshot.docs.length > 1) {
+      throw new Error(
+        "Multiple interview information records found. Deletion cancelled."
+      );
+    }
+
+    if (infoSnapshot.docs.length === 1) {
+      batch.delete(infoSnapshot.docs[0].ref);
+    }
+  }
+
+  await batch.commit();
+}
   async getAllInterviewsData() {
     let refDate = new Date(Date.UTC(new Date().getFullYear()-1, 8, 15)).getTime();
     let collectionRef = await this.firestore
@@ -618,7 +672,12 @@ let refDate = new Date(
     let hids = {};
     for (let doc of collectionRef.docs) {
       let data = doc.data();
+      //let utcDate = new Date(data.Date);
+      //let data = doc.data();
+      // Preserve original Firestore date for accurate filtering
+      data.InterviewDateTimestamp = data.Date;
       let utcDate = new Date(data.Date);
+      
       data.Date = new Date(
         utcDate.getUTCFullYear(),
         utcDate.getUTCMonth(),

@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { live, api } from "../firebase";
+import { live } from "../firebase";
+import {
+  searchUsersDirect,
+  searchHostsDirect,
+  selectedUsersDirect,
+} from "../user-search-direct";
 export function UserPicker({ value, onChange, kind = "users" }) {
   const [search, setSearch] = useState("");
   const [users, setUsers] = useState([]);
   const [known, setKnown] = useState({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [next, setNext] = useState(null);
   const [selectedBusy, setSelectedBusy] = useState(false),
     [selectedError, setSelectedError] = useState(""),
     [selectedRetry, setSelectedRetry] = useState(0);
@@ -20,9 +24,7 @@ export function UserPicker({ value, onChange, kind = "users" }) {
       return;
     }
     setSelectedBusy(true);
-    api("SelectedUsers", {
-      uids: missing,
-    })
+    selectedUsersDirect(missing)
       .then((data) => {
         if (active)
           setKnown((old) => ({
@@ -43,7 +45,6 @@ export function UserPicker({ value, onChange, kind = "users" }) {
   useEffect(() => {
     let active = true;
     setUsers([]);
-    setNext(null);
     setError("");
     if (search.trim().length < 2) {
       setBusy(false);
@@ -59,13 +60,10 @@ export function UserPicker({ value, onChange, kind = "users" }) {
         let after = null,
           matches = [];
         {
-          const page = await api(
-            kind === "hosts" ? "SearchHosts" : "SearchUsers",
-            {
-              search,
-              after,
-            },
-          );
+          const page =
+            kind === "hosts"
+              ? await searchHostsDirect(search)
+              : await searchUsersDirect(search);
           if (!active) return;
           matches = [...matches, ...page.users];
           after = page.next;
@@ -74,7 +72,6 @@ export function UserPicker({ value, onChange, kind = "users" }) {
             ...old,
             ...Object.fromEntries(page.users.map((u) => [u.uid, u])),
           }));
-          setNext(after);
         }
       } catch (e) {
         if (active) setError(e.message);
@@ -181,8 +178,9 @@ export function UserPicker({ value, onChange, kind = "users" }) {
       {kind === "hosts" && (
         <p className="small-text muted">
           Search is case-sensitive. Only Admin, CustomerSupport, SuperAdmin,
-          Mentor and Journalist accounts with completed Meetly profiles appear.
-          Refine your prefix if a host does not appear.
+          Mentor and Journalist accounts appear. Hosts must complete their
+          Meetly profile before the meeting can be saved. Search uses a
+          case-sensitive prefix.
         </p>
       )}
       {kind === "users" && (
@@ -190,40 +188,6 @@ export function UserPicker({ value, onChange, kind = "users" }) {
           Search matches the beginning of a name or email and is case-sensitive.
           Up to 20 matches from each field.
         </p>
-      )}
-      {next && !busy && (
-        <button
-          type="button"
-          className="secondary"
-          onClick={async () => {
-            setBusy(true);
-            try {
-              const page = await api(
-                kind === "hosts" ? "SearchHosts" : "SearchUsers",
-                {
-                  search,
-                  after: next,
-                },
-              );
-              setUsers((old) => [
-                ...new Map(
-                  [...old, ...page.users].map((u) => [u.uid, u]),
-                ).values(),
-              ]);
-              setKnown((old) => ({
-                ...old,
-                ...Object.fromEntries(page.users.map((u) => [u.uid, u])),
-              }));
-              setNext(page.next);
-            } catch (e) {
-              setError(e.message);
-            } finally {
-              setBusy(false);
-            }
-          }}
-        >
-          Load more users
-        </button>
       )}
     </fieldset>
   );

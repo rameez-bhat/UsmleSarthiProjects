@@ -50,12 +50,14 @@ if (app && env.VITE_RECAPTCHA_ENTERPRISE_SITE_KEY)
 export const auth = app ? getAuth(app) : null;
 export const DATABASE_ID = "calendly";
 export const db = app ? getFirestore(app, DATABASE_ID) : null;
+export const identityDb = app ? getFirestore(app) : null;
 export const functions = app
   ? getFunctions(app, env.VITE_FUNCTIONS_REGION || "asia-south1")
   : null;
 if (app && env.VITE_USE_EMULATORS === "true") {
   connectAuthEmulator(auth, "http://localhost:9099");
   connectFirestoreEmulator(db, "localhost", 8080);
+  connectFirestoreEmulator(identityDb, "localhost", 8080);
   connectFunctionsEmulator(functions, "localhost", 5001);
 }
 const pendingReads = new Map();

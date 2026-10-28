@@ -3809,7 +3809,7 @@ let value;
   }
   else
   {
-  	 value=event.label;
+  	value=event.label;
   }
 if(typeof MatchValues['OnBoarding']=="undefined")
 {
@@ -3817,6 +3817,8 @@ if(typeof MatchValues['OnBoarding']=="undefined")
 }
 
       let newval=MatchValues['OnBoarding'];
+      console.log("hasrelation====>",hasrelation)
+      console.log("subname====>",subname)
       if(hasrelation && subname==="")
       {
       	if(typeof newval[name]==="undefined")
@@ -3837,7 +3839,7 @@ if(typeof MatchValues['OnBoarding']=="undefined")
       {
       	newval[name]=value;
       }
-
+console.log("newval====>",newval)
     	setMatchValues((prevValues) => ({
         ...prevValues,
         'OnBoarding': newval,

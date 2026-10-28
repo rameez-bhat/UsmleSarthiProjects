@@ -1,0 +1,8 @@
+{
+  "firestore": [
+    {
+      "database": "calendly",
+      "indexes": "firestore.indexes.json"
+    }
+  ]
+}

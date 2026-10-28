@@ -16,6 +16,11 @@ import {
 } from "lucide-react";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { live, auth, api } from "./firebase";
+import {
+  getSchedulerAccess,
+  getSchedulerWorkspace,
+  saveSchedulerProfile,
+} from "./firestore-scheduler";
 import { loadDemo, saveDemo, demoSlots } from "./demo";
 import "./styles.css";
 import { pagePaths, pageFromPath } from "./routes";
@@ -175,7 +180,7 @@ function WorkspaceApp() {
       return;
     const load = async () => {
       try {
-        const permission = access || (await api("Access", {}));
+        const permission = access || (await getSchedulerAccess());
         if (!active) return;
         setAccess(permission);
         if (!permission.canHost) {
@@ -185,7 +190,7 @@ function WorkspaceApp() {
           setConnections([]);
           return;
         }
-        const data = await api("Workspace", {});
+        const data = await getSchedulerWorkspace();
         if (!active) return;
         setProfile(data.profile);
         setEvents(data.events);
@@ -943,7 +948,7 @@ function WorkspaceApp() {
               }}
               save={(v) =>
                 act(async () => {
-                  await api("SaveProfile", v);
+                  await saveSchedulerProfile(v);
                   notify("Your workspace is ready.");
                 })
               }

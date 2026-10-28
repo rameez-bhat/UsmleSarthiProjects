@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { defaultEmails } from "../shared/utils";
 import { api } from "../firebase";
+import { saveSchedulerNotifications } from "../firestore-scheduler";
 import { EmailSettingsFields } from "../components/EmailSettingsFields";
 export function MeetingEmails({ booking }) {
   const [open, setOpen] = useState(false),
@@ -75,10 +76,7 @@ export function MeetingEmails({ booking }) {
                   setBusy(true);
                   setError("");
                   try {
-                    await api("SaveNotifications", {
-                      eventId: data.eventId,
-                      notifications: settings,
-                    });
+                    await saveSchedulerNotifications(data.eventId, settings);
                     setMessage("Email settings saved.");
                     await load();
                   } catch (e) {

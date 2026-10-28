@@ -7,6 +7,13 @@ vi.mock("./firebase", () => ({
     users: [{ uid: "pawan", name: "Pawan", email: "pawan@example.com" }],
   }),
 }));
+vi.mock("./user-search-direct", () => ({
+  selectedUsersDirect: vi
+    .fn()
+    .mockResolvedValue({
+      users: [{ uid: "pawan", name: "Pawan", email: "pawan@example.com" }],
+    }),
+}));
 import { HostSlotEditor } from "./components/HostSlotEditor";
 afterEach(cleanup);
 test("organizer and selected host are both available in the meeting time selector", async () => {

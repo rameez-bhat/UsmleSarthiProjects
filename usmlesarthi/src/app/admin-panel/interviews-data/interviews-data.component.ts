@@ -1,4 +1,4 @@
-import { Component, OnInit } from "@angular/core";
+import { Component, OnInit, NgZone, ChangeDetectorRef } from "@angular/core";
 import { ToastrService } from "ngx-toastr";
 import { AdminServicesService } from "../services/admin-services.service";
 import * as XLSX from "xlsx";
@@ -17,6 +17,9 @@ export class InterviewsDataComponent implements OnInit {
   loading: boolean = false;
   emails: any = [];
   selectedEmails = [];
+  interviewDateFrom: string = "";
+interviewDateTo: string = "";
+deletingInterviewId: string = "";
   customVisa: any = {
     "1": { Type: "GC/US citizen/H4 EAD", VId: "1" },
     "2": { Type: "Need H1", VId: "2" },
@@ -25,11 +28,61 @@ export class InterviewsDataComponent implements OnInit {
   };
   constructor(
     public adminService: AdminServicesService,
-    public toastr: ToastrService
+    public toastr: ToastrService,private ngZone: NgZone,
+      private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit() {}
+async deleteInterview(interview: any): Promise<void> {
+  if (!interview || !interview.id) {
+    this.toastr.error("Invalid interview selected");
+    return;
+  }
 
+  const confirmed = window.confirm(
+    "Are you sure you want to permanently delete this interview?\n\n" +
+    "Hospital: " + (interview.hospital ? interview.hospital.HName : "") +
+    "\nEmail: " + (interview.user ? interview.user.email : "") +
+    "\nInterview Date: " + interview.Date +
+    "\n\nThis action cannot be undone."
+  );
+
+  if (!confirmed) {
+    return;
+  }
+
+  this.deletingInterviewId = interview.id;
+
+  try {
+    await this.adminService.deleteInterview(interview);
+
+    this.ngZone.run(() => {
+      // Remove from original list
+      this.interviewsList = this.interviewsList.filter(
+        item => item.id !== interview.id
+      );
+
+      // Reapply existing email and date filters
+      this.filterInterviews();
+
+      this.deletingInterviewId = "";
+      this.cdr.detectChanges();
+    });
+
+    this.toastr.success("Interview deleted successfully");
+
+  } catch (error) {
+    console.error("Error deleting interview:", error);
+
+    this.toastr.error(
+      error && error.message
+        ? error.message
+        : "Unable to delete interview"
+    );
+
+    this.deletingInterviewId = "";
+  }
+}
   async fetchInterviews() {
     try {
       this.loading = true;
@@ -39,6 +92,7 @@ export class InterviewsDataComponent implements OnInit {
         this.adminService.getVisaObject(),
         this.adminService.getAllInterviewsInfo(),
       ]);
+      console.log("here you are ")
       this.programObject = result[0];
       this.interviewsList = result[1];
       this.visaObject = result[2];
@@ -61,9 +115,13 @@ export class InterviewsDataComponent implements OnInit {
       console.log(err);
       this.toastr.error("Error while fetching interviews, please try again");
     }
+    this.ngZone.run(() => {
+        this.loading = false;
+        this.cdr.detectChanges();
+      });
   }
 
-  async filterInterviews() {
+  /*async filterInterviews() {
     this.filteredInterviewsList = this.interviewsList.filter((interview) => {
       let include = true;
       if (this.selectedEmails.length)
@@ -71,7 +129,72 @@ export class InterviewsDataComponent implements OnInit {
           include && this.selectedEmails.indexOf(interview.user.email) != -1;
       return include;
     });
+  }*/
+filterInterviews(): void {
+  const fromDate = this.interviewDateFrom
+    ? Date.parse(this.interviewDateFrom + "T00:00:00Z")
+    : null;
+
+  const toDateExclusive = this.interviewDateTo
+    ? Date.parse(this.interviewDateTo + "T00:00:00Z") + 86400000
+    : null;
+
+  if (
+    fromDate !== null &&
+    toDateExclusive !== null &&
+    fromDate >= toDateExclusive
+  ) {
+    this.toastr.warning("From Date cannot be after To Date");
+    return;
   }
+
+  this.filteredInterviewsList = this.interviewsList.filter(
+    (interview) => {
+
+      // Email filter
+      if (
+        this.selectedEmails.length &&
+        this.selectedEmails.indexOf(
+          interview.user ? interview.user.email : ""
+        ) === -1
+      ) {
+        return false;
+      }
+
+      // Interview date filter
+      if (fromDate !== null || toDateExclusive !== null) {
+        const interviewTimestamp =
+          interview.InterviewDateTimestamp;
+
+        if (interviewTimestamp == null) {
+          return false;
+        }
+
+        const interviewDate = Number(interviewTimestamp);
+
+        if (!isFinite(interviewDate)) {
+          return false;
+        }
+
+        if (
+          fromDate !== null &&
+          interviewDate < fromDate
+        ) {
+          return false;
+        }
+
+        if (
+          toDateExclusive !== null &&
+          interviewDate >= toDateExclusive
+        ) {
+          return false;
+        }
+      }
+
+      return true;
+    }
+  );
+}
 
   exportInterviewsToExcel(): void {
     if (this.interviewsList.length == 0) {

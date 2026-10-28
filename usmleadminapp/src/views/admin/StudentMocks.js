@@ -357,7 +357,7 @@ groupedOptionsT = [
 
       if (m.isTaken) {
         if (!m.takenDate) errs[`date_${i}`] = "Date required";
-        if (!m.mentorEmail) errs[`mentor_${i}`] = "Mentor required";
+        //if (!m.mentorEmail) errs[`mentor_${i}`] = "Mentor required";
         const isTeamMentor = teamEmails.includes(m.mentorEmail);
 		if ( isTeamMentor) 
 		{

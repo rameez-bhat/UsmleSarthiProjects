@@ -14,7 +14,7 @@ const OnBoardingHtml = ({ MatchValues, HandleOnBoardingChange, errors}) => (
                 <FormControl fullWidth>
                   <div>On Boarding Email Sent</div>
                   <Select
-                    value={MatchValues['OnBoarding']?.['OnBoardingEmailSent'] ?? 'no'}
+                    value={MatchValues['OnBoarding']?.['OnBoardingEmailSent']?.['Value'] ?? MatchValues['OnBoarding']?.['OnBoardingEmailSent'] ?? 'no'}
                     label="Orientation Meet With Pawan"
                     required
                     onChange={(event) => HandleOnBoardingChange(event,'OnBoardingEmailSent',true)}

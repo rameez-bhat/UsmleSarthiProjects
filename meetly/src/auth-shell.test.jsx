@@ -14,6 +14,21 @@ const state = vi.hoisted(() => ({
   auth: { currentUser: null },
 }));
 vi.mock("./firebase", () => ({ live: true, auth: state.auth, api: state.api }));
+vi.mock("./user-search-direct", () => ({
+  searchUsersDirect: (search) =>
+    state.api("SearchUsers", { search, after: null }),
+  searchHostsDirect: (search) =>
+    state.api("SearchHosts", { search, after: null }),
+  selectedUsersDirect: (uids) => state.api("SelectedUsers", { uids }),
+}));
+vi.mock("./firestore-scheduler", () => ({
+  getSchedulerAccess: () => state.api("Access", {}),
+  getSchedulerWorkspace: () => state.api("Workspace", {}),
+  saveSchedulerAvailability: (value) => state.api("SaveAvailability", value),
+  saveSchedulerProfile: (value) => state.api("SaveProfile", value),
+  saveSchedulerNotifications: (eventId, notifications) =>
+    state.api("SaveNotifications", { eventId, notifications }),
+}));
 vi.mock("firebase/auth", async (importOriginal) => {
   const original = await importOriginal();
   return {

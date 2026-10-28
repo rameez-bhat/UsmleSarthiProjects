@@ -1,7 +1,8 @@
 import React from "react";
 import { PageTitle } from "../components/PageTitle";
 import { ProfileForm } from "../components/ProfileForm";
-import { live, api } from "../firebase";
+import { live } from "../firebase";
+import { saveSchedulerProfile } from "../firestore-scheduler";
 import { AlertCircle } from "lucide-react";
 export function SettingsPage({
   act,
@@ -24,7 +25,7 @@ export function SettingsPage({
         notify={notify}
         save={(v) =>
           act(async () => {
-            if (live) await api("SaveProfile", v);
+            if (live) await saveSchedulerProfile(v);
             else
               setDemo((d) => ({
                 ...d,
