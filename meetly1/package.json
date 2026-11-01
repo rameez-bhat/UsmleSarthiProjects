@@ -1,0 +1,27 @@
+{
+  "name": "meetly-scheduler",
+  "version": "1.11.3",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "test": "npm --prefix functions test && vitest run",
+    "start": "vite --host 0.0.0.0"
+  },
+  "dependencies": {
+    "firebase": "^13.0.0",
+    "lucide-react": "^0.468.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.8",
+    "@vitejs/plugin-react": "^5.0.0",
+    "jsdom": "^30.1.2",
+    "vite": "^7.0.0",
+    "vitest": "^5.0.4"
+  }
+}

@@ -2832,3 +2832,128 @@ a.nav-item {
     min-height: 32px;
   }
 }
+
+.host-schedule-card {
+  border: 1px solid #d9e3ec;
+  border-radius: 16px;
+  padding: 20px;
+  background: #fff;
+  min-width: 0;
+}
+.host-schedule-card legend {
+  padding: 0 10px;
+  font-weight: 750;
+  color: #183c57;
+}
+.host-schedule-meta {
+  color: #596b79;
+  font-size: 0.9rem;
+  margin-top: 0;
+}
+.host-schedule-section {
+  padding: 16px;
+  border-radius: 12px;
+  background: #f4f7fb;
+  margin-bottom: 16px;
+  display: grid;
+  gap: 12px;
+}
+.host-schedule-card h4 {
+  margin: 0 0 10px;
+  font-size: 1rem;
+}
+.host-schedule-card input,
+.host-schedule-card select {
+  min-height: 44px;
+  width: 100%;
+  box-sizing: border-box;
+}
+.host-schedule-preview {
+  padding: 16px;
+  border: 1px solid #b7dacb;
+  background: #f2faf6;
+  border-radius: 12px;
+  margin: 16px 0;
+}
+.host-schedule-preview-day {
+  display: grid;
+  grid-template-columns: 135px 1fr;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid #dfeae4;
+}
+.host-schedule-preview-day > div {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+.host-schedule-preview-day span {
+  background: #fff;
+  border: 1px solid #cbded5;
+  padding: 5px 9px;
+  border-radius: 7px;
+  font-size: 0.88rem;
+  font-variant-numeric: tabular-nums;
+}
+.user-picker select[multiple] {
+  width: 100%;
+  min-height: 180px;
+  border: 1px solid #c7d5e0;
+  border-radius: 10px;
+  padding: 8px;
+}
+.user-picker select[multiple] option {
+  padding: 9px;
+}
+@media (max-width: 600px) {
+  .host-schedule-card {
+    padding: 12px;
+  }
+  .host-schedule-preview-day {
+    grid-template-columns: 1fr;
+  }
+  .host-schedule-section {
+    padding: 12px;
+  }
+}
+.saved-host-appointments {
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px solid #d9e3ec;
+  border-radius: 10px;
+}
+.saved-host-appointments li {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  padding: 9px 0;
+}
+.saved-host-appointments ul {
+  list-style: none;
+  padding: 0;
+}
+
+.managed-account-banner {
+  position: sticky;
+  top: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px;
+  background: #fff0b3;
+  color: #332600;
+  border-bottom: 1px solid #d6b44b;
+}
+.managed-account-banner button {
+  padding: 6px 12px;
+  border: 1px solid currentColor;
+  border-radius: 6px;
+  background: white;
+  color: inherit;
+  cursor: pointer;
+}

@@ -4,6 +4,7 @@ import {
   searchUsersDirect,
   searchHostsDirect,
   selectedUsersDirect,
+  initialHostsDirect,
 } from "../user-search-direct";
 export function UserPicker({ value, onChange, kind = "users" }) {
   const [search, setSearch] = useState("");
@@ -46,7 +47,7 @@ export function UserPicker({ value, onChange, kind = "users" }) {
     let active = true;
     setUsers([]);
     setError("");
-    if (search.trim().length < 2) {
+    if (search.trim().length < 2 && kind !== "hosts") {
       setBusy(false);
       return;
     }
@@ -62,7 +63,9 @@ export function UserPicker({ value, onChange, kind = "users" }) {
         {
           const page =
             kind === "hosts"
-              ? await searchHostsDirect(search)
+              ? await (search.trim().length < 2
+                  ? initialHostsDirect()
+                  : searchHostsDirect(search))
               : await searchUsersDirect(search);
           if (!active) return;
           matches = [...matches, ...page.users];
@@ -93,7 +96,7 @@ export function UserPicker({ value, onChange, kind = "users" }) {
       </legend>
       <p className="small-text muted">
         {kind === "hosts"
-          ? "Select up to 20 participating hosts. Meetly assigns one available host for each dated meeting."
+          ? "Select up to 20 participating hosts. SAMAY assigns one available host for each dated meeting."
           : "Selected users receive an invitation and must accept before becoming confirmed attendees. Up to 100 invitees."}
       </p>
       <label>
@@ -136,32 +139,81 @@ export function UserPicker({ value, onChange, kind = "users" }) {
           </button>
         </p>
       )}
-      <div className="user-results" aria-label="Registered users">
-        {users.map((u) => (
-          <label key={u.uid}>
-            <input
-              type="checkbox"
-              checked={value.includes(u.uid)}
-              disabled={
-                !value.includes(u.uid) &&
-                value.length >= (kind === "hosts" ? 20 : 100)
+      {kind === "hosts" ? (
+        <label>
+          Selected meeting hosts
+          <select
+            multiple
+            size={10}
+            value={value}
+            onChange={(e) => {
+              const next = [...e.target.selectedOptions].map(
+                (option) => option.value,
+              );
+              if (next.length > 20) {
+                setError("Select up to 20 hosts.");
+                return;
               }
-              onChange={(e) =>
-                onChange(
-                  e.target.checked
-                    ? [...value, u.uid]
-                    : value.filter((x) => x !== u.uid),
-                )
-              }
-            />
-            <span>
-              {u.name}
-              <small>{u.email}</small>
-              {kind === "hosts" && u.role && <small>{u.role}</small>}
-            </span>
-          </label>
-        ))}
-      </div>
+              onChange(next);
+            }}
+          >
+            {[
+              ...new Map(
+                [
+                  ...value.map((uid) => known[uid] || { uid, name: uid }),
+                  ...users,
+                ].map((user) => [user.uid, user]),
+              ).values(),
+            ].map((user) => (
+              <option key={user.uid} value={user.uid}>
+                {user.name} — {user.email || ""}
+                {user.role ? ` (${user.role})` : ""}
+              </option>
+            ))}
+          </select>
+          <span className="small-text muted">
+            Use Ctrl (Windows) or Command (Mac) to select multiple hosts. Search
+            above to find more hosts.
+          </span>
+        </label>
+      ) : (
+        <>
+          <details
+            className="user-results"
+            open={search.trim().length >= 2 || undefined}
+          >
+            <summary>
+              {kind === "hosts"
+                ? "Choose hosts (searchable)"
+                : "Choose registered users"}
+            </summary>
+            {users.map((u) => (
+              <label key={u.uid}>
+                <input
+                  type="checkbox"
+                  checked={value.includes(u.uid)}
+                  disabled={
+                    !value.includes(u.uid) &&
+                    value.length >= (kind === "hosts" ? 20 : 100)
+                  }
+                  onChange={(e) =>
+                    onChange(
+                      e.target.checked
+                        ? [...value, u.uid]
+                        : value.filter((x) => x !== u.uid),
+                    )
+                  }
+                />
+                <span>
+                  {u.name}
+                  <small>{u.email}</small>
+                  {kind === "hosts" && u.role && <small>{u.role}</small>}
+                </span>
+              </label>
+            ))}
+          </details>
+        </>
+      )}
       {busy && (
         <p role="status">
           {kind === "hosts" ? "Searching eligible hosts…" : "Searching users…"}
@@ -178,9 +230,9 @@ export function UserPicker({ value, onChange, kind = "users" }) {
       {kind === "hosts" && (
         <p className="small-text muted">
           Search is case-sensitive. Only Admin, CustomerSupport, SuperAdmin,
-          Mentor and Journalist accounts appear. Hosts must complete their
-          Meetly profile before the meeting can be saved. Search uses a
-          case-sensitive prefix.
+          Mentor and Journalist accounts appear. Hosts must complete their SAMAY
+          profile before the meeting can be saved. Search uses a case-sensitive
+          prefix.
         </p>
       )}
       {kind === "users" && (

@@ -139,61 +139,237 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let interview of filteredInterviewsList; index as i">
-              <th scope="row">{{ i + 1 }}</th>
-              <th scope="row">{{ interview.id }}</th>
-              <td>{{ interview.hospital.HName }}</td>
-              <td>{{ programObject[interview.PId].PName }}</td>
-              <td>{{ interview.Date }}</td>
-              <td>{{ interview.hospital.City }}</td>
-              <td>{{ interview.hospital.State }}</td>
-              <td>{{ interview.user.displayName }}</td>
-              <td>{{ interview.user.email }}</td>
-              <td>{{ interview.data.InterviewType }}</td>
-              <td>
-                {{
-                  interview.data.interviewPlatform === "Others"
-                    ? interview.data.otherPlatform
-                    : interview.data.interviewPlatform
-                }}
-              </td>
-              <td>{{ interview.data.NumInterviews }}</td>
-              <td>{{ interview.data.Duration }}</td>
-              <td>{{ interview.data.InterviewerDesignations }}</td>
-              <td>{{ interview.data.QuestionsToOther }}</td>
-              <td>{{ interview.data.PreInterview }}</td>
-              <td>{{ interview.data.PDPpt }}</td>
-              <td>{{ interview.data.PDPptDur }}</td>
-              <td>{{ interview.data.PDDiscussion }}</td>
-              <td>{{ interview.data.UniquePoints }}</td>
-              <td>{{ interview.data.teleRotations }}</td>
-              <td>{{ interview.data.suppEras }}</td>
-              <td>{{ interview.data.signalProgram }}</td>
-              <td>{{ interview.data.QuestionsInPD }}</td>
-              <td>{{ interview.data.FriendlyEnv }}</td>
-              <td>{{ interview.data.ResidentstSatisfac }}</td>
-              <td>{{ interview.data.SenJunHierarchy }}</td>
-              <td>{{ interview.data.IMGFriendly }}</td>
-              <td>{{ interview.data.ProgramHighRating }}</td>
-              <td>{{ interview.data.OverallExp }}</td>
-              <td>
-  <button
-    type="button"
-    class="btn btn-danger btn-lg text-white"
-    [disabled]="deletingInterviewId === interview.id"
-    (click)="deleteInterview(interview)"
-  >
-    <i class="ft-trash-2"></i>
+  <tr *ngFor="let interview of filteredInterviewsList; index as i">
 
-    {{
-      deletingInterviewId === interview.id
-        ? "Deleting..."
-        : "Delete"
-    }}
-  </button>
-</td>
-            </tr>
-          </tbody>
+    <ng-container
+      *ngIf="interview.InterviewDateTimestamp &&
+             interview.InterviewDateTimestamp >= 1767225600000;
+             else oldInterviewData">
+
+      <!-- NEW DATA: FROM 01/01/2026 -->
+
+      <th scope="row">{{ i + 1 }}</th>
+      <th scope="row">{{ interview.id }}</th>
+      <td>{{ interview.hospital.HName }}</td>
+      <td>{{ programObject[interview.PId].PName }}</td>
+      <td>{{ interview.Date }}</td>
+      <td>{{ interview.hospital.City }}</td>
+      <td>{{ interview.hospital.State }}</td>
+      <td>{{ interview.user.displayName }}</td>
+      <td>{{ interview.user.email }}</td>
+
+      <!-- Interview Type -->
+      <td>
+        {{
+          interview.data.interview_format === 'Other'
+            ? interview.data.interview_format_other
+            : interview.data.interview_format
+        }}
+      </td>
+
+      <!-- Interview Platform -->
+      <td>
+        {{
+          interview.data.virtual_platform === 'Other'
+            ? interview.data.virtual_platform_other
+            : interview.data.virtual_platform
+        }}
+      </td>
+
+      <!-- Number of Interviews -->
+      <td>
+        {{
+          interview.data.individual_interview_count_do_not_recall
+            ? 'Do not recall'
+            : interview.data.individual_interview_count
+        }}
+      </td>
+
+      <!-- Interview Duration -->
+      <td>
+        {{
+          interview.data.individual_interview_duration_do_not_recall
+            ? 'Do not recall'
+            : (
+                interview.data.individual_interview_duration_varied
+                  ? 'Varied'
+                  : interview.data.individual_interview_duration_minutes
+              )
+        }}
+      </td>
+
+      <!-- Interviewer Designations -->
+      <td>
+        {{ (interview.data.interviewer_roles || []).join(', ') }}
+        {{ interview.data.interviewer_role_other }}
+      </td>
+
+      <!-- Specific Questions Asked -->
+      <td>
+        <div *ngIf="interview.data.do_not_recall_questions">
+          Do not recall
+        </div>
+
+        <div
+          *ngFor="let question of (interview.data.questions_asked || [])"
+          class="mb-2"
+        >
+          <strong>{{ question.interviewer_role || 'Unknown' }}:</strong>
+          {{ question.question_text }}
+          <span *ngIf="question.category">
+            ({{ question.category }})
+          </span>
+        </div>
+      </td>
+
+      <!-- Pre Interview / Resident Social -->
+      <td>
+        {{ interview.data.resident_social }}
+        <span *ngIf="interview.data.other_day_activities &&
+                     interview.data.other_day_activities.length">
+          |
+          {{ interview.data.other_day_activities.join(', ') }}
+        </span>
+        {{ interview.data.other_day_activity_other }}
+      </td>
+
+      <!-- PD Presentation -->
+      <td>{{ interview.data.program_presentation }}</td>
+
+      <!-- PD Presentation Duration: Not in new form -->
+      <td></td>
+
+      <!-- Presentation Details -->
+      <td>{{ interview.data.presentation_details }}</td>
+
+      <!-- Unique Points -->
+      <td>{{ interview.data.distinctive_observations }}</td>
+
+      <!-- Telerotations: Not separately collected -->
+      <td></td>
+
+      <!-- Application Topics -->
+      <td>
+        {{ (interview.data.application_topics_discussed || []).join(', ') }}
+        {{ interview.data.application_topic_details }}
+      </td>
+
+      <!-- Program Signal -->
+      <td>
+        {{ interview.signal || interview.Signal || '' }}
+      </td>
+
+      <!-- Questions Asked by PD -->
+      <td>
+        <ng-container
+          *ngFor="let question of (interview.data.questions_asked || [])"
+        >
+          <div *ngIf="question.interviewer_role === 'PD'">
+            {{ question.question_text }}
+          </div>
+        </ng-container>
+      </td>
+
+      <!-- Friendly Environment: Not collected -->
+      <td></td>
+
+      <!-- Resident Interaction Rating -->
+      <td>{{ interview.data.resident_interaction_rating }}</td>
+
+      <!-- Senior Junior Hierarchy: Not collected -->
+      <td></td>
+
+      <!-- IMG Friendly: Not collected -->
+      <td></td>
+
+      <!-- Program High Rating: Not collected -->
+      <td></td>
+
+      <!-- Overall Experience -->
+      <td>{{ interview.data.overall_experience_rating }}</td>
+
+      <!-- Action -->
+      <td>
+        <button
+          type="button"
+          class="btn btn-danger btn-lg text-white"
+          [disabled]="deletingInterviewId === interview.id"
+          (click)="deleteInterview(interview)"
+        >
+          <i class="ft-trash-2"></i>
+          {{
+            deletingInterviewId === interview.id
+              ? 'Deleting...'
+              : 'Delete'
+          }}
+        </button>
+      </td>
+
+    </ng-container>
+
+    <!-- OLD DATA: BEFORE 01/01/2026 -->
+    <ng-template #oldInterviewData>
+
+      <th scope="row">{{ i + 1 }}</th>
+      <th scope="row">{{ interview.id }}</th>
+      <td>{{ interview.hospital.HName }}</td>
+      <td>{{ programObject[interview.PId].PName }}</td>
+      <td>{{ interview.Date }}</td>
+      <td>{{ interview.hospital.City }}</td>
+      <td>{{ interview.hospital.State }}</td>
+      <td>{{ interview.user.displayName }}</td>
+      <td>{{ interview.user.email }}</td>
+
+      <td>{{ interview.data.InterviewType }}</td>
+
+      <td>
+        {{
+          interview.data.interviewPlatform === 'Others'
+            ? interview.data.otherPlatform
+            : interview.data.interviewPlatform
+        }}
+      </td>
+
+      <td>{{ interview.data.NumInterviews }}</td>
+      <td>{{ interview.data.Duration }}</td>
+      <td>{{ interview.data.InterviewerDesignations }}</td>
+      <td>{{ interview.data.QuestionsToOther }}</td>
+      <td>{{ interview.data.PreInterview }}</td>
+      <td>{{ interview.data.PDPpt }}</td>
+      <td>{{ interview.data.PDPptDur }}</td>
+      <td>{{ interview.data.PDDiscussion }}</td>
+      <td>{{ interview.data.UniquePoints }}</td>
+      <td>{{ interview.data.teleRotations }}</td>
+      <td>{{ interview.data.suppEras }}</td>
+      <td>{{ interview.data.signalProgram }}</td>
+      <td>{{ interview.data.QuestionsInPD }}</td>
+      <td>{{ interview.data.FriendlyEnv }}</td>
+      <td>{{ interview.data.ResidentstSatisfac }}</td>
+      <td>{{ interview.data.SenJunHierarchy }}</td>
+      <td>{{ interview.data.IMGFriendly }}</td>
+      <td>{{ interview.data.ProgramHighRating }}</td>
+      <td>{{ interview.data.OverallExp }}</td>
+
+      <td>
+        <button
+          type="button"
+          class="btn btn-danger btn-lg text-white"
+          [disabled]="deletingInterviewId === interview.id"
+          (click)="deleteInterview(interview)"
+        >
+          <i class="ft-trash-2"></i>
+          {{
+            deletingInterviewId === interview.id
+              ? 'Deleting...'
+              : 'Delete'
+          }}
+        </button>
+      </td>
+
+    </ng-template>
+
+  </tr>
+</tbody>
         </table>
       </div>
     </div>

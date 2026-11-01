@@ -1,13 +1,15 @@
+import { HostScheduleOptions } from "./HostScheduleOptions";
 import React, { useState, useEffect } from "react";
 import { live } from "../firebase";
 import { selectedUsersDirect } from "../user-search-direct";
-import { zones } from "../shared/utils";
 export function HostSlotEditor({
   hostUids,
   value,
   onChange,
   timezone,
   organizer,
+  duration = 30,
+  onDraftChange,
 }) {
   const [hosts, setHosts] = useState({});
   const key = JSON.stringify(hostUids);
@@ -25,100 +27,57 @@ export function HostSlotEditor({
       active = false;
     };
   }, [key]);
-  const update = (index, field, content) =>
-    onChange(
-      value.map((slot, i) =>
-        i === index
-          ? {
-              ...slot,
-              [field]: content,
-            }
-          : slot,
-      ),
-    );
   return (
     <div className="host-slot-editor">
       <p>
-        Add a separate date-and-time entry for each host appointment. For
-        example, 25 October at 10:00 and 27 October at 14:30 are two independent
-        entries. Each entry uses its own host and time zone.
+        Choose dates and times in each host's schedule card. Save includes the
+        previewed appointments automatically.
       </p>
-      {value.map((slot, index) => (
-        <fieldset key={index}>
-          <legend>Date & time {index + 1}</legend>
-          <label>
-            Host
-            <select
-              required
-              value={slot.hostUid}
-              onChange={(e) => update(index, "hostUid", e.target.value)}
-            >
-              {hostUids.map((uid) => (
-                <option value={uid} key={uid}>
-                  {uid === organizer?.uid
-                    ? `${organizer.name || organizer.email || "Organizer"} (Organizer)`
-                    : hosts[uid]?.name || hosts[uid]?.email || "Loading host…"}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Date and time
-            <input
-              type="datetime-local"
-              required
-              step="60"
-              value={slot.date && slot.time ? `${slot.date}T${slot.time}` : ""}
-              onChange={(e) => {
-                const [date = "", time = ""] = e.target.value.split("T");
-                onChange(
-                  value.map((row, i) =>
-                    i === index ? { ...row, date, time } : row,
-                  ),
-                );
-              }}
-            />
-          </label>
-          <label>
-            Time zone
-            <select
-              value={slot.timezone || timezone || "UTC"}
-              onChange={(e) => update(index, "timezone", e.target.value)}
-            >
-              {[
-                ...new Set([timezone, slot.timezone, ...zones].filter(Boolean)),
-              ].map((zone) => (
-                <option key={zone}>{zone}</option>
-              ))}
-            </select>
-          </label>
-          <button
-            type="button"
-            className="danger-text"
-            onClick={() => onChange(value.filter((_, i) => i !== index))}
-          >
-            Remove date and time
-          </button>
-        </fieldset>
+      {hostUids.map((uid) => (
+        <HostScheduleOptions
+          key={uid}
+          uid={uid}
+          name={
+            uid === organizer?.uid
+              ? `${organizer.name || "Organizer"} (Organizer)`
+              : hosts[uid]?.name || hosts[uid]?.email || "Host"
+          }
+          timezone={timezone}
+          duration={duration}
+          value={value}
+          onDraftChange={onDraftChange}
+        />
       ))}
-      <button
-        type="button"
-        className="secondary"
-        disabled={!hostUids.length || value.length >= 100}
-        onClick={() =>
-          onChange([
-            ...value,
-            {
-              hostUid: value.at(-1)?.hostUid || hostUids[0],
-              date: "",
-              time: "09:00",
-              timezone: value.at(-1)?.timezone || timezone || "UTC",
-            },
-          ])
-        }
-      >
-        Add another date and time
-      </button>
+      {!!value.length && (
+        <details className="saved-host-appointments">
+          <summary>Existing saved appointments ({value.length})</summary>
+          <ul>
+            {value.map((slot, index) => (
+              <li key={`${slot.hostUid}_${slot.date}_${slot.time}_${index}`}>
+                <span>
+                  {slot.hostUid === organizer?.uid
+                    ? organizer.name || "Organizer"
+                    : hosts[slot.hostUid]?.name ||
+                      hosts[slot.hostUid]?.email ||
+                      "Host"}{" "}
+                  · {slot.date || "Incomplete date"} ·{" "}
+                  {slot.time || "Incomplete time"}
+                  {slot.endTime ? `–${slot.endTime}` : ""} ·{" "}
+                  {slot.timezone || timezone || "UTC"}
+                </span>
+                <button
+                  type="button"
+                  className="text-button"
+                  aria-label={`Remove saved appointment ${index + 1}`}
+                  onClick={() => onChange(value.filter((_, i) => i !== index))}
+                >
+                  Remove
+                </button>
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
     </div>
   );
 }

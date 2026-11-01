@@ -1,3 +1,8 @@
+import { issueManagedLogin } from "./managed-login.js";
+import {
+  googleConnectionError,
+  hostConnectionLabel,
+} from "./calendar-requirements.js";
 import { slotsForMonth } from "./month-availability.js";
 import {
   normalizeHostSlots,
@@ -41,6 +46,7 @@ import { applyEventPolicy, assertBookingAudience } from "./event-policy.js";
 import { schedulerOrigin } from "./oauth-config.js";
 import { accessForUid, requireHost, requireAdmin } from "./access.js";
 import { getApps, initializeApp } from "firebase-admin/app";
+import { getAuth as getAdminAuth } from "firebase-admin/auth";
 import { FieldValue, getFirestore } from "firebase-admin/firestore";
 import { DATABASE_ID, schedulerDatabase } from "./database.js";
 import { onCall, onRequest, HttpsError } from "firebase-functions/v2/https";
@@ -119,6 +125,16 @@ const safeId = (v) => {
 const wrap = (fn, withSecrets = false) =>
   onCall({ ...opts, ...(withSecrets ? { secrets } : {}) }, async (r) => {
     try {
+      if (r.auth?.token?.samayAdminActor) {
+        await collection("audit").add({
+          action: "managed-account-request",
+          actorUid: r.auth.token.samayAdminActor,
+          targetUid: r.auth.uid,
+          sessionId: r.auth.token.samayAdminSession,
+          operation: r.rawRequest?.path || "callable",
+          at: Date.now(),
+        });
+      }
       return await fn(r);
     } catch (e) {
       if (e instanceof HttpsError) throw e;
@@ -245,6 +261,17 @@ function eventInput(v, uid) {
   return e;
 }
 // No role claims supplied by the browser are accepted.
+export const schedulerAdminLogin = wrap(async (r) => {
+  const actorUid = verified(r);
+  return issueManagedLogin({
+    actorUid,
+    targetUid: safeId(r.data.uid),
+    managed: Boolean(r.auth.token.samayAdminActor),
+    requireAdmin,
+    auth: getAdminAuth(),
+    audit: collection("audit"),
+  });
+});
 export const schedulerAccess = wrap(async (r) => accessForUid(user(r)));
 export const schedulerWorkspace = wrap(async (r) => {
   const uid = await hostUser(r);
@@ -731,6 +758,41 @@ export const schedulerSaveEvent = slotWrap(async (r) => {
   ) {
     data.teamHostUids = participatingHosts(uid, data.teamHostUids);
   }
+  const googleHostIds = participatingHosts(uid, data.teamHostUids);
+  const identities = new Map(
+    (await selectedUsers(getFirestore(), googleHostIds)).users.map((person) => [
+      person.uid,
+      person,
+    ]),
+  );
+  const googleRequirements = await Promise.all(
+    googleHostIds.map(async (hostId) => {
+      const [profile, providers] = await Promise.all([
+        collection("hosts").doc(hostId).get(),
+        connections(hostId),
+      ]);
+      let identity = identities.get(hostId) || {};
+      if (
+        !identity.name &&
+        !identity.email &&
+        !profile.data()?.name &&
+        !profile.data()?.email
+      ) {
+        const roles = await getFirestore()
+          .collection("UsersRoles")
+          .where("uid", "==", hostId)
+          .limit(2)
+          .get();
+        if (roles.size === 1) identity = roles.docs[0].data();
+      }
+      return {
+        name: hostConnectionLabel(profile.data(), identity, hostId),
+        providers,
+      };
+    }),
+  );
+  const googleError = googleConnectionError(googleRequirements);
+  if (googleError) throw new HttpsError("failed-precondition", googleError);
   if (data.schedulingMode === "host-slots") {
     if (
       resolved.length ||
@@ -759,6 +821,60 @@ export const schedulerSaveEvent = slotWrap(async (r) => {
       profiles,
       data,
     );
+    const conflictChecks = await Promise.all(
+      data.teamHostUids.map(async (hostUid) => {
+        const slots = data.hostSlots.filter((slot) => slot.hostUid === hostUid);
+        if (!slots.length) return [];
+        const start =
+          Math.min(...slots.map((slot) => slot.startAt)) -
+          data.bufferBefore * 60000;
+        const end =
+          Math.max(...slots.map((slot) => slot.startAt)) +
+          (data.duration + data.bufferAfter) * 60000;
+        const [busy, saved] = await Promise.all([
+          busyForHost(hostUid, start, end),
+          collection("bookings")
+            .where("ownerId", "==", hostUid)
+            .where("startAt", ">=", start - 86400000)
+            .where("startAt", "<=", end + 86400000)
+            .get(),
+        ]);
+        const blocked = [
+          ...busy,
+          ...saved.docs
+            .filter((item) => item.data().status === "confirmed")
+            .map((item) => ({
+              start: item.data().lockStart,
+              end: item.data().lockEnd,
+            })),
+        ];
+        return slots
+          .filter((slot) =>
+            blocked.some((interval) =>
+              overlap(
+                {
+                  start: slot.startAt - data.bufferBefore * 60000,
+                  end:
+                    slot.startAt + (data.duration + data.bufferAfter) * 60000,
+                },
+                interval,
+              ),
+            ),
+          )
+          .map((slot) => ({
+            hostUid,
+            hostName: profiles.get(hostUid).name || "Host",
+            startAt: slot.startAt,
+          }));
+      }),
+    );
+    const conflicts = conflictChecks.flat();
+    if (conflicts.length)
+      throw new HttpsError(
+        "already-exists",
+        "Some selected hosts already have meetings at the chosen times.",
+        { conflicts },
+      );
   }
   if (!["named", "round-robin", "host-choice"].includes(data.assignmentMode))
     bad("Choose a supported host assignment.");
@@ -809,6 +925,28 @@ export const schedulerSaveEvent = slotWrap(async (r) => {
     end = start + data.duration * 60000,
     lockStart = start - data.bufferBefore * 60000,
     lockEnd = end + data.bufferAfter * 60000;
+  if (data.schedulingMode === "fixed" && !resolved.length) {
+    const busy = await busyForHost(uid, lockStart, lockEnd);
+    if (
+      busy.some((interval) =>
+        overlap({ start: lockStart, end: lockEnd }, interval),
+      )
+    ) {
+      throw new HttpsError(
+        "already-exists",
+        `${organizer.name || "Organizer"} already has a meeting at the chosen time.`,
+        {
+          conflicts: [
+            {
+              hostUid: uid,
+              hostName: organizer.name || "Organizer",
+              startAt: start,
+            },
+          ],
+        },
+      );
+    }
+  }
   const candidates = resolved.length
     ? await Promise.all(
         (data.assignmentMode === "round-robin" ? data.teamHostUids : [uid]).map(

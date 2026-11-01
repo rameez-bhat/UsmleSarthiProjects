@@ -1,6 +1,12 @@
 import { trackRequest } from "./request-activity";
 import { initializeApp } from "firebase/app";
-import { getAuth, connectAuthEmulator } from "firebase/auth";
+import {
+  getAuth,
+  initializeAuth,
+  browserSessionPersistence,
+  signInWithCustomToken,
+  connectAuthEmulator,
+} from "firebase/auth";
 import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
 import {
   getFunctions,
@@ -39,7 +45,14 @@ export const live = !!(
   config.appId &&
   config.authDomain
 );
-const app = live ? initializeApp(config) : null;
+export const managedAccount =
+  typeof window !== "undefined" &&
+  (new URLSearchParams(location.search).get("adminSession") === "1" ||
+    sessionStorage.getItem("samay.managed") === "true");
+if (managedAccount) sessionStorage.setItem("samay.managed", "true");
+const app = live
+  ? initializeApp(config, managedAccount ? "samay-managed" : "[DEFAULT]")
+  : null;
 if (app && env.VITE_RECAPTCHA_ENTERPRISE_SITE_KEY)
   initializeAppCheck(app, {
     provider: new ReCaptchaEnterpriseProvider(
@@ -47,7 +60,30 @@ if (app && env.VITE_RECAPTCHA_ENTERPRISE_SITE_KEY)
     ),
     isTokenAutoRefreshEnabled: true,
   });
-export const auth = app ? getAuth(app) : null;
+export const auth = app
+  ? managedAccount
+    ? initializeAuth(app, { persistence: browserSessionPersistence })
+    : getAuth(app)
+  : null;
+if (managedAccount && window.opener) {
+  window.addEventListener("message", async (event) => {
+    if (
+      event.origin !== location.origin ||
+      event.source !== window.opener ||
+      event.data?.type !== "samay-admin-token"
+    )
+      return;
+    try {
+      await signInWithCustomToken(auth, event.data.token);
+      sessionStorage.setItem("samay.managedName", event.data.name);
+      location.replace("/event-types");
+    } catch {
+      document.body.textContent =
+        "Unable to open this account. Close this tab and try again from Administration.";
+    }
+  });
+  window.opener.postMessage({ type: "samay-admin-ready" }, location.origin);
+}
 export const DATABASE_ID = "calendly";
 export const db = app ? getFirestore(app, DATABASE_ID) : null;
 export const identityDb = app ? getFirestore(app) : null;

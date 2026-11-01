@@ -92,7 +92,7 @@ async deleteInterview(interview: any): Promise<void> {
         this.adminService.getVisaObject(),
         this.adminService.getAllInterviewsInfo(),
       ]);
-      console.log("here you are ")
+      console.log("here you are ======>",result)
       this.programObject = result[0];
       this.interviewsList = result[1];
       this.visaObject = result[2];

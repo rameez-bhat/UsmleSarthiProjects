@@ -116,7 +116,7 @@ export function ManageBookingPage({
         </div>
       )}
       <button className="text-button" onClick={() => navigate("/")}>
-        Back to Meetly <ArrowRight size={16} />
+        Back to SAMAY <ArrowRight size={16} />
       </button>
     </div>
   );

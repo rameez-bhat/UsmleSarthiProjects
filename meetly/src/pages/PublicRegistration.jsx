@@ -7,7 +7,7 @@ export function PublicRegistration() {
     <>
       <header className="public-top">
         <a className="brand" href="/">
-          meetly.
+          SAMAY.
         </a>
       </header>
       <RegistrationPanel id={id} token={token} />

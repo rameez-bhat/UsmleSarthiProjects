@@ -15,7 +15,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { live, auth, api } from "./firebase";
+import { live, auth, api, managedAccount } from "./firebase";
 import {
   getSchedulerAccess,
   getSchedulerWorkspace,
@@ -34,7 +34,7 @@ const ManageBookingPage = loadPage(
   () => import("./pages/ManageBookingPage"),
   "ManageBookingPage",
 );
-const MeetlyRoom = loadPage(() => import("./pages/MeetlyRoom"), "MeetlyRoom");
+const SAMAYRoom = loadPage(() => import("./pages/MeetlyRoom"), "SAMAYRoom");
 const PublicRegistration = loadPage(
   () => import("./pages/PublicRegistration"),
   "PublicRegistration",
@@ -96,8 +96,33 @@ function loadPage(loader, name) {
 export function App() {
   return (
     <>
+      {managedAccount && (
+        <div className="managed-account-banner" role="status">
+          Managing account:{" "}
+          {auth?.currentUser?.email ||
+            sessionStorage.getItem("samay.managedName") ||
+            "Selected user"}
+          <button
+            type="button"
+            onClick={async () => {
+              await signOut(auth);
+              sessionStorage.removeItem("samay.managed");
+              sessionStorage.removeItem("samay.managedName");
+              window.close();
+              location.replace("/");
+            }}
+          >
+            Exit managed account
+          </button>
+        </div>
+      )}
       <RequestActivity />
-      {location.pathname.startsWith("/registration/") ? (
+      {managedAccount &&
+      new URLSearchParams(location.search).get("adminSession") === "1" ? (
+        <div className="auth-screen" role="status">
+          Opening selected account…
+        </div>
+      ) : location.pathname.startsWith("/registration/") ? (
         <PublicRegistration />
       ) : (
         <WorkspaceApp />
@@ -376,8 +401,21 @@ function WorkspaceApp() {
   };
   const saveEventValue = async (e) =>
     act(async () => {
-      if (live) await api("SaveEvent", e);
-      else
+      if (live) {
+        try {
+          await api("SaveEvent", e);
+        } catch (error) {
+          if (error.details?.conflicts?.length) {
+            setModal((old) => ({
+              ...old,
+              conflicts: error.details.conflicts,
+              event: e,
+            }));
+            return;
+          }
+          throw error;
+        }
+      } else
         setDemo((d) => ({
           ...d,
           events: d.events.some((x) => x.id === e.id)
@@ -486,7 +524,7 @@ function WorkspaceApp() {
     const body = [
       "BEGIN:VCALENDAR",
       "VERSION:2.0",
-      "PRODID:-//Meetly//Scheduling//EN",
+      "PRODID:-//SAMAY//Scheduling//EN",
       "BEGIN:VEVENT",
       `UID:${b.id}@meetly`,
       `DTSTAMP:${stamp(Date.now())}`,
@@ -623,7 +661,7 @@ function WorkspaceApp() {
       <span className="brand-mark">
         <CalendarDays size={23} />
       </span>
-      meetly<span className="brand-dot">.</span>
+      SAMAY<span className="brand-dot">.</span>
     </a>
   );
   if (
@@ -664,7 +702,7 @@ function WorkspaceApp() {
           {header}
           <span>
             {live
-              ? "Simple scheduling. Meetly."
+              ? "Simple scheduling. SAMAY."
               : "Interactive demo · bookings stay in this browser"}
           </span>
         </div>
@@ -702,7 +740,7 @@ function WorkspaceApp() {
           <Modal modal={modal} close={() => setModal(null)} loading={loading} />
         )}
         <footer className="public-footer">
-          Made for the moments that matter. <strong>meetly.</strong>
+          Made for the moments that matter. <strong>SAMAY.</strong>
         </footer>
       </>
     );
@@ -731,7 +769,7 @@ function WorkspaceApp() {
             Back to dashboard
           </a>
         </header>
-        <MeetlyRoom key={user?.uid} id={location.pathname.split("/")[2]} />
+        <SAMAYRoom key={user?.uid} id={location.pathname.split("/")[2]} />
       </div>
     );
   if (live && access && !access.canHost)
@@ -841,7 +879,7 @@ function WorkspaceApp() {
           )}
           <div className="version">
             <span className="status-dot" />
-            {live ? "Firebase connected" : "Demo workspace"}
+            {live ? "Live Workspace" : "Demo workspace"}
             <span>v1.11.3</span>
           </div>
         </div>
@@ -887,7 +925,7 @@ function WorkspaceApp() {
             ) : (
               <span className="connected-pill">
                 <span />
-                Firebase
+                
               </span>
             )}
             <button

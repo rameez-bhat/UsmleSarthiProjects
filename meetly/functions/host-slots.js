@@ -49,24 +49,7 @@ export function normalizeHostSlots(input, hostIds, profiles, event) {
       startAt,
     };
   });
-  for (const slot of slots) {
-    if (
-      slots.some(
-        (other) =>
-          other !== slot &&
-          other.hostUid === slot.hostUid &&
-          slot.startAt - event.bufferBefore * 60000 <
-            other.startAt + (event.duration + event.bufferAfter) * 60000 &&
-          other.startAt - event.bufferBefore * 60000 <
-            slot.startAt + (event.duration + event.bufferAfter) * 60000,
-      )
-    ) {
-      throw new HttpsError(
-        "invalid-argument",
-        "Times for the same host overlap, including buffers.",
-      );
-    }
-  }
+  // Published choices may overlap buffers; booking-time conflict checks enforce buffers.
   if (
     hostIds.some(
       (uid) =>

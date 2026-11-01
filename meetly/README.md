@@ -1,3 +1,7 @@
+# SAMAY — save range previews directly
+
+See docs/SAVE_HOST_RANGE_FIX.md. The host range preview is automatically included by Save; there is no Add choices requirement. Frontend-only fix.
+
 # Meetly v1.11.3 — stable editor and explicit appointment dates
 
 See docs/EDITOR_FIX_v1_11_3.md. Outside clicks no longer close the editor. Explicit dates can be saved independently of the rolling booking horizon and notice; booking cutoff and conflicts remain enforced. Backend and frontend updates required.

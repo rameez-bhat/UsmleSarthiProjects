@@ -22,6 +22,14 @@ import { CrystalButton } from '../../components/css/CustomStyles';
 import  '../../components/css/style.css';
 let LastDocVar=null;
 let AllServices=[];
+const UserTypeList = [
+  { value: "", label: "Select User Type" },
+  { value: "Admin", label: "Admin" },
+  { value: "Default", label: "Default" },
+  { value: "Silver", label: "Silver" },
+  { value: "Mentor", label: "Mentor" },
+  { value: "Journalist", label: "Journalist" }
+];
 const PaginatedTable = (ActualUser, AuthUser ) => {
 AuthUser=ActualUser.AuthUser;
 ActualUser=ActualUser.ActualUser;
@@ -37,6 +45,10 @@ const { LoggedInuser,setLoggedInuser } = useState(ActualUser);
   const [totalRows, setTotalRows] = useState(0);
   const [loading, setLoading] = useState(false);
   const [isLastPage, setIsLastPage] = useState(false);
+  const [roleDialogOpen, setRoleDialogOpen] = useState(false);
+const [selectedRoleUser, setSelectedRoleUser] = useState(null);
+const [newUserRole, setNewUserRole] = useState("");
+const [updatingRole, setUpdatingRole] = useState(false);
   const pageSize = 100; // Number of entries per page
 	const mainCollectionName = 'UsersRoles';
   const joinCollectionName = 'Users';
@@ -726,6 +738,82 @@ const adminOptions = await fetchAdminDataWithJoin(mainCollectionName,joinCollect
     // Implement filtering logic here
     // For simplicity, this example does not include filtering logic in Firestore
   };
+
+const handleOpenRoleDialog = (item) => {
+  setSelectedRoleUser(item);
+  setNewUserRole(item.Role || "Default");
+  setRoleDialogOpen(true);
+};
+
+const handleCloseRoleDialog = () => {
+  if (updatingRole) return;
+
+  setRoleDialogOpen(false);
+  setSelectedRoleUser(null);
+  setNewUserRole("");
+};
+
+const handleUpdateUserRole = async () => {
+  if (!selectedRoleUser || !selectedRoleUser.id) {
+    alert("Invalid user selected");
+    return;
+  }
+
+  const validRoles = UserTypeList
+    .filter(role => role.value !== "")
+    .map(role => role.value);
+
+  if (!validRoles.includes(newUserRole)) {
+    alert("Please select a valid user role");
+    return;
+  }
+
+  if (selectedRoleUser.Role === newUserRole) {
+    handleCloseRoleDialog();
+    return;
+  }
+
+  try {
+    setUpdatingRole(true);
+    showLoading();
+
+    // Update the existing UsersRoles document
+    await handleUpdate(
+      "UsersRoles",
+      selectedRoleUser.id,
+      {
+        Role: newUserRole,
+        updatedAt: new Date()
+      }
+    );
+
+    // Update local table without fetching again
+    setData(prev =>
+      prev.map(item =>
+        item.id === selectedRoleUser.id
+          ? {
+              ...item,
+              Role: newUserRole
+            }
+          : item
+      )
+    );
+
+    setRoleDialogOpen(false);
+    setSelectedRoleUser(null);
+    setNewUserRole("");
+
+    alert("User role updated successfully");
+
+  } catch (error) {
+    console.error("Error updating user role:", error);
+    alert("Failed to update user role");
+  } finally {
+    setUpdatingRole(false);
+    hideLoading();
+  }
+};
+
   const totalPages = Math.ceil(totalRows / pageSize);
 
   if (loadingAuth) return <p>Loading...</p>;
@@ -915,7 +1003,7 @@ const adminOptions = await fetchAdminDataWithJoin(mainCollectionName,joinCollect
                         fontWeight: 'bold',
                       }}>No</label>}
                  </TableCell>
-                 <TableCell>
+                { /*<TableCell>
   <Button
     size="small"
     color="error"
@@ -936,7 +1024,57 @@ const adminOptions = await fetchAdminDataWithJoin(mainCollectionName,joinCollect
       Remove Admin
     </Button>
   )}
+</TableCell>*/}
+
+<TableCell>
+  <Box
+    sx={{
+      display: "flex",
+      gap: 1,
+      flexWrap: "wrap",
+      alignItems: "center"
+    }}
+  >
+    {/* Delete User */}
+    <Button
+      size="small"
+      color="error"
+      variant="outlined"
+      onClick={() => handleDeleteUser(item)}
+    >
+      Delete
+    </Button>
+
+    {/* Update User Role */}
+    <Button
+      size="small"
+      color="primary"
+      variant="contained"
+      onClick={() => handleOpenRoleDialog(item)}
+      sx={{
+        color: "#fff",
+        "&:hover": {
+          color: "#fff"
+        }
+      }}
+    >
+      Update Role
+    </Button>
+
+    {/* Remove Admin */}
+    {item.Role === "Admin" && (
+      <Button
+        size="small"
+        color="warning"
+        variant="outlined"
+        onClick={() => handleRemoveAdmin(item)}
+      >
+        Remove Admin
+      </Button>
+    )}
+  </Box>
 </TableCell>
+
 
 
               </TableRow>
@@ -976,6 +1114,93 @@ const adminOptions = await fetchAdminDataWithJoin(mainCollectionName,joinCollect
           </Button>
         </DialogActions>
       </Dialog>
+
+<Dialog
+  open={roleDialogOpen}
+  onClose={handleCloseRoleDialog}
+  fullWidth
+  maxWidth="xs"
+>
+  <DialogTitle>
+    Update User Role
+  </DialogTitle>
+
+  <DialogContent>
+    <Box sx={{ mt: 1, mb: 2 }}>
+      <Typography variant="subtitle1" fontWeight="bold">
+        {selectedRoleUser?.displayName ||
+          selectedRoleUser?.joinData?.displayName ||
+          "User"}
+      </Typography>
+
+      <Typography variant="body2" color="text.secondary">
+        {selectedRoleUser?.email ||
+          selectedRoleUser?.joinData?.email ||
+          ""}
+      </Typography>
+
+      <Typography sx={{ mt: 2 }}>
+        Current Role:
+        <strong>
+          {" "}{selectedRoleUser?.Role || "Default"}
+        </strong>
+      </Typography>
+    </Box>
+
+    <FormControl fullWidth>
+      <InputLabel id="user-role-select-label">
+        Select User Type
+      </InputLabel>
+
+      <Select
+        labelId="user-role-select-label"
+        value={newUserRole}
+        label="Select User Type"
+        onChange={(event) =>
+          setNewUserRole(event.target.value)
+        }
+      >
+        {UserTypeList.map((role) => (
+          <MenuItem
+            key={role.value}
+            value={role.value}
+            disabled={role.value === ""}
+          >
+            {role.label}
+          </MenuItem>
+        ))}
+      </Select>
+    </FormControl>
+  </DialogContent>
+
+  <DialogActions sx={{ p: 2 }}>
+    <Button
+      onClick={handleCloseRoleDialog}
+      disabled={updatingRole}
+      variant="outlined"
+    >
+      Cancel
+    </Button>
+
+    <Button
+      onClick={handleUpdateUserRole}
+      disabled={
+        updatingRole ||
+        !newUserRole ||
+        newUserRole === selectedRoleUser?.Role
+      }
+      variant="contained"
+      color="primary"
+      sx={{
+        color: "#fff",
+        "&:hover": { color: "#fff" }
+      }}
+    >
+      {updatingRole ? "Updating..." : "Update Role"}
+    </Button>
+  </DialogActions>
+</Dialog>
+
       </TableContainer>
       {loading && <CircularProgress sx={{ mt: 2 }} />}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>

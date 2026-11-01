@@ -147,3 +147,27 @@ export async function selectedUsersDirect(input = []) {
     };
   });
 }
+
+export async function initialHostsDirect() {
+  const roles = await getDocs(
+    query(
+      collection(identityDb, "UsersRoles"),
+      where("Role", "in", [...HOST_ROLES]),
+      limit(10),
+    ),
+  );
+  const ids = [
+    ...new Set(roles.docs.map((item) => item.data().uid).filter(Boolean)),
+  ];
+  const result = await selectedUsersDirect(ids);
+  const roleMap = new Map(
+    roles.docs.map((item) => [item.data().uid, item.data().Role]),
+  );
+  return {
+    users: result.users.map((user) => ({
+      ...user,
+      role: roleMap.get(user.uid),
+    })),
+    next: null,
+  };
+}

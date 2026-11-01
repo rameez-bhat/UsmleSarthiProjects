@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import { expandTimeRanges } from "../time-ranges";
+import React, { useState, useEffect, useCallback } from "react";
 import { createUUID } from "../shared/utils";
 import { X, Plus, Check, ArrowRight } from "lucide-react";
 import { UserPicker } from "../components/UserPicker";
@@ -13,6 +14,11 @@ export function Modal({
   hostTimezone,
   organizer,
 }) {
+  const [hostDrafts, setHostDrafts] = useState({});
+  const updateHostDraft = useCallback(
+    (uid, draft) => setHostDrafts((old) => ({ ...old, [uid]: draft })),
+    [],
+  );
   const [saveRequestId] = useState(createUUID);
   const [event, setEvent] = useState(() =>
       !modal.event?.id && !modal.event?.participantUids?.length
@@ -27,6 +33,15 @@ export function Modal({
     ),
     [config, setConfig] = useState(""),
     [err, setErr] = useState("");
+  useEffect(() => {
+    if (event && !["google-meet", "zoom"].includes(event.location)) {
+      setEvent((old) => ({
+        ...old,
+        location: "google-meet",
+        locationValue: "",
+      }));
+    }
+  }, []);
   const teamHosts = [
     ...new Set(
       [organizer?.uid, ...(event?.teamHostUids || [])].filter(Boolean),
@@ -91,12 +106,103 @@ export function Modal({
             <form
               onSubmit={(e) => {
                 e.preventDefault();
+                let slots;
+                try {
+                  const drafts =
+                    event.schedulingMode === "host-slots"
+                      ? teamHosts.map((uid) => hostDrafts[uid]).filter(Boolean)
+                      : [];
+                  const invalid = drafts.find(
+                    (draft) => draft.dirty && draft.error,
+                  );
+                  if (invalid) throw new Error(invalid.error);
+                  slots = expandTimeRanges(
+                    [
+                      ...(event.hostSlots || []),
+                      ...drafts.flatMap((draft) => draft.slots),
+                    ],
+                    event.duration,
+                  );
+                  if (event.schedulingMode === "host-slots" && !slots.length)
+                    throw new Error(
+                      "Choose a date and time or range for at least one host before saving.",
+                    );
+                } catch (error) {
+                  setErr(error.message);
+                  return;
+                }
+                setErr("");
                 saveEvent({
                   ...event,
+                  hostSlots: slots,
                   id: event.id || saveRequestId,
                 });
               }}
             >
+              {err && <p role="alert">{err}</p>}
+              {!!modal.conflicts?.length && (
+                <section role="alert" className="info-banner">
+                  <p>
+                    These hosts already have meetings at the selected times:
+                  </p>
+                  <ul>
+                    {modal.conflicts.map((item) => (
+                      <li key={`${item.hostUid}_${item.startAt}`}>
+                        {item.hostName} —{" "}
+                        {new Date(item.startAt).toLocaleString(undefined, {
+                          timeZone: hostTimezone || "UTC",
+                        })}{" "}
+                        ({hostTimezone || "UTC"})
+                      </li>
+                    ))}
+                  </ul>
+                  <p>
+                    You can change the times, or remove these hosts’ times and
+                    save again.
+                  </p>
+                  <button
+                    type="button"
+                    className="secondary"
+                    onClick={() => {
+                      const excluded = new Set(
+                        modal.conflicts.map((item) => item.hostUid),
+                      );
+                      setHostDrafts((old) =>
+                        Object.fromEntries(
+                          Object.entries(old).filter(
+                            ([uid]) => !excluded.has(uid),
+                          ),
+                        ),
+                      );
+                      const slots = [
+                        ...(event.hostSlots || []),
+                        ...Object.values(hostDrafts).flatMap(
+                          (draft) => draft.slots,
+                        ),
+                      ].filter((slot) => !excluded.has(slot.hostUid));
+                      if (!slots.length) {
+                        setErr(
+                          "All host times conflict. Add another host or choose different times.",
+                        );
+                        return;
+                      }
+                      setEvent((old) => ({
+                        ...old,
+                        hostSlots: slots,
+                        teamHostUids: (old.teamHostUids || []).filter(
+                          (uid) => !excluded.has(uid),
+                        ),
+                      }));
+                      setErr(
+                        "Conflicting hosts’ times removed. Review the remaining times and click Save.",
+                      );
+                    }}
+                  >
+                    Remove conflicting hosts’ times
+                  </button>
+                </section>
+              )}
+
               <label>
                 Event name
                 <input
@@ -105,6 +211,17 @@ export function Modal({
                   value={event.title}
                   onChange={(e) => change("title", e.target.value)}
                   placeholder="A good conversation"
+                />
+              </label>
+              <label>
+                Duration (minutes)
+                <input
+                  type="number"
+                  min="15"
+                  max="240"
+                  required
+                  value={event.duration}
+                  onChange={(e) => change("duration", +e.target.value)}
                 />
               </label>
               {event.id && (
@@ -249,6 +366,8 @@ export function Modal({
                     rolling booking horizon.
                   </p>
                   <HostSlotEditor
+                    duration={event.duration}
+                    onDraftChange={updateHostDraft}
                     hostUids={teamHosts}
                     organizer={organizer}
                     value={event.hostSlots || []}
@@ -302,7 +421,7 @@ export function Modal({
                       />
                       <p className="small-text muted">
                         The organizer is included as a host alongside the
-                        selected team. Invite users above. Meetly assigns one
+                        selected team. Invite users above. SAMAY assigns one
                         available host using weekly hours, connected calendars,
                         booking limits and fair rotation.
                       </p>
@@ -367,17 +486,6 @@ export function Modal({
               </label>
               <div className="form-row">
                 <label>
-                  Duration (minutes)
-                  <input
-                    type="number"
-                    min="15"
-                    max="240"
-                    required
-                    value={event.duration}
-                    onChange={(e) => change("duration", +e.target.value)}
-                  />
-                </label>
-                <label>
                   Color
                   <input
                     type="color"
@@ -392,17 +500,8 @@ export function Modal({
                   value={event.location}
                   onChange={(e) => change("location", e.target.value)}
                 >
-                  <option value="custom">Custom meeting link</option>
-                  <option value="google-meet">
-                    Google Meet (automatic or paste a link)
-                  </option>
-                  <option value="zoom">Zoom (API or paste a link)</option>
-                  <option value="meetly">Meetly video room (Jitsi)</option>
-                  <option value="teams">
-                    Microsoft Teams (supported Outlook accounts)
-                  </option>
-                  <option value="phone">Phone call</option>
-                  <option value="in-person">In person</option>
+                  <option value="google-meet">Google Meet</option>
+                  <option value="zoom">Zoom</option>
                 </select>
               </label>
               {["custom", "phone", "in-person", "google-meet", "zoom"].includes(
@@ -431,7 +530,7 @@ export function Modal({
               )}
               {event.location === "meetly" && (
                 <p className="small-text muted">
-                  Video opens inside Meetly using your configured Jitsi server.
+                  Video opens inside SAMAY using your configured Jitsi server.
                   Registered attendees must accept their invitation before
                   joining. A separate video server/provider is required.
                 </p>

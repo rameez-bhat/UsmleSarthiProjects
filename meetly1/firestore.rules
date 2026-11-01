@@ -1,0 +1,8 @@
+rules_version = '2';
+service cloud.firestore {
+ match /databases/{database}/documents {
+  // Roles live in (default), which these rules cannot read across databases.
+  // All scheduler access uses callable functions that recheck the current role.
+  match /{document=**} { allow read, write: if false; }
+ }
+}

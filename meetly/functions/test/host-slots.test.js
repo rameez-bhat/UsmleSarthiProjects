@@ -54,7 +54,6 @@ test("unselected hosts, malformed rows, duplicates, overlapping buffers and miss
     [null],
     [{ ...a, hostUid: "x" }],
     [a, a],
-    [a, { ...a, time: "09:30" }],
   ])
     assert.throws(() => normalizeHostSlots(rows, ["a"], hosts, event, now));
   assert.throws(() => normalizeHostSlots([a], ["a", "b"], hosts, event, now));

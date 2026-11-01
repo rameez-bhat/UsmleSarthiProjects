@@ -1,6 +1,6 @@
 import React from "react";
 import { test, expect, vi, afterEach } from "vitest";
-import { render, screen, cleanup, within } from "@testing-library/react";
+import { render, screen, cleanup } from "@testing-library/react";
 vi.mock("./firebase", () => ({
   live: true,
   api: vi.fn().mockResolvedValue({
@@ -8,15 +8,13 @@ vi.mock("./firebase", () => ({
   }),
 }));
 vi.mock("./user-search-direct", () => ({
-  selectedUsersDirect: vi
-    .fn()
-    .mockResolvedValue({
-      users: [{ uid: "pawan", name: "Pawan", email: "pawan@example.com" }],
-    }),
+  selectedUsersDirect: vi.fn().mockResolvedValue({
+    users: [{ uid: "pawan", name: "Pawan", email: "pawan@example.com" }],
+  }),
 }));
 import { HostSlotEditor } from "./components/HostSlotEditor";
 afterEach(cleanup);
-test("organizer and selected host are both available in the meeting time selector", async () => {
+test("organizer and selected host have schedule cards without legacy time controls", async () => {
   render(
     <HostSlotEditor
       hostUids={["shafi", "pawan"]}
@@ -26,14 +24,8 @@ test("organizer and selected host are both available in the meeting time selecto
       organizer={{ uid: "shafi", name: "Shafi" }}
     />,
   );
-  expect(
-    within(screen.getByLabelText("Host")).getByRole("option", {
-      name: "Shafi (Organizer)",
-    }),
-  ).toBeTruthy();
-  expect(
-    await within(screen.getByLabelText("Host")).findByRole("option", {
-      name: "Pawan",
-    }),
-  ).toBeTruthy();
+  expect(screen.getByRole("group", { name: "Shafi (Organizer)" })).toBeTruthy();
+  expect(await screen.findByRole("group", { name: "Pawan" })).toBeTruthy();
+  expect(screen.queryByText("Date & time 1")).toBeNull();
+  expect(screen.queryByLabelText("Date and time")).toBeNull();
 });

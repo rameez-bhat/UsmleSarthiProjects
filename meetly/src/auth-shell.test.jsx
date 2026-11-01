@@ -13,10 +13,16 @@ const state = vi.hoisted(() => ({
   api: vi.fn(),
   auth: { currentUser: null },
 }));
-vi.mock("./firebase", () => ({ live: true, auth: state.auth, api: state.api }));
+vi.mock("./firebase", () => ({
+  live: true,
+  auth: state.auth,
+  api: state.api,
+  managedAccount: false,
+}));
 vi.mock("./user-search-direct", () => ({
   searchUsersDirect: (search) =>
     state.api("SearchUsers", { search, after: null }),
+  initialHostsDirect: async () => ({ users: [], next: null }),
   searchHostsDirect: (search) =>
     state.api("SearchHosts", { search, after: null }),
   selectedUsersDirect: (uids) => state.api("SelectedUsers", { uids }),
@@ -588,13 +594,15 @@ test("round-robin picker uses the prefix host-search API and displays the host r
     target: { value: "Te" },
   });
   expect(
-    await screen.findByRole("checkbox", { name: /Test Mentor/ }),
+    await screen.findByRole("option", { name: /Test Mentor/ }),
   ).toBeTruthy();
   expect(state.api).toHaveBeenCalledWith("SearchHosts", {
     search: "Te",
     after: null,
   });
-  expect(screen.getByText("Mentor", { selector: "small" })).toBeTruthy();
+  expect(
+    screen.getByRole("option", { name: /Test Mentor.*Mentor/ }),
+  ).toBeTruthy();
 });
 
 test("editing hydrates selected invitee and round-robin host chips with emails", async () => {

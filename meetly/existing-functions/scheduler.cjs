@@ -40,6 +40,7 @@ var index_exports = {};
 __export(index_exports, {
   schedulerAccess: () => schedulerAccess,
   schedulerAdminBookings: () => schedulerAdminBookings,
+  schedulerAdminLogin: () => schedulerAdminLogin,
   schedulerAttendeeDetails: () => schedulerAttendeeDetails,
   schedulerBook: () => schedulerBook,
   schedulerCancel: () => schedulerCancel,
@@ -72,6 +73,73 @@ __export(index_exports, {
   schedulerWorkspace: () => schedulerWorkspace,
 });
 module.exports = __toCommonJS(index_exports);
+
+// functions/managed-login.js
+var import_https = require("firebase-functions/v2/https");
+async function issueManagedLogin({
+  actorUid,
+  targetUid,
+  managed,
+  requireAdmin: requireAdmin2,
+  auth,
+  audit,
+}) {
+  if (managed)
+    throw new import_https.HttpsError(
+      "permission-denied",
+      "Exit the managed account before opening another account.",
+    );
+  await requireAdmin2(actorUid);
+  if (targetUid === actorUid)
+    throw new import_https.HttpsError(
+      "invalid-argument",
+      "This is already your account.",
+    );
+  const target = await auth.getUser(targetUid);
+  if (target.disabled)
+    throw new import_https.HttpsError(
+      "failed-precondition",
+      "This account is disabled.",
+    );
+  const session = audit.doc();
+  await session.set({
+    action: "admin-account-login",
+    actorUid,
+    targetUid,
+    at: Date.now(),
+    sessionId: session.id,
+  });
+  const token2 = await auth.createCustomToken(targetUid, {
+    samayAdminActor: actorUid,
+    samayAdminSession: session.id,
+  });
+  return {
+    token: token2,
+    name: target.displayName || target.email || "Selected user",
+  };
+}
+
+// functions/calendar-requirements.js
+function hostConnectionLabel(profile = {}, identity = {}, uid = "") {
+  const clean = (value) => (typeof value === "string" ? value.trim() : "");
+  const name = [profile.name, identity.name, identity.displayName]
+    .map(clean)
+    .find((value) => value && value !== uid);
+  const email = clean(profile.email) || clean(identity.email);
+  if (name && email && name.toLowerCase() !== email.toLowerCase())
+    return `${name} (${email})`;
+  return name || email || "A selected host";
+}
+function googleConnectionError(hosts) {
+  const missing = hosts.filter((host) => !host.providers.includes("google"));
+  if (!missing.length) return null;
+  return missing
+    .map(
+      (host) =>
+        `${host.name || "Host"}: please connect your Google account to SAMAY in Integrations before this event can be saved.`,
+    )
+    .join("\n");
+}
 
 // functions/month-availability.js
 var import_luxon2 = require("luxon");
@@ -222,10 +290,10 @@ function slotsForMonth({
 
 // functions/host-slots.js
 var import_luxon3 = require("luxon");
-var import_https = require("firebase-functions/v2/https");
+var import_https2 = require("firebase-functions/v2/https");
 function normalizeHostSlots(input, hostIds, profiles, event) {
   if (!Array.isArray(input) || !input.length || input.length > 100) {
-    throw new import_https.HttpsError(
+    throw new import_https2.HttpsError(
       "invalid-argument",
       "Add between 1 and 100 host meeting times.",
     );
@@ -233,7 +301,7 @@ function normalizeHostSlots(input, hostIds, profiles, event) {
   const seen = /* @__PURE__ */ new Set();
   const slots = input.map((value) => {
     if (!value || typeof value !== "object" || Array.isArray(value))
-      throw new import_https.HttpsError(
+      throw new import_https2.HttpsError(
         "invalid-argument",
         "Invalid host meeting time.",
       );
@@ -250,7 +318,7 @@ function normalizeHostSlots(input, hostIds, profiles, event) {
       !start.isValid ||
       start.toFormat("yyyy-MM-dd'T'HH:mm") !== local
     ) {
-      throw new import_https.HttpsError(
+      throw new import_https2.HttpsError(
         "invalid-argument",
         "Choose a valid host, date and time for every slot.",
       );
@@ -258,7 +326,7 @@ function normalizeHostSlots(input, hostIds, profiles, event) {
     const startAt = start.toMillis();
     const key2 = `${value.hostUid}_${startAt}`;
     if (seen.has(key2))
-      throw new import_https.HttpsError(
+      throw new import_https2.HttpsError(
         "invalid-argument",
         "Remove duplicate host times.",
       );
@@ -275,31 +343,13 @@ function normalizeHostSlots(input, hostIds, profiles, event) {
       startAt,
     };
   });
-  for (const slot of slots) {
-    if (
-      slots.some(
-        (other) =>
-          other !== slot &&
-          other.hostUid === slot.hostUid &&
-          slot.startAt - event.bufferBefore * 6e4 <
-            other.startAt + (event.duration + event.bufferAfter) * 6e4 &&
-          other.startAt - event.bufferBefore * 6e4 <
-            slot.startAt + (event.duration + event.bufferAfter) * 6e4,
-      )
-    ) {
-      throw new import_https.HttpsError(
-        "invalid-argument",
-        "Times for the same host overlap, including buffers.",
-      );
-    }
-  }
   if (
     hostIds.some(
       (uid) =>
         uid !== event.ownerId && !slots.some((slot) => slot.hostUid === uid),
     )
   ) {
-    throw new import_https.HttpsError(
+    throw new import_https2.HttpsError(
       "invalid-argument",
       "Add at least one time for every selected host.",
     );
@@ -418,10 +468,10 @@ async function dispatchMailDraft(
 }
 
 // functions/notifications.js
-var import_https2 = require("firebase-functions/v2/https");
+var import_https3 = require("firebase-functions/v2/https");
 function notificationSettings(input = {}) {
   if (!input || typeof input !== "object" || Array.isArray(input))
-    throw new import_https2.HttpsError(
+    throw new import_https3.HttpsError(
       "invalid-argument",
       "Invalid notification settings.",
     );
@@ -434,7 +484,7 @@ function notificationSettings(input = {}) {
     "hostUpdates",
   ]) {
     if (input[key2] !== void 0 && typeof input[key2] !== "boolean")
-      throw new import_https2.HttpsError(
+      throw new import_https3.HttpsError(
         "invalid-argument",
         `Invalid email setting: ${key2}.`,
       );
@@ -445,7 +495,7 @@ function notificationSettings(input = {}) {
     !Array.isArray(reminders) ||
     reminders.some((n) => ![1440, 60, 15].includes(n))
   )
-    throw new import_https2.HttpsError(
+    throw new import_https3.HttpsError(
       "invalid-argument",
       "Choose supported email reminder times.",
     );
@@ -498,30 +548,30 @@ function mailSummary(id, data) {
 }
 
 // functions/invitations.js
-var import_https3 = require("firebase-functions/v2/https");
+var import_https4 = require("firebase-functions/v2/https");
 var responseStatus = (participant) => participant?.response || "invited";
 var confirmedParticipants = (booking) =>
   (booking.participants || []).filter((p) => responseStatus(p) === "accepted");
 function respondToInvitation(booking, uid, response, now = Date.now()) {
   if (!["accepted", "declined"].includes(response))
-    throw new import_https3.HttpsError(
+    throw new import_https4.HttpsError(
       "invalid-argument",
       "Choose Accept or Decline.",
     );
   const participant = booking.participants?.find((p) => p.uid === uid);
   if (!participant)
-    throw new import_https3.HttpsError(
+    throw new import_https4.HttpsError(
       "permission-denied",
       "This invitation belongs to another user.",
     );
   if (booking.status !== "confirmed" || booking.startAt <= now)
-    throw new import_https3.HttpsError(
+    throw new import_https4.HttpsError(
       "failed-precondition",
       "This invitation is closed.",
     );
   if (responseStatus(participant) === response) return null;
   if (responseStatus(participant) !== "invited")
-    throw new import_https3.HttpsError(
+    throw new import_https4.HttpsError(
       "failed-precondition",
       "You have already responded. Contact the host to change your response.",
     );
@@ -549,7 +599,7 @@ function canEnterRoom(booking, uid) {
 }
 
 // functions/participants.js
-var import_https4 = require("firebase-functions/v2/https");
+var import_https5 = require("firebase-functions/v2/https");
 function selectedUids(input = []) {
   if (
     !Array.isArray(input) ||
@@ -558,7 +608,7 @@ function selectedUids(input = []) {
       (uid) => typeof uid !== "string" || !/^[a-zA-Z0-9_-]{1,110}$/.test(uid),
     )
   ) {
-    throw new import_https4.HttpsError(
+    throw new import_https5.HttpsError(
       "invalid-argument",
       "Select up to 100 registered users.",
     );
@@ -574,7 +624,7 @@ async function resolveParticipants(uids, identityDb) {
         .limit(2)
         .get();
       if (result.docs.length !== 1)
-        throw new import_https4.HttpsError(
+        throw new import_https5.HttpsError(
           "invalid-argument",
           "A selected user is missing or has duplicate identity records.",
         );
@@ -583,7 +633,7 @@ async function resolveParticipants(uids, identityDb) {
         typeof user2.email !== "string" ||
         !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user2.email)
       )
-        throw new import_https4.HttpsError(
+        throw new import_https5.HttpsError(
           "invalid-argument",
           "A selected user has no valid email.",
         );
@@ -600,7 +650,7 @@ async function resolveParticipants(uids, identityDb) {
 }
 function personalMeeting(id, booking, uid) {
   if (booking.attendeeUid !== uid && !booking.participantUids?.includes(uid))
-    throw new import_https4.HttpsError(
+    throw new import_https5.HttpsError(
       "permission-denied",
       "This meeting belongs to another attendee.",
     );
@@ -667,7 +717,7 @@ async function selectedUsers(identityDb, input) {
 
 // functions/access.js
 var import_firestore2 = require("firebase-admin/firestore");
-var import_https5 = require("firebase-functions/v2/https");
+var import_https6 = require("firebase-functions/v2/https");
 var ADMIN_ROLES = Object.freeze(["Admin", "CustomerSupport", "SuperAdmin"]);
 var HOST_ROLES = Object.freeze(["Mentor", "Journalist", ...ADMIN_ROLES]);
 function permissions(role) {
@@ -692,7 +742,7 @@ async function accessForUid(
 async function requireHost(uid) {
   const access = await accessForUid(uid);
   if (!access.canHost)
-    throw new import_https5.HttpsError(
+    throw new import_https6.HttpsError(
       "permission-denied",
       "Your existing UsersRoles account is not authorized to host meetings. Contact an administrator.",
     );
@@ -701,7 +751,7 @@ async function requireHost(uid) {
 async function requireAdmin(uid) {
   const access = await accessForUid(uid);
   if (!access.isAdmin)
-    throw new import_https5.HttpsError(
+    throw new import_https6.HttpsError(
       "permission-denied",
       "Administrator access is required.",
     );
@@ -796,7 +846,7 @@ async function searchHosts(identityDb, schedulerDb, input) {
 }
 
 // functions/registrations.js
-var import_https6 = require("firebase-functions/v2/https");
+var import_https7 = require("firebase-functions/v2/https");
 function registrationReceipt(id, registration, booking) {
   const participant = booking.participants?.find(
     (p) => p.uid === registration.participantUid,
@@ -832,14 +882,14 @@ function registerParticipant(
   capacity = 100,
 ) {
   if (booking.status !== "confirmed" || booking.startAt <= now)
-    throw new import_https6.HttpsError(
+    throw new import_https7.HttpsError(
       "failed-precondition",
       "This meeting is no longer open for registration.",
     );
   const existing = booking.participants.find((p) => p.uid === participant.uid);
   if (existing) {
     if (existing.response === "declined")
-      throw new import_https6.HttpsError(
+      throw new import_https7.HttpsError(
         "failed-precondition",
         "You declined this invitation. Contact the host to change your response.",
       );
@@ -854,7 +904,7 @@ function registerParticipant(
       (p) => p.email.toLowerCase() === participant.email.toLowerCase(),
     )
   )
-    throw new import_https6.HttpsError(
+    throw new import_https7.HttpsError(
       "already-exists",
       "This email already has an invitation or registration. Sign in to accept your invitation, or use your confirmation link.",
     );
@@ -863,7 +913,7 @@ function registerParticipant(
       capacity ||
     booking.participants.length >= 1e3
   )
-    throw new import_https6.HttpsError(
+    throw new import_https7.HttpsError(
       "resource-exhausted",
       "This meeting is full.",
     );
@@ -920,13 +970,13 @@ var import_node_util = require("node:util");
 var import_node_crypto3 = __toESM(require("node:crypto"), 1);
 
 // functions/attendee-details.js
-var import_https7 = require("firebase-functions/v2/https");
+var import_https8 = require("firebase-functions/v2/https");
 function assertAttendeeAccess(uid, access, booking) {
   if (
     !access.canHost ||
     (!access.isAdmin && booking.ownerId !== uid && booking.organizerId !== uid)
   )
-    throw new import_https7.HttpsError(
+    throw new import_https8.HttpsError(
       "permission-denied",
       "You can view attendee details only for bookings on your own links.",
     );
@@ -1012,7 +1062,7 @@ function attendeeRoster(id, booking) {
 // functions/event-policy.js
 var import_luxon4 = require("luxon");
 var import_firestore3 = require("firebase-admin/firestore");
-var import_https8 = require("firebase-functions/v2/https");
+var import_https9 = require("firebase-functions/v2/https");
 function applyEventPolicy(input, event, host, now = Date.now()) {
   const schedulingMode =
     input.multipleHostTimes === true
@@ -1023,7 +1073,7 @@ function applyEventPolicy(input, event, host, now = Date.now()) {
     !["recurring", "fixed", "host-slots"].includes(schedulingMode) ||
     !["anyone", "registered"].includes(audience)
   )
-    throw new import_https8.HttpsError(
+    throw new import_https9.HttpsError(
       "invalid-argument",
       "Choose a valid meeting schedule and booking audience.",
     );
@@ -1032,7 +1082,7 @@ function applyEventPolicy(input, event, host, now = Date.now()) {
     const category =
       input.scheduleCategory || input.schedulingMode || "recurring";
     if (!["recurring", "fixed", "host-slots"].includes(category))
-      throw new import_https8.HttpsError(
+      throw new import_https9.HttpsError(
         "invalid-argument",
         "Invalid schedule category.",
       );
@@ -1046,7 +1096,7 @@ function applyEventPolicy(input, event, host, now = Date.now()) {
       !/^\d{4}-\d{2}-\d{2}$/.test(input.meetingDate || "") ||
       !/^([01]\d|2[0-3]):[0-5]\d$/.test(input.meetingTime || "")
     )
-      throw new import_https8.HttpsError(
+      throw new import_https9.HttpsError(
         "invalid-argument",
         "Choose the meeting date and start time.",
       );
@@ -1055,12 +1105,12 @@ function applyEventPolicy(input, event, host, now = Date.now()) {
       zone: host.timezone,
     });
     if (!start.isValid || start.toFormat("yyyy-MM-dd'T'HH:mm") !== local)
-      throw new import_https8.HttpsError(
+      throw new import_https9.HttpsError(
         "invalid-argument",
         "This local meeting time does not exist in the host time zone.",
       );
     if (event.active && start.toMillis() <= now + event.minNotice * 6e4)
-      throw new import_https8.HttpsError(
+      throw new import_https9.HttpsError(
         "invalid-argument",
         "Choose a meeting time after the configured minimum booking notice, or reduce that notice.",
       );
@@ -1082,7 +1132,7 @@ async function assertBookingAudience(
     return { uid: request2.auth?.uid || null, email: null };
   const auth = request2.auth;
   if (!auth)
-    throw new import_https8.HttpsError(
+    throw new import_https9.HttpsError(
       "unauthenticated",
       "Sign in with your registered USMLESarthi account to book this meeting.",
     );
@@ -1091,7 +1141,7 @@ async function assertBookingAudience(
     typeof auth.token.email !== "string" ||
     !auth.token.email
   )
-    throw new import_https8.HttpsError(
+    throw new import_https9.HttpsError(
       "failed-precondition",
       "Verify your account email, then sign in again before booking.",
     );
@@ -1101,7 +1151,7 @@ async function assertBookingAudience(
     .limit(2)
     .get();
   if (users.docs.length !== 1)
-    throw new import_https8.HttpsError(
+    throw new import_https9.HttpsError(
       "permission-denied",
       "This meeting is available only to existing registered USMLESarthi users. Contact support if your account is missing.",
     );
@@ -1148,6 +1198,7 @@ function safeOAuthError(value) {
 
 // functions/index.js
 var import_app = require("firebase-admin/app");
+var import_auth = require("firebase-admin/auth");
 var import_firestore5 = require("firebase-admin/firestore");
 
 // functions/database.js
@@ -1156,7 +1207,7 @@ var DATABASE_ID = "calendly";
 var schedulerDatabase = () => (0, import_firestore4.getFirestore)(DATABASE_ID);
 
 // functions/index.js
-var import_https9 = require("firebase-functions/v2/https");
+var import_https10 = require("firebase-functions/v2/https");
 var import_firestore6 = require("firebase-functions/v2/firestore");
 var import_scheduler = require("firebase-functions/v2/scheduler");
 var import_firebase_functions = require("firebase-functions");
@@ -1777,19 +1828,19 @@ var opts = {
 };
 var collection = (name) => db2.collection(`scheduler_${name}`);
 var bad = (message) => {
-  throw new import_https9.HttpsError("invalid-argument", message);
+  throw new import_https10.HttpsError("invalid-argument", message);
 };
 var text = (v, max = 200) =>
   typeof v === "string" ? v.trim().slice(0, max) : "";
 function user(r) {
   if (!r.auth)
-    throw new import_https9.HttpsError("unauthenticated", "Please sign in.");
+    throw new import_https10.HttpsError("unauthenticated", "Please sign in.");
   return r.auth.uid;
 }
 function verified(r) {
   const uid = user(r);
   if (!r.auth.token.email_verified)
-    throw new import_https9.HttpsError(
+    throw new import_https10.HttpsError(
       "failed-precondition",
       "Verify your email, then sign in again.",
     );
@@ -1806,15 +1857,25 @@ var safeId = (v) => {
   return v;
 };
 var wrap = (fn, withSecrets = false) =>
-  (0, import_https9.onCall)(
+  (0, import_https10.onCall)(
     { ...opts, ...(withSecrets ? { secrets } : {}) },
     async (r) => {
       try {
+        if (r.auth?.token?.samayAdminActor) {
+          await collection("audit").add({
+            action: "managed-account-request",
+            actorUid: r.auth.token.samayAdminActor,
+            targetUid: r.auth.uid,
+            sessionId: r.auth.token.samayAdminSession,
+            operation: r.rawRequest?.path || "callable",
+            at: Date.now(),
+          });
+        }
         return await fn(r);
       } catch (e) {
-        if (e instanceof import_https9.HttpsError) throw e;
+        if (e instanceof import_https10.HttpsError) throw e;
         import_firebase_functions.logger.error(e.message);
-        throw new import_https9.HttpsError(
+        throw new import_https10.HttpsError(
           "internal",
           "The request could not be completed. Please try again or reconnect your calendar.",
         );
@@ -1836,7 +1897,7 @@ async function throttle(r, kind, limit = 60) {
   await db2.runTransaction(async (tx) => {
     const s = await tx.get(ref);
     if ((s.data()?.count || 0) >= limit)
-      throw new import_https9.HttpsError(
+      throw new import_https10.HttpsError(
         "resource-exhausted",
         "Too many requests. Please try again shortly.",
       );
@@ -1936,6 +1997,17 @@ function eventInput(v, uid) {
     );
   return e;
 }
+var schedulerAdminLogin = wrap(async (r) => {
+  const actorUid = verified(r);
+  return issueManagedLogin({
+    actorUid,
+    targetUid: safeId(r.data.uid),
+    managed: Boolean(r.auth.token.samayAdminActor),
+    requireAdmin,
+    auth: (0, import_auth.getAuth)(),
+    audit: collection("audit"),
+  });
+});
 var schedulerAccess = wrap(async (r) => accessForUid(user(r)));
 var schedulerWorkspace = wrap(async (r) => {
   const uid = await hostUser(r);
@@ -1984,7 +2056,7 @@ var schedulerAttendeeDetails = wrap(async (request2) => {
     .doc(safeId(request2.data?.id))
     .get();
   if (!snapshot.exists)
-    throw new import_https9.HttpsError("not-found", "Booking not found.");
+    throw new import_https10.HttpsError("not-found", "Booking not found.");
   const booking = snapshot.data();
   assertAttendeeAccess(uid, access, booking);
   if (booking.participants?.length) {
@@ -1994,7 +2066,7 @@ var schedulerAttendeeDetails = wrap(async (request2) => {
       (p) => p.uid === request2.data.participantUid,
     );
     if (!participant)
-      throw new import_https9.HttpsError(
+      throw new import_https10.HttpsError(
         "permission-denied",
         "This user is not an attendee.",
       );
@@ -2040,7 +2112,7 @@ var schedulerSaveProfile = wrap(async (r) => {
   await db2.runTransaction(async (tx) => {
     const [old, claim] = await Promise.all([tx.get(profile), tx.get(slugRef)]);
     if (claim.exists && claim.data().ownerId !== uid)
-      throw new import_https9.HttpsError(
+      throw new import_https10.HttpsError(
         "already-exists",
         "That booking link is already taken.",
       );
@@ -2097,7 +2169,7 @@ var schedulerMyMeetings = wrap(async (r) => {
     .limit(2)
     .get();
   if (users.size !== 1)
-    throw new import_https9.HttpsError(
+    throw new import_https10.HttpsError(
       "permission-denied",
       "A registered Users account is required.",
     );
@@ -2163,7 +2235,7 @@ var schedulerJoinMeeting = calendarWrap(async (r) => {
     event.location === "meetly" &&
     (!r.auth?.token.email_verified || !account.uid)
   )
-    throw new import_https9.HttpsError(
+    throw new import_https10.HttpsError(
       "unauthenticated",
       "Sign in with a verified registered account for this meeting room.",
     );
@@ -2193,7 +2265,7 @@ var schedulerJoinMeeting = calendarWrap(async (r) => {
         saved.email !== email ||
         saved.name !== name
       )
-        throw new import_https9.HttpsError(
+        throw new import_https10.HttpsError(
           "already-exists",
           "This request identifier is already in use.",
         );
@@ -2204,12 +2276,12 @@ var schedulerJoinMeeting = calendarWrap(async (r) => {
       !currentEvent.data().active ||
       !(0, import_node_util.isDeepStrictEqual)(currentEvent.data(), event)
     )
-      throw new import_https9.HttpsError(
+      throw new import_https10.HttpsError(
         "aborted",
         "Meeting settings changed. Reload and try again.",
       );
     if (booking.data().startAt <= Date.now() + event.minNotice * 6e4)
-      throw new import_https9.HttpsError(
+      throw new import_https10.HttpsError(
         "failed-precondition",
         "Registration has closed for this meeting.",
       );
@@ -2284,7 +2356,7 @@ var schedulerRegistration = wrap(async (r) => {
       !token2 ||
       hash(token2) !== registration.data().tokenHash
     )
-      throw new import_https9.HttpsError(
+      throw new import_https10.HttpsError(
         "permission-denied",
         "This private registration link is invalid.",
       );
@@ -2298,7 +2370,7 @@ var schedulerRegistration = wrap(async (r) => {
       registrationReceipt(ref.id, data, booking).status !== "cancelled"
     ) {
       if (Date.now() >= booking.startAt - booking.cancelHours * 36e5)
-        throw new import_https9.HttpsError(
+        throw new import_https10.HttpsError(
           "failed-precondition",
           "The cancellation window has closed. Contact the host.",
         );
@@ -2338,14 +2410,14 @@ var schedulerRespondInvitation = wrap(async (r) => {
     .limit(2)
     .get();
   if (users.size !== 1)
-    throw new import_https9.HttpsError(
+    throw new import_https10.HttpsError(
       "permission-denied",
       "A registered Users account is required.",
     );
   await db2.runTransaction(async (tx) => {
     const snapshot = await tx.get(ref);
     if (!snapshot.exists)
-      throw new import_https9.HttpsError("not-found", "Invitation not found.");
+      throw new import_https10.HttpsError("not-found", "Invitation not found.");
     const booking = snapshot.data(),
       participants = respondToInvitation(booking, uid, r.data.response);
     if (!participants) return;
@@ -2384,7 +2456,7 @@ var schedulerRoom = wrap(async (r) => {
   const uid = verified(r),
     snap = await collection("bookings").doc(safeId(r.data?.id)).get();
   if (!snap.exists || !canEnterRoom(snap.data(), uid))
-    throw new import_https9.HttpsError(
+    throw new import_https10.HttpsError(
       "permission-denied",
       "Accept your invitation and sign in to join this meeting.",
     );
@@ -2431,6 +2503,41 @@ var schedulerSaveEvent = slotWrap(async (r) => {
   ) {
     data.teamHostUids = participatingHosts(uid, data.teamHostUids);
   }
+  const googleHostIds = participatingHosts(uid, data.teamHostUids);
+  const identities = new Map(
+    (
+      await selectedUsers((0, import_firestore5.getFirestore)(), googleHostIds)
+    ).users.map((person) => [person.uid, person]),
+  );
+  const googleRequirements = await Promise.all(
+    googleHostIds.map(async (hostId) => {
+      const [profile, providers] = await Promise.all([
+        collection("hosts").doc(hostId).get(),
+        connections(hostId),
+      ]);
+      let identity = identities.get(hostId) || {};
+      if (
+        !identity.name &&
+        !identity.email &&
+        !profile.data()?.name &&
+        !profile.data()?.email
+      ) {
+        const roles = await (0, import_firestore5.getFirestore)()
+          .collection("UsersRoles")
+          .where("uid", "==", hostId)
+          .limit(2)
+          .get();
+        if (roles.size === 1) identity = roles.docs[0].data();
+      }
+      return {
+        name: hostConnectionLabel(profile.data(), identity, hostId),
+        providers,
+      };
+    }),
+  );
+  const googleError = googleConnectionError(googleRequirements);
+  if (googleError)
+    throw new import_https10.HttpsError("failed-precondition", googleError);
   if (data.schedulingMode === "host-slots") {
     if (
       resolved.length ||
@@ -2459,6 +2566,59 @@ var schedulerSaveEvent = slotWrap(async (r) => {
       profiles,
       data,
     );
+    const conflictChecks = await Promise.all(
+      data.teamHostUids.map(async (hostUid) => {
+        const slots = data.hostSlots.filter((slot) => slot.hostUid === hostUid);
+        if (!slots.length) return [];
+        const start2 =
+          Math.min(...slots.map((slot) => slot.startAt)) -
+          data.bufferBefore * 6e4;
+        const end2 =
+          Math.max(...slots.map((slot) => slot.startAt)) +
+          (data.duration + data.bufferAfter) * 6e4;
+        const [busy, saved] = await Promise.all([
+          busyForHost(hostUid, start2, end2),
+          collection("bookings")
+            .where("ownerId", "==", hostUid)
+            .where("startAt", ">=", start2 - 864e5)
+            .where("startAt", "<=", end2 + 864e5)
+            .get(),
+        ]);
+        const blocked = [
+          ...busy,
+          ...saved.docs
+            .filter((item) => item.data().status === "confirmed")
+            .map((item) => ({
+              start: item.data().lockStart,
+              end: item.data().lockEnd,
+            })),
+        ];
+        return slots
+          .filter((slot) =>
+            blocked.some((interval) =>
+              overlap(
+                {
+                  start: slot.startAt - data.bufferBefore * 6e4,
+                  end: slot.startAt + (data.duration + data.bufferAfter) * 6e4,
+                },
+                interval,
+              ),
+            ),
+          )
+          .map((slot) => ({
+            hostUid,
+            hostName: profiles.get(hostUid).name || "Host",
+            startAt: slot.startAt,
+          }));
+      }),
+    );
+    const conflicts = conflictChecks.flat();
+    if (conflicts.length)
+      throw new import_https10.HttpsError(
+        "already-exists",
+        "Some selected hosts already have meetings at the chosen times.",
+        { conflicts },
+      );
   }
   if (!["named", "round-robin", "host-choice"].includes(data.assignmentMode))
     bad("Choose a supported host assignment.");
@@ -2490,7 +2650,7 @@ var schedulerSaveEvent = slotWrap(async (r) => {
   if (previous.exists) {
     const existing = await ref.get();
     if (existing.data()?.ownerId !== uid)
-      throw new import_https9.HttpsError(
+      throw new import_https10.HttpsError(
         "permission-denied",
         "This event belongs to another host.",
       );
@@ -2501,7 +2661,7 @@ var schedulerSaveEvent = slotWrap(async (r) => {
     };
     if ((0, import_node_util.isDeepStrictEqual)(comparable, data))
       return { id };
-    throw new import_https9.HttpsError(
+    throw new import_https10.HttpsError(
       "failed-precondition",
       "Cancel the saved meeting and create a new meeting to change its settings or invitees.",
     );
@@ -2510,6 +2670,28 @@ var schedulerSaveEvent = slotWrap(async (r) => {
     end = start + data.duration * 6e4,
     lockStart = start - data.bufferBefore * 6e4,
     lockEnd = end + data.bufferAfter * 6e4;
+  if (data.schedulingMode === "fixed" && !resolved.length) {
+    const busy = await busyForHost(uid, lockStart, lockEnd);
+    if (
+      busy.some((interval) =>
+        overlap({ start: lockStart, end: lockEnd }, interval),
+      )
+    ) {
+      throw new import_https10.HttpsError(
+        "already-exists",
+        `${organizer.name || "Organizer"} already has a meeting at the chosen time.`,
+        {
+          conflicts: [
+            {
+              hostUid: uid,
+              hostName: organizer.name || "Organizer",
+              startAt: start,
+            },
+          ],
+        },
+      );
+    }
+  }
   const candidates = resolved.length
     ? await Promise.all(
         (data.assignmentMode === "round-robin" ? data.teamHostUids : [uid]).map(
@@ -2575,18 +2757,18 @@ var schedulerSaveEvent = slotWrap(async (r) => {
       tx.get(rotationRef),
     ]);
     if (old.data()?.deletedAt)
-      throw new import_https9.HttpsError(
+      throw new import_https10.HttpsError(
         "failed-precondition",
         "This event was deleted.",
       );
     if (old.exists && old.data().ownerId !== uid)
-      throw new import_https9.HttpsError(
+      throw new import_https10.HttpsError(
         "permission-denied",
         "This event belongs to another host.",
       );
     if (assigned.exists) {
       if ((0, import_node_util.isDeepStrictEqual)(old.data(), data)) return;
-      throw new import_https9.HttpsError(
+      throw new import_https10.HttpsError(
         "already-exists",
         "The meeting was already created.",
       );
@@ -2595,7 +2777,7 @@ var schedulerSaveEvent = slotWrap(async (r) => {
       !currentHost.exists ||
       !(0, import_node_util.isDeepStrictEqual)(currentHost.data(), organizer)
     )
-      throw new import_https9.HttpsError(
+      throw new import_https10.HttpsError(
         "aborted",
         "Host settings changed. Try again.",
       );
@@ -2642,7 +2824,7 @@ var schedulerSaveEvent = slotWrap(async (r) => {
         rotation.data()?.counts,
       );
       if (!chosen)
-        throw new import_https9.HttpsError(
+        throw new import_https10.HttpsError(
           "already-exists",
           "No selected host is available at this time. Check calendars, weekly hours and daily booking limits.",
         );
@@ -2772,9 +2954,9 @@ var schedulerDeleteEvent = wrap(async (r) => {
       tx.get(collection("bookings").where("eventId", "==", ref.id)),
     ]);
     if (!event.exists)
-      throw new import_https9.HttpsError("not-found", "Event not found.");
+      throw new import_https10.HttpsError("not-found", "Event not found.");
     if (event.data().ownerId !== uid)
-      throw new import_https9.HttpsError(
+      throw new import_https10.HttpsError(
         "permission-denied",
         "Only the event organizer can delete this event.",
       );
@@ -2786,7 +2968,7 @@ var schedulerDeleteEvent = wrap(async (r) => {
             ["pending", "error"].includes(doc.data().syncStatus)),
       )
     ) {
-      throw new import_https9.HttpsError(
+      throw new import_https10.HttpsError(
         "failed-precondition",
         "Cancel upcoming bookings and wait for calendar cancellation to finish before deleting this event.",
       );
@@ -2819,10 +3001,10 @@ var schedulerPublicPage = wrap(async (r) => {
   await throttle(r, "page");
   const s = await collection("slugs").doc(safeId(r.data.slug)).get();
   if (!s.exists)
-    throw new import_https9.HttpsError("not-found", "Booking page not found.");
+    throw new import_https10.HttpsError("not-found", "Booking page not found.");
   const host = await collection("hosts").doc(s.data().ownerId).get();
   if (!host.exists)
-    throw new import_https9.HttpsError("not-found", "Host not found.");
+    throw new import_https10.HttpsError("not-found", "Host not found.");
   await requireHost(host.id);
   const h = host.data(),
     events = await collection("events")
@@ -2844,10 +3026,10 @@ var schedulerPublicEvent = wrap(async (r) => {
   await throttle(r, "page");
   const s = await collection("events").doc(safeId(r.data.eventId)).get();
   if (!s.exists || !s.data().active)
-    throw new import_https9.HttpsError("not-found", "Event unavailable.");
+    throw new import_https10.HttpsError("not-found", "Event unavailable.");
   const h = await collection("hosts").doc(s.data().ownerId).get();
   if (!h.exists)
-    throw new import_https9.HttpsError("not-found", "Host unavailable.");
+    throw new import_https10.HttpsError("not-found", "Host unavailable.");
   await requireHost(h.id);
   const p = h.data();
   return {
@@ -2870,7 +3052,7 @@ async function context(
 ) {
   const ev = await collection("events").doc(safeId(eventId)).get();
   if (!ev.exists || !ev.data().active)
-    throw new import_https9.HttpsError(
+    throw new import_https10.HttpsError(
       "not-found",
       "This event is unavailable.",
     );
@@ -2915,7 +3097,7 @@ async function context(
       ] ||
       !process.env.OAUTH_TOKEN_KEY
     )
-      throw new import_https9.HttpsError(
+      throw new import_https10.HttpsError(
         "failed-precondition",
         "This host has a connected calendar. Configure its OAuth client ID and backend secrets, then redeploy schedulerSlots before offering times.",
       );
@@ -2926,7 +3108,7 @@ async function context(
       !providerConnections.includes("google")) ||
     (event.location === "teams" && !providerConnections.includes("microsoft"))
   ) {
-    throw new import_https9.HttpsError(
+    throw new import_https10.HttpsError(
       "failed-precondition",
       "This host must connect the meeting's calendar provider before offering times.",
     );
@@ -3089,7 +3271,7 @@ async function manageAllowed(r, b) {
   }
   const token2 = text(r.data.token, 200);
   if (!token2 || hash(token2) !== b.tokenHash)
-    throw new import_https9.HttpsError(
+    throw new import_https10.HttpsError(
       "permission-denied",
       "This booking link is invalid.",
     );
@@ -3099,7 +3281,7 @@ var schedulerGetBooking = wrap(async (r) => {
   const id = safeId(r.data.id),
     s = await collection("bookings").doc(id).get();
   if (!s.exists)
-    throw new import_https9.HttpsError("not-found", "Booking not found.");
+    throw new import_https10.HttpsError("not-found", "Booking not found.");
   const b = s.data();
   await manageAllowed(r, b);
   const { tokenHash, tokenCipher, roomKey, ...publicData } = b;
@@ -3114,14 +3296,14 @@ async function book(r, reschedule = false) {
     ref = collection("bookings").doc(safeId(v.id));
     const s = await ref.get();
     if (!s.exists)
-      throw new import_https9.HttpsError("not-found", "Booking not found.");
+      throw new import_https10.HttpsError("not-found", "Booking not found.");
     old = s.data();
     await manageAllowed(r, old);
     if (
       old.status !== "confirmed" ||
       Date.now() > old.startAt - old.cancelHours * 36e5
     )
-      throw new import_https9.HttpsError(
+      throw new import_https10.HttpsError(
         "failed-precondition",
         "The rescheduling window has closed.",
       );
@@ -3134,7 +3316,7 @@ async function book(r, reschedule = false) {
   const ev = await collection("events").doc(safeId(eventId)).get();
   if (!ev.exists) bad("Event is unavailable.");
   if (ev.data().participantUids?.length)
-    throw new import_https9.HttpsError(
+    throw new import_https10.HttpsError(
       "permission-denied",
       "This meeting already has assigned attendees. Sign in to My meetings.",
     );
@@ -3144,7 +3326,7 @@ async function book(r, reschedule = false) {
     ev.data().audience === "registered" &&
     old.attendeeUid !== attendee.uid
   )
-    throw new import_https9.HttpsError(
+    throw new import_https10.HttpsError(
       "permission-denied",
       "Sign in with the account that originally booked this meeting.",
     );
@@ -3161,7 +3343,7 @@ async function book(r, reschedule = false) {
         b.startAt !== Number(v.startAt) ||
         (ev.data().schedulingMode === "host-slots" && b.ownerId !== v.hostUid)
       )
-        throw new import_https9.HttpsError(
+        throw new import_https10.HttpsError(
           "already-exists",
           "Request identifier is already used.",
         );
@@ -3191,12 +3373,12 @@ async function book(r, reschedule = false) {
     }).toISODate(),
     c = await context(eventId, date, old ? ref.id : null, selectedHostId);
   if (JSON.stringify(c.event) !== JSON.stringify(ev.data()))
-    throw new import_https9.HttpsError(
+    throw new import_https10.HttpsError(
       "aborted",
       "Meeting settings changed. Refresh and try again.",
     );
   if (!c.slots.some((s) => s.start === startAt))
-    throw new import_https9.HttpsError(
+    throw new import_https10.HttpsError(
       "already-exists",
       "That time is no longer available. Choose another time.",
     );
@@ -3207,7 +3389,7 @@ async function book(r, reschedule = false) {
     !ps.includes("zoom") &&
     (!process.env.ZOOM_ACCOUNT_ID || !process.env.ZOOM_CLIENT_ID)
   ) {
-    throw new import_https9.HttpsError(
+    throw new import_https10.HttpsError(
       "failed-precondition",
       "This host must connect Zoom or provide a Zoom meeting link.",
     );
@@ -3217,12 +3399,12 @@ async function book(r, reschedule = false) {
     !c.event.locationValue &&
     !ps.includes("google")
   )
-    throw new import_https9.HttpsError(
+    throw new import_https10.HttpsError(
       "failed-precondition",
       "This host must connect Google Calendar first.",
     );
   if (c.event.location === "teams" && !ps.includes("microsoft"))
-    throw new import_https9.HttpsError(
+    throw new import_https10.HttpsError(
       "failed-precondition",
       "This host must connect Outlook first.",
     );
@@ -3314,7 +3496,7 @@ async function book(r, reschedule = false) {
         current.data().ownerId === c.hostId
       )
         return current.data();
-      throw new import_https9.HttpsError(
+      throw new import_https10.HttpsError(
         "already-exists",
         "A booking with this request identifier already exists.",
       );
@@ -3325,7 +3507,7 @@ async function book(r, reschedule = false) {
         current.data().revision !== old.revision ||
         current.data().status !== "confirmed")
     )
-      throw new import_https9.HttpsError(
+      throw new import_https10.HttpsError(
         "aborted",
         "This booking changed. Refresh and try again.",
       );
@@ -3337,17 +3519,17 @@ async function book(r, reschedule = false) {
       tx.get(c.query),
     ]);
     if (!hostNow.exists || !eventNow.exists || !eventNow.data().active)
-      throw new import_https9.HttpsError(
+      throw new import_https10.HttpsError(
         "failed-precondition",
         "Event is unavailable.",
       );
     if (JSON.stringify(hostNow.data()) !== JSON.stringify(c.host))
-      throw new import_https9.HttpsError(
+      throw new import_https10.HttpsError(
         "aborted",
         "Host availability changed. Choose a time again.",
       );
     if (JSON.stringify(eventNow.data()) !== JSON.stringify(event))
-      throw new import_https9.HttpsError(
+      throw new import_https10.HttpsError(
         "aborted",
         "Event settings changed. Choose a time again.",
       );
@@ -3374,7 +3556,7 @@ async function book(r, reschedule = false) {
         ],
       }).some((s) => s.start === startAt)
     )
-      throw new import_https9.HttpsError(
+      throw new import_https10.HttpsError(
         "already-exists",
         "That time was just booked. Choose another time.",
       );
@@ -3413,7 +3595,7 @@ var schedulerCancel = wrap(async (r) => {
   await db2.runTransaction(async (tx) => {
     const s = await tx.get(ref);
     if (!s.exists)
-      throw new import_https9.HttpsError("not-found", "Booking not found.");
+      throw new import_https10.HttpsError("not-found", "Booking not found.");
     const b = s.data();
     await manageAllowed(r, b);
     if (b.status === "cancelled") return;
@@ -3422,7 +3604,7 @@ var schedulerCancel = wrap(async (r) => {
       r.auth?.uid !== b.organizerId &&
       Date.now() > b.startAt - b.cancelHours * 36e5
     )
-      throw new import_https9.HttpsError(
+      throw new import_https10.HttpsError(
         "failed-precondition",
         "The cancellation window has closed. Contact the host.",
       );
@@ -3451,7 +3633,7 @@ var schedulerConnect = wrap(async (r) => {
   try {
     origin();
   } catch (e) {
-    throw new import_https9.HttpsError("failed-precondition", e.message);
+    throw new import_https10.HttpsError("failed-precondition", e.message);
   }
   if (
     !process.env[
@@ -3463,7 +3645,7 @@ var schedulerConnect = wrap(async (r) => {
     ] ||
     !process.env.OAUTH_REDIRECT_URI
   )
-    throw new import_https9.HttpsError(
+    throw new import_https10.HttpsError(
       "failed-precondition",
       `Configure ${provider === "zoom" ? "ZOOM_OAUTH_CLIENT_ID" : provider === "google" ? "GOOGLE_CLIENT_ID" : "MICROSOFT_CLIENT_ID"} and OAUTH_REDIRECT_URI in the Functions environment, then redeploy schedulerConnect.`,
     );
@@ -3479,7 +3661,7 @@ var schedulerConnect = wrap(async (r) => {
     .set({ ownerId: uid, provider, verifier, expiresAt: Date.now() + 6e5 });
   return { url };
 });
-var schedulerOAuthCallback = (0, import_https9.onRequest)(
+var schedulerOAuthCallback = (0, import_https10.onRequest)(
   { region, secrets, maxInstances: 5 },
   async (req, res) => {
     let returnOrigin = null,
@@ -3601,7 +3783,7 @@ var schedulerDisconnect = wrap(async (r) => {
           d.data().externalIds?.[r.data.provider],
       )
     )
-      throw new import_https9.HttpsError(
+      throw new import_https10.HttpsError(
         "failed-precondition",
         "This calendar has upcoming synced bookings. Keep it connected until those bookings finish or are cancelled.",
       );
@@ -3731,7 +3913,7 @@ var schedulerSaveNotifications = wrap(async (r) => {
       event.data().ownerId !== uid &&
       !bookings.docs.some((d) => d.data().ownerId === uid)
     )
-      throw new import_https9.HttpsError(
+      throw new import_https10.HttpsError(
         "permission-denied",
         "You cannot change this meeting's notifications.",
       );
@@ -3763,7 +3945,7 @@ var schedulerMeetingEmails = wrap(async (r) => {
     const messageRef = collection("mail").doc(mailId),
       message = await messageRef.get();
     if (!message.exists || message.data().bookingId !== bookingId)
-      throw new import_https9.HttpsError(
+      throw new import_https10.HttpsError(
         "permission-denied",
         "Email not found for this meeting.",
       );
@@ -4014,7 +4196,7 @@ var schedulerRetrySync = wrap(async (r) => {
     ref = collection("bookings").doc(safeId(r.data.id)),
     s = await ref.get();
   if (!s.exists || (s.data().ownerId !== uid && s.data().organizerId !== uid))
-    throw new import_https9.HttpsError(
+    throw new import_https10.HttpsError(
       "permission-denied",
       "Booking not found.",
     );
@@ -4053,6 +4235,7 @@ var schedulerReminders = (0, import_scheduler.onSchedule)(
   (module.exports = {
     schedulerAccess,
     schedulerAdminBookings,
+    schedulerAdminLogin,
     schedulerAttendeeDetails,
     schedulerBook,
     schedulerCancel,

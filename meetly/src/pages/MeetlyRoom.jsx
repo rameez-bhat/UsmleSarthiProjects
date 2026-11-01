@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { api } from "../firebase";
-export function MeetlyRoom({ id }) {
+export function SAMAYRoom({ id }) {
   const [room, setRoom] = useState(null),
     [error, setError] = useState("");
   useEffect(() => {
@@ -35,7 +35,7 @@ export function MeetlyRoom({ id }) {
       <h1>{room.title}</h1>
       <p>Hosted by {room.hostName} · Video powered by Jitsi</p>
       <iframe
-        title="Meetly video meeting"
+        title="SAMAY video meeting"
         src={room.url}
         allow="camera; microphone; display-capture; fullscreen; autoplay"
         allowFullScreen

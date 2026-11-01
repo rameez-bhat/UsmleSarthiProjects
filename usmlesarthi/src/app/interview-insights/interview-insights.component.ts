@@ -430,12 +430,13 @@ console.log("this.speciality====>",this.speciality)
       this.selectedInterview = this.interviewsList[index];
 
       const allInfo = await this.dbService.getInterviewsInfoByHIdPId(interview.HId, interview.PId);
-
+console.log("allInfo=====>",allInfo)
       // Legacy records have no Status. New v2 records should be shown after approval.
       this.interviewsInfo = (allInfo || []).filter((item: any) => {
-        if (!item.FormVersion || item.FormVersion === 'legacy_v1') {
+        /*if (!item.FormVersion || item.FormVersion === 'legacy_v1') {
           return true;
-        }
+        }*/
+       return true;
         return item.Status === 'approved' || item.Verified === 'Yes';
       });
 

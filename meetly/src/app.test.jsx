@@ -19,13 +19,20 @@ test("create an event and pause it without removing the event definition", async
   const user = userEvent.setup();
   render(<App />);
   await user.click(
-    await screen.findByRole("button", { name: "New event type" }),
+    await screen.findByRole(
+      "button",
+      { name: "New event type" },
+      { timeout: 5000 },
+    ),
   );
   const dialog = await screen.findByRole("dialog");
   await user.type(
     within(dialog).getByLabelText("Event name"),
     "Staff consultation",
   );
+  fireEvent.change(within(dialog).getByLabelText("Date 1"), {
+    target: { value: "2026-12-01" },
+  });
   await user.click(
     within(dialog).getByRole("button", { name: /Save event type/ }),
   );

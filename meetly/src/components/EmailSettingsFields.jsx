@@ -7,7 +7,7 @@ export function EmailSettingsFields({ value, onChange }) {
   };
   return (
     <fieldset className="email-settings">
-      <legend>Meetly email notifications</legend>
+      <legend>SAMAY email notifications</legend>
       {[
         ["enabled", "Enable meeting emails"],
         ["invitations", "Email invited users"],
