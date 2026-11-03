@@ -34,7 +34,5 @@ export function expandTimeRanges(rows, duration) {
       ]),
     ).values(),
   ];
-  if (unique.length > 100)
-    throw new Error("Use at most 100 meeting slots per event.");
   return unique;
 }

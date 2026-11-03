@@ -28,7 +28,7 @@ test("range generates full duration-sized appointments", () => {
   ).toThrow();
 });
 
-test("re-saving the same preview does not count duplicate choices against the limit", () => {
+test("re-saving the same preview deduplicates choices", () => {
   const rows = Array.from({ length: 60 }, (_, index) => ({
     hostUid: "a",
     date: `2026-12-${String((index % 30) + 1).padStart(2, "0")}`,
@@ -36,4 +36,17 @@ test("re-saving the same preview does not count duplicate choices against the li
     timezone: "UTC",
   }));
   expect(expandTimeRanges([...rows, ...rows], 30)).toHaveLength(60);
+});
+
+test("expands and deduplicates more than 100 meeting slots without a count cap", () => {
+  const rows = Array.from({ length: 120 }, (_, index) => ({
+    hostUid: "a",
+    date: new Date(Date.UTC(2027, 0, index + 1)).toISOString().slice(0, 10),
+    time: "09:00",
+    endTime: "11:00",
+    timezone: "UTC",
+  }));
+  const slots = expandTimeRanges([...rows, ...rows], 30);
+  expect(slots).toHaveLength(480);
+  expect(slots.at(-1).time).toBe("10:30");
 });

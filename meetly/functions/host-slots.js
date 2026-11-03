@@ -2,10 +2,10 @@ import { DateTime } from "luxon";
 import { HttpsError } from "firebase-functions/v2/https";
 
 export function normalizeHostSlots(input, hostIds, profiles, event) {
-  if (!Array.isArray(input) || !input.length || input.length > 100) {
+  if (!Array.isArray(input) || !input.length) {
     throw new HttpsError(
       "invalid-argument",
-      "Add between 1 and 100 host meeting times.",
+      "Add at least one host meeting time.",
     );
   }
   const seen = new Set();

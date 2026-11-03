@@ -20,11 +20,23 @@ export function HostScheduleOptions({
     times: ["09:00"],
     endTime: "11:30",
   });
+  const [removedSlots, setRemovedSlots] = useState([]);
+  const slotKey = (slot) => `${slot.date}|${slot.time}`;
+  const removeSlots = (slots) =>
+    setRemovedSlots((old) => [...new Set([...old, ...slots.map(slotKey)])]);
+  const removeEntry = (key, index) =>
+    setConfig((old) => {
+      const next = old[key].filter((_, i) => i !== index);
+      return { ...old, [key]: next.length ? next : [""] };
+    });
   const change = (key, next) => setConfig((old) => ({ ...old, [key]: next }));
   let preview = [],
     previewError = "";
   try {
-    preview = hostScheduleOptions(config, duration);
+    preview = hostScheduleOptions(config, duration).filter(
+      (slot) => !removedSlots.includes(slotKey(slot)),
+    );
+    if (!preview.length) previewError = "Choose at least one meeting time.";
   } catch (problem) {
     previewError = problem.message;
   }
@@ -85,21 +97,31 @@ export function HostScheduleOptions({
               ? config.dates.slice(0, 1)
               : config.dates
             ).map((date, index) => (
-              <label key={index}>
-                Date {index + 1}
-                <input
-                  type="date"
-                  value={date}
-                  onChange={(e) =>
-                    change(
-                      "dates",
-                      config.dates.map((old, i) =>
-                        i === index ? e.target.value : old,
-                      ),
-                    )
-                  }
-                />
-              </label>
+              <div className="schedule-input-row" key={index}>
+                <label>
+                  Date {index + 1}
+                  <input
+                    type="date"
+                    value={date}
+                    onChange={(e) =>
+                      change(
+                        "dates",
+                        config.dates.map((old, i) =>
+                          i === index ? e.target.value : old,
+                        ),
+                      )
+                    }
+                  />
+                </label>
+                <button
+                  type="button"
+                  className="secondary"
+                  aria-label={`Remove date ${index + 1} for ${name}`}
+                  onClick={() => removeEntry("dates", index)}
+                >
+                  Remove date
+                </button>
+              </div>
             ))}
             {config.dateMode === "multiple" && (
               <button
@@ -130,22 +152,32 @@ export function HostScheduleOptions({
           ? config.times
           : config.times.slice(0, 1)
         ).map((time, index) => (
-          <label key={index}>
-            {config.timeMode === "range" ? "Range starts" : "Start time"}{" "}
-            {index + 1}
-            <input
-              type="time"
-              value={time}
-              onChange={(e) =>
-                change(
-                  "times",
-                  config.times.map((old, i) =>
-                    i === index ? e.target.value : old,
-                  ),
-                )
-              }
-            />
-          </label>
+          <div className="schedule-input-row" key={index}>
+            <label>
+              {config.timeMode === "range" ? "Range starts" : "Start time"}{" "}
+              {index + 1}
+              <input
+                type="time"
+                value={time}
+                onChange={(e) =>
+                  change(
+                    "times",
+                    config.times.map((old, i) =>
+                      i === index ? e.target.value : old,
+                    ),
+                  )
+                }
+              />
+            </label>
+            <button
+              type="button"
+              className="secondary"
+              aria-label={`Remove time ${index + 1} for ${name}`}
+              onClick={() => removeEntry("times", index)}
+            >
+              Remove time
+            </button>
+          </div>
         ))}
         {config.timeMode === "multiple" && (
           <button
@@ -201,11 +233,29 @@ export function HostScheduleOptions({
                   timeZone: "UTC",
                 }).format(new Date(`${date}T12:00:00Z`))}
               </strong>
+              <button
+                type="button"
+                className="text-button"
+                aria-label={`Remove all times on ${date} for ${name}`}
+                onClick={() =>
+                  removeSlots(preview.filter((slot) => slot.date === date))
+                }
+              >
+                Remove date
+              </button>
               <div>
                 {preview
                   .filter((slot) => slot.date === date)
                   .map((slot) => (
-                    <span key={slot.time}>{slot.time}</span>
+                    <button
+                      type="button"
+                      key={slot.time}
+                      className="schedule-slot-remove"
+                      aria-label={`Remove ${slot.time} on ${slot.date} for ${name}`}
+                      onClick={() => removeSlots([slot])}
+                    >
+                      {slot.time} ×
+                    </button>
                   ))}
               </div>
             </div>
@@ -215,9 +265,19 @@ export function HostScheduleOptions({
         )}
         {days.length > 8 && <p>And {days.length - 8} more dates.</p>}
       </section>
+      {!!removedSlots.length && (
+        <button
+          type="button"
+          className="secondary"
+          onClick={() => setRemovedSlots([])}
+        >
+          Restore removed preview times
+        </button>
+      )}
       <p className="small-text">
-        The previewed appointments are included automatically when you save the
-        event.
+        Click a preview time to remove that appointment, or Remove date to
+        remove all its times. The previewed appointments are included
+        automatically when you save the event.
       </p>
     </fieldset>
   );

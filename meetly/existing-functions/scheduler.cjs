@@ -292,10 +292,10 @@ function slotsForMonth({
 var import_luxon3 = require("luxon");
 var import_https2 = require("firebase-functions/v2/https");
 function normalizeHostSlots(input, hostIds, profiles, event) {
-  if (!Array.isArray(input) || !input.length || input.length > 100) {
+  if (!Array.isArray(input) || !input.length) {
     throw new import_https2.HttpsError(
       "invalid-argument",
-      "Add between 1 and 100 host meeting times.",
+      "Add at least one host meeting time.",
     );
   }
   const seen = /* @__PURE__ */ new Set();

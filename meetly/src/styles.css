@@ -2957,3 +2957,29 @@ a.nav-item {
   color: inherit;
   cursor: pointer;
 }
+
+.schedule-input-row {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.schedule-input-row label {
+  flex: 1;
+  min-width: 160px;
+  margin: 0;
+}
+.schedule-slot-remove {
+  border: 1px solid #b7d8cd;
+  background: #eaf5f0;
+  color: #174a3a;
+  border-radius: 8px;
+  padding: 7px 10px;
+  cursor: pointer;
+}
+.schedule-slot-remove:hover {
+  background: #ffe9e5;
+  border-color: #bb5c4e;
+  color: #842d22;
+}

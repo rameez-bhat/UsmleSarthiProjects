@@ -879,7 +879,7 @@ function WorkspaceApp() {
           )}
           <div className="version">
             <span className="status-dot" />
-            {live ? "Live Workspace" : "Demo workspace"}
+            {live ? "Firebase connected" : "Demo workspace"}
             <span>v1.11.3</span>
           </div>
         </div>
@@ -925,7 +925,7 @@ function WorkspaceApp() {
             ) : (
               <span className="connected-pill">
                 <span />
-                
+                Firebase
               </span>
             )}
             <button

@@ -50,11 +50,7 @@ test("host-specific dates preserve chosen host and absolute instant across displ
 });
 test("unselected hosts, malformed rows, duplicates, overlapping buffers and missing host times are rejected", () => {
   const a = { hostUid: "a", date: "2026-10-20", time: "09:00" };
-  for (const rows of [
-    [null],
-    [{ ...a, hostUid: "x" }],
-    [a, a],
-  ])
+  for (const rows of [[null], [{ ...a, hostUid: "x" }], [a, a]])
     assert.throws(() => normalizeHostSlots(rows, ["a"], hosts, event, now));
   assert.throws(() => normalizeHostSlots([a], ["a", "b"], hosts, event, now));
 });
@@ -240,5 +236,27 @@ test("saving explicit dates ignores rolling notice/horizon while booking still e
       date: "2026-10-19",
     }).length,
     1,
+  );
+});
+
+test("accepts more than 100 host meeting times without truncation", () => {
+  const rows = Array.from({ length: 480 }, (_, index) => ({
+    hostUid: index % 2 ? "a" : "b",
+    date: new Date(Date.UTC(2027, 0, Math.floor(index / 2) + 1))
+      .toISOString()
+      .slice(0, 10),
+    time: "09:00",
+    timezone: "UTC",
+  }));
+  const result = normalizeHostSlots(rows, ["a", "b"], hosts, event);
+  assert.equal(result.length, 480);
+  assert.equal(result.filter((slot) => slot.hostUid === "a").length, 240);
+  assert.throws(
+    () => normalizeHostSlots([], ["a"], hosts, event),
+    /at least one/,
+  );
+  assert.throws(
+    () => normalizeHostSlots([...rows, rows[0]], ["a", "b"], hosts, event),
+    /duplicate/,
   );
 });

@@ -125,6 +125,20 @@ const getNavigation = (user) => {
       },
       {
         component: CNavGroup,
+        name: 'Samay Meetings',
+        to: '/base',
+        icon: <CIcon icon={cilList} customClassName="nav-icon" />,
+       items: [
+          {
+            component: CNavItem,
+            icon: <CIcon icon={cilBabyCarriage} customClassName="nav-icon" />,
+            name: 'My Meetings',
+            to: '/admin/mymeetings',
+          }
+        ],
+      },
+      {
+        component: CNavGroup,
         name: 'Rotations',
         to: '/base',
         icon: <CIcon icon={cilList} customClassName="nav-icon" />,

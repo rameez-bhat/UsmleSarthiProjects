@@ -69,6 +69,7 @@ const EditResearch = React.lazy(() => import('./views/admin/EditResearch'))
 const ListOfMicroservices = React.lazy(() => import('./views/admin/ListOfMicroservices'))
 const EditMicroservices = React.lazy(() => import('./views/admin/EditMicroservices'))
 const PhysicianPaymentReport = React.lazy(() => import('./views/admin/PhysicianPaymentsReport'))
+const MyBookings = React.lazy(() => import('./views/admin/MyBookings'))
 
 const ListOfAllResearchStudents = React.lazy(() => import('./views/admin/ListOfAllResearchStudents'))
 const ListOfAllServiceStudents = React.lazy(() => import('./views/admin/ListOfAllServiceStudents'))
@@ -187,6 +188,7 @@ const routes = {"public":[
     { path: '/admin/listofmicroservices', name: 'Microservices List',exact: true, element: ListOfMicroservices },
     { path: '/admin/editmicroservices/:microservices_id?', name: 'Edit Microservices',exact: true, element: EditMicroservices },
     { path: '/admin/physicianpaymentreport/:microservices_id?', name: 'Physician Payment Report',exact: true, element: PhysicianPaymentReport },
+    { path: '/admin/mymeetings/:microservices_id?', name: 'My Meetings',exact: true, element: MyBookings },
 ],
 "users":[
 	{ path: '/users/register', name: 'RegisterUser',exact: true, element: RegisterUser },
