@@ -24,7 +24,7 @@ const events = () => [
     minNotice: 120,
     horizonDays: 60,
     bufferBefore: 0,
-    bufferAfter: 10,
+    bufferAfter: 0,
     dailyLimit: 8,
     cancelHours: 0,
     active: true,

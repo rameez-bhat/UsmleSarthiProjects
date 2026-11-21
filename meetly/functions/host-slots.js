@@ -2,7 +2,12 @@ import { DateTime } from "luxon";
 import { HttpsError } from "firebase-functions/v2/https";
 
 export function normalizeHostSlots(input, hostIds, profiles, event) {
-  if (!Array.isArray(input) || !input.length) {
+  if (
+    !Array.isArray(input) ||
+    (!input.length &&
+      !event.selfSchedulingHostUids?.length &&
+      event.eventKind !== "group")
+  ) {
     throw new HttpsError(
       "invalid-argument",
       "Add at least one host meeting time.",
@@ -51,9 +56,12 @@ export function normalizeHostSlots(input, hostIds, profiles, event) {
   });
   // Published choices may overlap buffers; booking-time conflict checks enforce buffers.
   if (
+    event.eventKind !== "group" &&
     hostIds.some(
       (uid) =>
-        uid !== event.ownerId && !slots.some((slot) => slot.hostUid === uid),
+        uid !== event.ownerId &&
+        !(event.selfSchedulingHostUids || []).includes(uid) &&
+        !slots.some((slot) => slot.hostUid === uid),
     )
   ) {
     throw new HttpsError(

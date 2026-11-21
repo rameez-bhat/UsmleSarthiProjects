@@ -142,7 +142,7 @@ export async function saveSchedulerProfile(input) {
             minNotice: 120,
             horizonDays: 60,
             bufferBefore: 0,
-            bufferAfter: 10,
+            bufferAfter: 0,
             dailyLimit: 8,
             capacity: 100,
             cancelHours: 0,

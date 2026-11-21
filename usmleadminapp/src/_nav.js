@@ -504,6 +504,12 @@ const getNavigation = (user) => {
             icon: <CIcon icon={cilCash} customClassName="nav-icon" />,
             name: 'Enquiry List',
             to: '/admin/enquirylist',
+          },
+          {
+            component: CNavItem,
+            icon: <CIcon icon={cilCash} customClassName="nav-icon" />,
+            name: 'Mock Reports',
+            to: '/admin/mockreports',
           }
         ],
       },

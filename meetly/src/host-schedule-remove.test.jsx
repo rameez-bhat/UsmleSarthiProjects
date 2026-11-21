@@ -66,3 +66,33 @@ test("date and time input rows can be removed independently", () => {
   );
   expect(changed.mock.lastCall[1].slots.map((s) => s.time)).toEqual(["14:00"]);
 });
+
+test("remaining dates expand with an explicit button and retain removal controls", () => {
+  const changed = setup();
+  fireEvent.change(screen.getByLabelText("Date selection"), {
+    target: { value: "range" },
+  });
+  fireEvent.change(screen.getByLabelText("From date"), {
+    target: { value: "2026-12-01" },
+  });
+  fireEvent.change(screen.getByLabelText("Through date"), {
+    target: { value: "2026-12-27" },
+  });
+  const summary = screen.getByText("See 19 more dates");
+  const details = summary;
+  expect(details.getAttribute("aria-expanded")).toBe("false");
+  fireEvent.click(summary);
+  expect(details.getAttribute("aria-expanded")).toBe("true");
+  expect(
+    screen.getAllByRole("button", { name: /Remove all times on/ }),
+  ).toHaveLength(27);
+  fireEvent.click(
+    screen.getByRole("button", {
+      name: "Remove 09:00 on 2026-12-27 for Host A",
+    }),
+  );
+  expect(changed.mock.lastCall[1].slots).toHaveLength(134);
+  fireEvent.click(summary);
+  expect(details.getAttribute("aria-expanded")).toBe("false");
+  expect(changed.mock.lastCall[1].slots).toHaveLength(134);
+});

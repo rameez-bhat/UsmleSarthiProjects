@@ -1,3 +1,6 @@
+import { resolveShortLink } from "./short-links";
+import { delegatedEventInput } from "./delegated-event-input";
+import { loadPublishedSlots } from "./published-slots-direct";
 import React, { useEffect, useState, lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import {
@@ -59,6 +62,10 @@ const BookingsPage = loadPage(
 const AdministrationPage = loadPage(
   () => import("./pages/AdministrationPage"),
   "AdministrationPage",
+);
+const ManageSlotsPage = loadPage(
+  () => import("./pages/ManageSlotsPage"),
+  "ManageSlotsPage",
 );
 const AvailabilityPage = loadPage(
   () => import("./pages/AvailabilityPage"),
@@ -188,6 +195,7 @@ function WorkspaceApp() {
   }, []);
   const isWorkspaceRoute = ![
     "/book/",
+    "/b/",
     "/manage/",
     "/room/",
     "/registration/",
@@ -199,6 +207,7 @@ function WorkspaceApp() {
     if (
       !user ||
       location.pathname.startsWith("/book/") ||
+      location.pathname.startsWith("/b/") ||
       location.pathname.startsWith("/manage/") ||
       location.pathname.startsWith("/room/")
     )
@@ -278,7 +287,21 @@ function WorkspaceApp() {
   useEffect(() => {
     let active = true;
     const paths = location.pathname.split("/").filter(Boolean);
-    if (paths[0] === "book" && paths[1]) {
+    if (paths[0] === "b" && paths[1]) {
+      setBookingPage(null);
+      setManage(null);
+      setLoading(true);
+      resolveShortLink(paths[1])
+        .then((target) => {
+          if (active) location.replace(target + location.search);
+        })
+        .catch((error) => {
+          if (active) {
+            notify(error.message);
+            setLoading(false);
+          }
+        });
+    } else if (paths[0] === "book" && paths[1]) {
       setManage(null);
       setLoading(true);
       const load = live
@@ -403,12 +426,13 @@ function WorkspaceApp() {
     act(async () => {
       if (live) {
         try {
-          await api("SaveEvent", e);
+          await api("SaveEvent", delegatedEventInput(e, user?.uid));
         } catch (error) {
           if (error.details?.conflicts?.length) {
             setModal((old) => ({
               ...old,
               conflicts: error.details.conflicts,
+              remainingSlots: error.details.remainingSlots,
               event: e,
             }));
             return;
@@ -613,6 +637,16 @@ function WorkspaceApp() {
     navigate(`/manage/${id}?token=${token}`);
   };
   const getSlots = async (date, event, host, old) => {
+    if (
+      live &&
+      ((event.schedulingMode === "host-slots" &&
+        Array.isArray(event.hostSlots)) ||
+        event.schedulingMode === "fixed")
+    )
+      return loadPublishedSlots({
+        ...event,
+        hostName: event.hostName || host.name,
+      });
     if (live) {
       const result = await api("Slots", {
         ...(date.startsWith("month:") ? { month: date.slice(6) } : { date }),
@@ -694,6 +728,7 @@ function WorkspaceApp() {
     bookingPage ||
     manage ||
     location.pathname.startsWith("/book/") ||
+    location.pathname.startsWith("/b/") ||
     location.pathname.startsWith("/manage/")
   )
     return (
@@ -833,6 +868,7 @@ function WorkspaceApp() {
             ["My meetings", CalendarDays],
             ["Event types", LayoutGrid],
             ["Bookings", CalendarDays],
+            ["Manage your slots", Clock],
             ["Availability", Clock],
             ["Hosts & sharing", Users],
             ["Integrations", Link2],
@@ -1013,6 +1049,7 @@ function WorkspaceApp() {
               )}
               {page === "Event types" && (
                 <EventTypesPage
+                  viewerUid={user?.uid}
                   deleteEvent={deleteEvent}
                   connections={connections}
                   copy={copy}
@@ -1042,6 +1079,9 @@ function WorkspaceApp() {
                   notify={notify}
                   viewAttendee={viewAttendee}
                 />
+              )}
+              {page === "Manage your slots" && (
+                <ManageSlotsPage profile={profile} />
               )}
               {page === "Availability" && (
                 <AvailabilityPage

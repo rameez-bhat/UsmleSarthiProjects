@@ -1,3 +1,4 @@
+import { PhoneContact } from "../components/PhoneContact";
 import React, { useState, useEffect } from "react";
 import { api } from "../firebase";
 export function RegistrationPanel({ id, token, initial = null }) {
@@ -66,6 +67,9 @@ export function RegistrationPanel({ id, token, initial = null }) {
           <p>{receipt.status}</p>
           {receipt.status === "confirmed" && (
             <>
+              {receipt.status === "confirmed" && (
+                <PhoneContact instructions={receipt.meetingUrl} />
+              )}
               {/^https:\/\//i.test(receipt.meetingUrl) ? (
                 <a
                   className="primary"

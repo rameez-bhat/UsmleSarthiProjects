@@ -1,3 +1,23 @@
+import { sameBookingSettings } from "./booking-settings.js";
+import { isGroupHostEnabled, activeGroupEvent } from "../shared/group-hosts.js";
+import { normalizeQuestions, validateQuestionAnswers } from "./questions.js";
+import { meetingEmail, emailBookingDetails } from "./meeting-email.js";
+import {
+  selfSchedulingHosts,
+  assertSelfScheduling,
+  replaceOwnSlots,
+  hostAssignment,
+} from "./self-scheduling.js";
+import { normalizeHostLocations, eventForHost } from "./host-locations.js";
+import {
+  normalizeHostPhones,
+  phoneInstructions,
+  bookingJoiningInstructions,
+} from "./phone-location.js";
+import {
+  fitsHostAvailability,
+  remainingHostSlots,
+} from "./host-availability.js";
 import { issueManagedLogin } from "./managed-login.js";
 import {
   googleConnectionError,
@@ -173,13 +193,14 @@ async function throttle(r, kind, limit = 60) {
 function eventInput(v, uid) {
   const e = {
     ownerId: uid,
+    eventKind: v.eventKind === "group" ? "group" : "individual",
     title: text(v.title, 80),
     description: text(v.description, 2000),
     duration: Number(v.duration),
     minNotice: Number(v.minNotice ?? 120),
     horizonDays: Number(v.horizonDays ?? 60),
     bufferBefore: Number(v.bufferBefore ?? 0),
-    bufferAfter: Number(v.bufferAfter ?? 10),
+    bufferAfter: Number(v.bufferAfter ?? 0),
     dailyLimit: Number(v.dailyLimit ?? 8),
     capacity: Number(v.capacity ?? 100),
     cancelHours: Number(v.cancelHours ?? 0),
@@ -188,11 +209,7 @@ function eventInput(v, uid) {
     color: /^#[0-9a-f]{6}$/i.test(v.color) ? v.color : "#187b68",
     active: v.active !== false,
     notifications: notificationSettings(v.notifications),
-    questions: Array.isArray(v.questions)
-      ? v.questions
-          .slice(0, 10)
-          .map((q) => ({ label: text(q.label, 160), required: !!q.required }))
-      : [],
+    questions: normalizeQuestions(v.questions),
   };
   const bounds = {
     duration: [15, 240],
@@ -514,6 +531,7 @@ export const schedulerJoinMeeting = calendarWrap(async (r) => {
     : [];
   if ((event.questions || []).some((q, i) => q.required && !answers[i]))
     bad("Please answer the required questions.");
+  validateQuestionAnswers(event.questions, answers);
   await requireHost(event.ownerId);
   const result = await db.runTransaction(async (tx) => {
     const [currentEvent, booking, old] = await Promise.all([
@@ -596,7 +614,25 @@ export const schedulerJoinMeeting = calendarWrap(async (r) => {
         to: [email],
         message: {
           subject: `Registration confirmed: ${b.eventTitle}`,
-          text: `You are registered for ${b.eventTitle}.\nView joining details or cancel: ${origin()}/registration/${id}?token=${encodeURIComponent(token)}`,
+          ...meetingEmail({
+            booking: {
+              ...b,
+              participants: undefined,
+              attendeeName: name,
+              attendeeEmail: email,
+              notes: registration.notes,
+              answers: registration.answers,
+              questionLabels: registration.questionLabels,
+            },
+            person: { name, email, staff: false, response: "accepted" },
+            title: "Meeting confirmed",
+            time: DateTime.fromMillis(b.startAt, {
+              zone: b.timezone || "UTC",
+            }).toFormat("cccc, dd LLL yyyy · HH:mm ZZZZ"),
+            managementUrl: `${origin()}/registration/${id}?token=${encodeURIComponent(token)}`,
+            link: b.status === "confirmed" ? bookingJoiningInstructions(b) : "",
+            cancelled: false,
+          }),
         },
       });
     return { registration, booking: { ...b, participants } };
@@ -758,6 +794,27 @@ export const schedulerSaveEvent = slotWrap(async (r) => {
   ) {
     data.teamHostUids = participatingHosts(uid, data.teamHostUids);
   }
+  data.slotsVersion = r.data.slotsVersion ?? 0;
+  if (!Number.isSafeInteger(data.slotsVersion) || data.slotsVersion < 0)
+    bad("Invalid schedule version. Refresh the meeting.");
+  data.selfSchedulingHostUids = selfSchedulingHosts(
+    r.data.selfSchedulingHostUids || [],
+    data,
+  );
+  data.disabledHostUids =
+    data.eventKind === "group"
+      ? selectedUids(r.data.disabledHostUids).filter((hostId) =>
+          participatingHosts(uid, data.teamHostUids).includes(hostId),
+        )
+      : [];
+  if (data.eventKind === "group")
+    data.groupHostNames = Object.fromEntries(
+      participatingHosts(uid, data.teamHostUids).map((hostId) => [
+        hostId,
+        text(r.data.groupHostNames?.[hostId], 160) ||
+          (hostId === uid ? organizer.name : "Host"),
+      ]),
+    );
   const googleHostIds = participatingHosts(uid, data.teamHostUids);
   const identities = new Map(
     (await selectedUsers(getFirestore(), googleHostIds)).users.map((person) => [
@@ -791,7 +848,41 @@ export const schedulerSaveEvent = slotWrap(async (r) => {
       };
     }),
   );
-  const googleError = googleConnectionError(googleRequirements);
+  if (r.data.hostLocations) {
+    data.hostLocations = normalizeHostLocations(
+      r.data.hostLocations,
+      googleHostIds,
+      { ...data, hostPhones: r.data.hostPhones },
+      new Map(
+        googleHostIds.map((hostId, i) => [hostId, googleRequirements[i].name]),
+      ),
+    );
+    data.hostPhones = Object.fromEntries(
+      Object.entries(data.hostLocations)
+        .filter(([, choice]) => choice.location === "phone")
+        .map(([hostId, choice]) => [hostId, choice.phone]),
+    );
+  } else if (data.location === "phone") {
+    data.hostPhones = normalizeHostPhones(
+      r.data.hostPhones,
+      googleHostIds,
+      new Map(
+        googleHostIds.map((hostId, i) => [hostId, googleRequirements[i].name]),
+      ),
+    );
+    data.locationValue = "";
+  }
+  const googleError = googleConnectionError(
+    googleRequirements.filter(
+      (_, i) =>
+        eventForHost(data, googleHostIds[i]).location === "google-meet" &&
+        (data.eventKind !== "group" ||
+          (isGroupHostEnabled(data, googleHostIds[i]) &&
+            (r.data.hostSlots || []).some(
+              (slot) => slot.hostUid === googleHostIds[i],
+            ))),
+    ),
+  );
   if (googleError) throw new HttpsError("failed-precondition", googleError);
   if (data.schedulingMode === "host-slots") {
     if (
@@ -809,8 +900,23 @@ export const schedulerSaveEvent = slotWrap(async (r) => {
         data.teamHostUids.map(async (hostId) => {
           await requireHost(hostId);
           const profile = await collection("hosts").doc(hostId).get();
-          if (!profile.exists)
+          if (!profile.exists) {
+            if (
+              data.eventKind === "group" &&
+              !(r.data.hostSlots || []).some((slot) => slot.hostUid === hostId)
+            )
+              return [
+                hostId,
+                {
+                  name:
+                    data.groupHostNames?.[hostId] ||
+                    identities.get(hostId)?.name ||
+                    "Host",
+                  timezone: organizer.timezone || "UTC",
+                },
+              ];
             bad("Every host must complete their profile first.");
+          }
           return [hostId, profile.data()];
         }),
       ),
@@ -821,10 +927,29 @@ export const schedulerSaveEvent = slotWrap(async (r) => {
       profiles,
       data,
     );
+    data.hostSlots = data.hostSlots.filter(
+      (slot) =>
+        !isGroupHostEnabled(data, slot.hostUid) ||
+        fitsHostAvailability(slot, profiles.get(slot.hostUid), data.duration),
+    );
+    if (
+      data.eventKind !== "group" &&
+      !data.hostSlots.length &&
+      !data.selfSchedulingHostUids.length
+    )
+      bad(
+        "No selected times fall within the hosts' saved availability. Choose different dates or update Availability.",
+      );
+    data.teamHostUids = data.teamHostUids.filter(
+      (hostUid) =>
+        data.eventKind === "group" ||
+        data.hostSlots.some((slot) => slot.hostUid === hostUid) ||
+        data.selfSchedulingHostUids.includes(hostUid),
+    );
     const conflictChecks = await Promise.all(
       data.teamHostUids.map(async (hostUid) => {
         const slots = data.hostSlots.filter((slot) => slot.hostUid === hostUid);
-        if (!slots.length) return [];
+        if (!slots.length || !isGroupHostEnabled(data, hostUid)) return [];
         const start =
           Math.min(...slots.map((slot) => slot.startAt)) -
           data.bufferBefore * 60000;
@@ -873,7 +998,10 @@ export const schedulerSaveEvent = slotWrap(async (r) => {
       throw new HttpsError(
         "already-exists",
         "Some selected hosts already have meetings at the chosen times.",
-        { conflicts },
+        {
+          conflicts,
+          remainingSlots: remainingHostSlots(data.hostSlots, conflicts),
+        },
       );
   }
   if (!["named", "round-robin", "host-choice"].includes(data.assignmentMode))
@@ -959,13 +1087,15 @@ export const schedulerSaveEvent = slotWrap(async (r) => {
               providers = await connections(hostUid);
             if (providers.some((p) => p !== "zoom") && !calendarConfigured)
               bad("Configure calendar OAuth before scheduling team meetings.");
+            const hostEvent = eventForHost(data, hostUid);
             const providerReady =
-              (data.location !== "google-meet" ||
-                data.locationValue ||
+              (hostEvent.location !== "google-meet" ||
+                hostEvent.locationValue ||
                 providers.includes("google")) &&
-              (data.location !== "teams" || providers.includes("microsoft")) &&
-              (data.location !== "zoom" ||
-                data.locationValue ||
+              (hostEvent.location !== "teams" ||
+                providers.includes("microsoft")) &&
+              (hostEvent.location !== "zoom" ||
+                hostEvent.locationValue ||
                 providers.includes("zoom") ||
                 (process.env.ZOOM_ACCOUNT_ID && process.env.ZOOM_CLIENT_ID));
             const busy = providerReady
@@ -1017,6 +1147,11 @@ export const schedulerSaveEvent = slotWrap(async (r) => {
       throw new HttpsError(
         "permission-denied",
         "This event belongs to another host.",
+      );
+    if (old.exists && (old.data().slotsVersion || 0) !== data.slotsVersion)
+      throw new HttpsError(
+        "aborted",
+        "A host updated their slots since you opened this meeting. Refresh before saving so their changes are preserved.",
       );
     if (assigned.exists) {
       if (isDeepStrictEqual(old.data(), data)) return;
@@ -1091,14 +1226,17 @@ export const schedulerSaveEvent = slotWrap(async (r) => {
           },
           updatedAt: Date.now(),
         });
+      const chosenEvent = eventForHost(data, chosen.uid);
       const roomKey =
-        data.location === "meetly"
+        chosenEvent.location === "meetly"
           ? `meetly-${crypto.randomBytes(24).toString("hex")}`
           : null;
       const meetingUrl =
-        data.location === "meetly"
+        chosenEvent.location === "meetly"
           ? `${origin()}/room/${bookingRef.id}`
-          : data.locationValue;
+          : chosenEvent.location === "phone"
+            ? chosenEvent.locationValue || phoneInstructions(data, chosen.uid)
+            : chosenEvent.locationValue;
       tx.create(bookingRef, {
         ownerId: chosen.uid,
         organizerId: uid,
@@ -1107,6 +1245,7 @@ export const schedulerSaveEvent = slotWrap(async (r) => {
         notifications: data.notifications,
         eventId: id,
         eventTitle: data.title,
+        eventDescription: data.description || "",
         hostName: chosen.host.name,
         hostEmail: chosen.host.email,
         timezone: organizer.timezone,
@@ -1124,8 +1263,11 @@ export const schedulerSaveEvent = slotWrap(async (r) => {
         lockStart,
         lockEnd,
         status: "confirmed",
-        location: data.location,
-        locationValue: data.locationValue,
+        location: chosenEvent.location,
+        locationValue:
+          chosenEvent.location === "phone"
+            ? meetingUrl
+            : chosenEvent.locationValue,
         meetingUrl,
         roomKey,
         cancelHours: data.cancelHours,
@@ -1181,8 +1323,169 @@ export const schedulerSaveEvent = slotWrap(async (r) => {
       });
     }
     tx.set(ref, data);
+    for (const hostUid of old.data()?.selfSchedulingHostUids || []) {
+      if (!data.selfSchedulingHostUids.includes(hostUid))
+        tx.delete(collection("host_assignments").doc(`${id}_${hostUid}`));
+    }
+    for (const hostUid of data.selfSchedulingHostUids)
+      tx.set(
+        collection("host_assignments").doc(`${id}_${hostUid}`),
+        hostAssignment(id, data, hostUid),
+      );
+    tx.set(collection("public_events").doc(id), {
+      ownerId: data.ownerId,
+      eventKind: data.eventKind,
+      disabledHostUids: data.disabledHostUids || [],
+      groupHostNames: data.groupHostNames || {},
+      active: data.active,
+      duration: data.duration,
+      minNotice: data.minNotice,
+      teamHostUids: data.teamHostUids || [],
+      schedulingMode: data.schedulingMode,
+      hostSlots: data.hostSlots || [],
+      fixedStartAt: data.fixedStartAt || null,
+      meetingTimezone: data.meetingTimezone || organizer.timezone || "UTC",
+      hostName: organizer.name || "Organizer",
+      updatedAt: Date.now(),
+    });
   });
   return { id };
+});
+// Delegation is scoped to this host's slots for this event; no title/team/location edits.
+export const schedulerSaveOwnSlots = slotWrap(async (r) => {
+  const uid = await hostUser(r),
+    id = safeId(r.data.eventId);
+  const ref = collection("events").doc(id);
+  const snapshot = await ref.get();
+  const event = snapshot.data();
+  assertSelfScheduling(event, uid);
+  const profileRef = collection("hosts").doc(uid),
+    profileSnapshot = await profileRef.get();
+  if (!profileSnapshot.exists) bad("Complete your host profile first.");
+  const profile = profileSnapshot.data();
+  if (!Array.isArray(r.data.hostSlots)) bad("Choose valid host times.");
+  let slots = r.data.hostSlots.length
+    ? normalizeHostSlots(r.data.hostSlots, [uid], new Map([[uid, profile]]), {
+        ...event,
+        ownerId: uid,
+        selfSchedulingHostUids: [],
+      })
+    : [];
+  slots = slots.filter((slot) =>
+    fitsHostAvailability(slot, profile, event.duration),
+  );
+  const newSlots = slots.filter(
+    (slot) =>
+      !(event.hostSlots || []).some(
+        (old) => old.hostUid === uid && old.startAt === slot.startAt,
+      ),
+  );
+  if (newSlots.length) {
+    const ownEvent = eventForHost(event, uid);
+    if (
+      ownEvent.location === "google-meet" &&
+      !ownEvent.locationValue &&
+      !(await connections(uid)).includes("google")
+    )
+      throw new HttpsError(
+        "failed-precondition",
+        "Connect your Google account in Integrations before publishing Google Meet slots.",
+      );
+    const start =
+      Math.min(...newSlots.map((slot) => slot.startAt)) -
+      event.bufferBefore * 60000;
+    const end =
+      Math.max(...newSlots.map((slot) => slot.startAt)) +
+      (event.duration + event.bufferAfter) * 60000;
+    const [busy, bookings] = await Promise.all([
+      busyForHost(uid, start, end),
+      collection("bookings")
+        .where("ownerId", "==", uid)
+        .where("startAt", ">=", start - 86400000)
+        .where("startAt", "<=", end + 86400000)
+        .get(),
+    ]);
+    const blocked = [
+      ...busy,
+      ...bookings.docs
+        .filter((doc) => doc.data().status === "confirmed")
+        .map((doc) => ({
+          start: doc.data().lockStart,
+          end: doc.data().lockEnd,
+        })),
+    ];
+    const conflicts = newSlots
+      .filter((slot) =>
+        blocked.some((interval) =>
+          overlap(
+            {
+              start: slot.startAt - event.bufferBefore * 60000,
+              end: slot.startAt + (event.duration + event.bufferAfter) * 60000,
+            },
+            interval,
+          ),
+        ),
+      )
+      .map((slot) => ({
+        hostUid: uid,
+        hostName: profile.name || "Host",
+        startAt: slot.startAt,
+      }));
+    if (conflicts.length)
+      throw new HttpsError(
+        "already-exists",
+        "Some of your times overlap existing meetings.",
+        { conflicts, remainingSlots: remainingHostSlots(slots, conflicts) },
+      );
+  }
+  await db.runTransaction(async (tx) => {
+    const [current, hostNow] = await Promise.all([
+      tx.get(ref),
+      tx.get(profileRef),
+    ]);
+    assertSelfScheduling(current.data(), uid);
+    if (
+      !isDeepStrictEqual(current.data(), event) ||
+      !isDeepStrictEqual(hostNow.data(), profile)
+    )
+      throw new HttpsError(
+        "aborted",
+        "The meeting or your availability changed. Refresh and try again.",
+      );
+    const allSlots = replaceOwnSlots(current.data(), uid, slots);
+    tx.update(ref, {
+      hostSlots: allSlots,
+      slotsVersion: (event.slotsVersion || 0) + 1,
+      updatedAt: Date.now(),
+    });
+    tx.set(collection("public_events").doc(id), {
+      ownerId: event.ownerId,
+      eventKind: event.eventKind || "individual",
+      disabledHostUids: event.disabledHostUids || [],
+      groupHostNames: event.groupHostNames || {},
+      active: event.active,
+      duration: event.duration,
+      minNotice: event.minNotice,
+      teamHostUids: event.teamHostUids,
+      schedulingMode: event.schedulingMode,
+      hostSlots: allSlots,
+      updatedAt: Date.now(),
+    });
+    tx.set(
+      collection("host_assignments").doc(`${id}_${uid}`),
+      hostAssignment(id, { ...event, hostSlots: allSlots }, uid),
+    );
+    tx.create(collection("audit").doc(), {
+      action: "host-own-slots-updated",
+      actor: uid,
+      eventId: id,
+      ownerId: event.ownerId,
+      at: Date.now(),
+      before: (event.hostSlots || []).filter((slot) => slot.hostUid === uid),
+      after: slots,
+    });
+  });
+  return { ok: true, hostSlots: slots };
 });
 export const schedulerDeleteEvent = wrap(async (r) => {
   const uid = await hostUser(r);
@@ -1212,6 +1515,9 @@ export const schedulerDeleteEvent = wrap(async (r) => {
       );
     }
     tx.update(ref, { active: false, deletedAt: Date.now(), deletedBy: uid });
+    tx.delete(collection("public_events").doc(ref.id));
+    for (const hostUid of event.data().selfSchedulingHostUids || [])
+      tx.delete(collection("host_assignments").doc(`${ref.id}_${hostUid}`));
     tx.create(collection("audit").doc(), {
       action: "event-deleted",
       eventId: ref.id,
@@ -1226,11 +1532,21 @@ function publicEvent(doc) {
     participantUids = [],
     teamHostUids,
     locationValue,
+    hostPhones,
+    hostLocations,
+    selfSchedulingHostUids,
+    slotsVersion,
     ...event
   } = doc.data();
+  const publicData = activeGroupEvent({
+    ...event,
+    ...(event.eventKind === "group"
+      ? { teamHostUids: teamHostUids || [] }
+      : {}),
+  });
   return {
     id: doc.id,
-    ...event,
+    ...publicData,
     locationValue: "",
     assignedCount: participantUids.length,
   };
@@ -1288,17 +1604,19 @@ async function context(
   const ev = await collection("events").doc(safeId(eventId)).get();
   if (!ev.exists || !ev.data().active)
     throw new HttpsError("not-found", "This event is unavailable.");
-  const event = ev.data();
+  let event = ev.data();
   const hostId =
     event.schedulingMode === "host-slots" ? selectedHostId : event.ownerId;
   if (
     !hostId ||
+    !isGroupHostEnabled(event, hostId) ||
     (event.schedulingMode === "host-slots" &&
       !participatingHosts(event.ownerId, event.teamHostUids || []).includes(
         hostId,
       ))
   )
     bad("Choose a participating host.");
+  event = eventForHost(event, hostId);
   const hs = await collection("hosts").doc(hostId).get();
   if (!hs.exists) bad("Host is unavailable.");
   await requireHost(hostId);
@@ -1366,6 +1684,7 @@ async function context(
     hostId,
     event,
     eventId: ev.id,
+    sourceEvent: ev.data(),
     query,
     date,
     busy,
@@ -1385,20 +1704,99 @@ export const schedulerSlots = slotWrap(async (r) => {
   await throttle(r, "slots", 120);
   const event = await collection("events").doc(safeId(r.data.eventId)).get();
   if (!event.exists || !event.data().active) bad("Event is unavailable.");
-  if (event.data().schedulingMode === "host-slots") {
+  if (r.data.diagnostics === true) {
+    const requester = await hostUser(r);
+    if (requester !== event.data().ownerId)
+      throw new HttpsError(
+        "permission-denied",
+        "This signed-in account is not the event organizer.",
+      );
+  }
+  if (event.data().schedulingMode === "fixed") {
     const data = event.data();
-    const hostIds = participatingHosts(data.ownerId, data.teamHostUids || []);
+    if (!Number.isSafeInteger(data.fixedStartAt))
+      bad(
+        "This fixed event has no valid saved start time. Open its editor and save its date and time.",
+      );
+    const profile = await collection("hosts").doc(data.ownerId).get();
+    const date = DateTime.fromMillis(data.fixedStartAt, {
+      zone: profile.data()?.timezone || data.meetingTimezone || "UTC",
+    }).toISODate();
+    const c = await context(event.id, date);
+    const slots = c.slots.map((slot) => ({
+      ...slot,
+      hostUid: c.hostId,
+      hostName: c.host.name,
+    }));
+    return {
+      timezone: c.host.timezone,
+      slots,
+      hosts: [
+        {
+          uid: c.hostId,
+          name: c.host.name,
+          organizer: true,
+          publishedCount: 1,
+          availableCount: slots.length,
+        },
+      ],
+      ...(r.data.diagnostics === true
+        ? {
+            diagnostics: [
+              {
+                hostUid: c.hostId,
+                hostName: c.host.name,
+                startAt: data.fixedStartAt,
+                reason: hostSlotReason({ startAt: data.fixedStartAt }, data, c),
+              },
+            ],
+          }
+        : {}),
+    };
+  }
+  if (
+    r.data.diagnostics === true &&
+    event.data().schedulingMode !== "host-slots"
+  )
+    throw new HttpsError(
+      "failed-precondition",
+      "This event uses recurring availability rather than saved appointment times. Check the organizer's Availability settings, or save a fixed date or host-specific times in the event editor.",
+    );
+  if (event.data().schedulingMode === "host-slots") {
+    const data = activeGroupEvent(event.data());
+    const hostIds = participatingHosts(
+      data.ownerId,
+      data.teamHostUids || [],
+    ).filter((uid) => isGroupHostEnabled(data, uid));
+    if (!hostIds.length) return { timezone: "UTC", slots: [], hosts: [] };
     const snapshots = await db.getAll(
       ...hostIds.map((uid) => collection("hosts").doc(uid)),
     );
     const profiles = new Map(
       snapshots.filter((s) => s.exists).map((s) => [s.id, s.data()]),
     );
-    const diagnosticsAllowed =
-      r.data.diagnostics === true && r.auth?.uid === data.ownerId;
-    if (diagnosticsAllowed) await hostUser(r);
+    const diagnosticsAllowed = r.data.diagnostics === true;
+    if (diagnosticsAllowed) {
+      const requester = await hostUser(r);
+      if (requester !== data.ownerId)
+        throw new HttpsError(
+          "permission-denied",
+          "This signed-in account is not the event organizer. Sign in with the account that created this event to inspect its availability reasons.",
+        );
+    }
+    const requestedSlot =
+      r.data.hostUid && Number.isSafeInteger(r.data.startAt)
+        ? (data.hostSlots || []).filter(
+            (slot) =>
+              slot.hostUid === r.data.hostUid &&
+              slot.startAt === r.data.startAt,
+          )
+        : null;
     const results = await Promise.all(
-      hostSlotGroups(data, profiles).map(async (group) => {
+      hostSlotGroups(
+        requestedSlot ? { ...data, hostSlots: requestedSlot } : data,
+        profiles,
+      ).map(async (group) => {
         const rows = (data.hostSlots || []).filter(
           (s) =>
             s.hostUid === group.hostUid &&
@@ -1446,7 +1844,10 @@ export const schedulerSlots = slotWrap(async (r) => {
       .sort((a, b) => a.start - b.start);
     const hosts = hostIds.map((uid) => ({
       uid,
-      name: profiles.get(uid)?.name || "Host unavailable",
+      name:
+        profiles.get(uid)?.name ||
+        data.groupHostNames?.[uid] ||
+        "Host unavailable",
       organizer: uid === data.ownerId,
       publishedCount: (data.hostSlots || []).filter((s) => s.hostUid === uid)
         .length,
@@ -1594,7 +1995,7 @@ async function book(r, reschedule = false) {
       zone: hs.data().timezone,
     }).toISODate(),
     c = await context(eventId, date, old ? ref.id : null, selectedHostId);
-  if (JSON.stringify(c.event) !== JSON.stringify(ev.data()))
+  if (!sameBookingSettings(c.sourceEvent, ev.data()))
     throw new HttpsError(
       "aborted",
       "Meeting settings changed. Refresh and try again.",
@@ -1642,12 +2043,16 @@ async function book(r, reschedule = false) {
       : []);
   if (c.event.questions.some((q, i) => q.required && !answers[i]))
     bad("Please answer all required questions.");
+  if (!old) validateQuestionAnswers(c.event.questions, answers);
   const id = old ? ref.id : safeId(v.requestId),
     token = old
       ? unseal(old.tokenCipher).token
       : crypto.randomBytes(32).toString("base64url");
   ref = ref || collection("bookings").doc(id);
-  const event = c.event,
+  const event =
+      c.event.location === "phone"
+        ? { ...c.event, locationValue: phoneInstructions(c.event, c.hostId) }
+        : c.event,
     endAt = startAt + event.duration * 60000,
     lockStart = startAt - event.bufferBefore * 60000,
     lockEnd = endAt + event.bufferAfter * 60000;
@@ -1661,6 +2066,7 @@ async function book(r, reschedule = false) {
     ownerId: c.hostId,
     eventId,
     eventTitle: event.title,
+    eventDescription: event.description || "",
     hostName: c.host.name,
     hostEmail: c.host.email,
     timezone: c.host.timezone,
@@ -1742,12 +2148,12 @@ async function book(r, reschedule = false) {
     ]);
     if (!hostNow.exists || !eventNow.exists || !eventNow.data().active)
       throw new HttpsError("failed-precondition", "Event is unavailable.");
-    if (JSON.stringify(hostNow.data()) !== JSON.stringify(c.host))
+    if (!sameBookingSettings(hostNow.data(), c.host))
       throw new HttpsError(
         "aborted",
         "Host availability changed. Choose a time again.",
       );
-    if (JSON.stringify(eventNow.data()) !== JSON.stringify(event))
+    if (!sameBookingSettings(eventNow.data(), c.sourceEvent))
       throw new HttpsError(
         "aborted",
         "Event settings changed. Choose a time again.",
@@ -2041,12 +2447,27 @@ async function mail(b, id, kind) {
     );
   else
     participants = [
-      { uid: "attendee", email: b.attendeeEmail, response: "accepted" },
+      {
+        uid: "attendee",
+        name: b.attendeeName,
+        email: b.attendeeEmail,
+        response: "accepted",
+      },
     ];
   const recipients = [
     ...participants.map((p) => ({ ...p, staff: false })),
     ...staff.map((p) => ({ ...p, staff: true, response: "accepted" })),
   ];
+  const emailBooking = await emailBookingDetails(
+    b,
+    id,
+    async (registrationId) => {
+      const snapshot = await collection("registrations")
+        .doc(safeId(registrationId))
+        .get();
+      return snapshot.exists ? snapshot.data() : null;
+    },
+  );
   for (const person of recipients) {
     const state = responseStatus(person),
       effectiveKind =
@@ -2080,11 +2501,7 @@ async function mail(b, id, kind) {
       managementUrl = `${origin()}/manage/${id}?token=${encodeURIComponent(unseal(b.tokenCipher).token)}`;
     const link =
       state === "accepted" && kind !== "cancel"
-        ? b.meetingUrl || b.locationValue || ""
-        : "";
-    const roster =
-      person.staff && b.participants?.length
-        ? `\nAttendees: ${b.participants.map((p) => `${p.name} (${responseStatus(p)})`).join(", ")}`
+        ? bookingJoiningInstructions(b)
         : "";
     const suffix = person.staff
       ? b.participants?.length && kind.startsWith("reminder")
@@ -2104,7 +2521,15 @@ async function mail(b, id, kind) {
           createdAt: Date.now(),
           message: {
             subject: `${title}: ${b.eventTitle}`,
-            text: `${title}\n${b.eventTitle}\n${time}\nWith ${b.hostName}\n${link}${roster}\nView details: ${managementUrl}`,
+            ...meetingEmail({
+              booking: emailBooking,
+              person,
+              title,
+              time,
+              managementUrl,
+              link,
+              cancelled: kind === "cancel",
+            }),
           },
         });
     } catch (e) {

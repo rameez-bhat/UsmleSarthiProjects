@@ -1,4 +1,6 @@
-import React from "react";
+import { EventShortLink } from "../components/EventShortLink";
+import { GroupHostManager } from "../components/GroupHostManager";
+import React, { useState } from "react";
 import { initialEvent, fmt, time } from "../shared/utils";
 import {
   Plus,
@@ -24,7 +26,55 @@ export function EventTypesPage({
   saveEvent,
   setModal,
   upcoming,
+  viewerUid,
 }) {
+  const [eventTab, setEventTab] = useState("own");
+  const [selectedGroup, setSelectedGroup] = useState(null);
+  const [groupUpdates, setGroupUpdates] = useState({});
+  const loadedEvents = events.map((event) =>
+    groupUpdates[event.id] &&
+    (groupUpdates[event.id].slotsVersion || 0) > (event.slotsVersion || 0)
+      ? groupUpdates[event.id]
+      : event,
+  );
+  const isMultiple = (event) =>
+    new Set([event.ownerId, ...(event.teamHostUids || [])].filter(Boolean))
+      .size > 1;
+  const groups = {
+    group: loadedEvents.filter((e) => e.eventKind === "group"),
+    multiple: loadedEvents.filter(
+      (e) => e.eventKind !== "group" && isMultiple(e),
+    ),
+    own: loadedEvents.filter(
+      (e) =>
+        e.eventKind !== "group" &&
+        !isMultiple(e) &&
+        (!viewerUid || e.ownerId === viewerUid),
+    ),
+  };
+  const visibleEvents = groups[eventTab];
+  if (selectedGroup)
+    return (
+      <GroupHostManager
+        key={selectedGroup.id}
+        initialEvent={
+          loadedEvents.find((event) => event.id === selectedGroup.id) ||
+          selectedGroup
+        }
+        profile={profile}
+        back={() => {
+          setSelectedGroup(null);
+          setEventTab("group");
+        }}
+        setModal={setModal}
+        eventLink={eventLink}
+        copy={copy}
+        onUpdated={(event) =>
+          setGroupUpdates((old) => ({ ...old, [event.id]: event }))
+        }
+        saveEvent={saveEvent}
+      />
+    );
   return (
     <>
       <div className="page-heading">
@@ -45,12 +95,21 @@ export function EventTypesPage({
               type: "event",
               event: {
                 ...initialEvent,
+                ...(eventTab === "group"
+                  ? {
+                      eventKind: "group",
+                      schedulingMode: "host-slots",
+                      scheduleCategory: "host-slots",
+                      assignmentMode: "host-choice",
+                      multipleHostTimes: true,
+                    }
+                  : {}),
               },
             })
           }
         >
           <Plus size={18} />
-          New event type
+          {eventTab === "group" ? "New group event" : "New event type"}
         </button>
       </div>
       <div className="overview-strip">
@@ -95,7 +154,7 @@ export function EventTypesPage({
       <div className="section-top">
         <div>
           <h2>
-            Your event types <span>{events.length}</span>
+            Your event types <span>{visibleEvents.length}</span>
           </h2>
           <p>One link. The right conversation.</p>
         </div>
@@ -128,129 +187,218 @@ export function EventTypesPage({
           New dated meeting
         </button>
       </div>
-      <div className="event-grid">
-        {events.map((e) => (
-          <article
-            className={"event-card" + (!e.active ? " paused" : "")}
-            key={e.id}
-            style={{
-              "--event-color": e.color,
-            }}
+      <div
+        className="schedule-tabs"
+        role="tablist"
+        aria-label="Event categories"
+      >
+        {[
+          ["group", "Group Meetings"],
+          ["multiple", "Multiple Hosts"],
+          ["own", "Admin Meetings"],
+        ].map(([key, label]) => (
+          <button
+            type="button"
+            role="tab"
+            key={key}
+            id={`event-tab-${key}`}
+            aria-controls="event-category-panel"
+            aria-selected={eventTab === key}
+            className={eventTab === key ? "active" : ""}
+            onClick={() => setEventTab(key)}
           >
-            <div className="event-card-top">
-              <span className="event-symbol">
-                <Video size={21} />
-              </span>
-              <button
-                className={"toggle " + (e.active ? "on" : "")}
-                aria-label={`${e.active ? "Pause" : "Enable"} ${e.title}`}
-                aria-pressed={e.active}
-                onClick={() =>
-                  saveEvent({
-                    ...e,
-                    active: !e.active,
-                  })
-                }
-              >
-                <span />
-              </button>
-            </div>
-            <p className="small-text muted">
-              {e.participantUids?.length
-                ? "Calendar sync status is shown in Bookings."
-                : "Booking link — a calendar appointment is created after registration."}
-            </p>
-            <span className="event-kind">
-              {e.schedulingMode === "fixed" ? "DATED MEETING" : "ONE-ON-ONE"}
-            </span>
-            <h3>{e.title}</h3>
-            {e.schedulingMode === "fixed" && (
-              <p className="meeting-date">
-                <CalendarDays size={15} />
-                <span>
-                  {fmt(e.fixedStartAt, profile.timezone, {
-                    year: "numeric",
-                  })}{" "}
-                  · {time(e.fixedStartAt, profile.timezone)} ({profile.timezone}
-                  )
-                </span>
-              </p>
-            )}
-            <span className="badge neutral">
-              {e.audience === "registered"
-                ? "Registered users only"
-                : "Anyone with the link"}
-            </span>
-            <p>
-              {e.description ||
-                "A focused conversation, at a time that works for both of you."}
-            </p>
-            <div className="event-meta">
-              <span>
-                <Clock size={15} />
-                {e.duration} min
-              </span>
-              <span>
-                {e.location === "in-person" ? (
-                  <MapPin size={15} />
-                ) : e.location === "phone" ? (
-                  <Phone size={15} />
-                ) : (
-                  <Video size={15} />
-                )}
-                {
-                  {
-                    "google-meet": "Google Meet",
-                    teams: "Microsoft Teams",
-                    custom: "Meeting link",
-                    phone: "Phone call",
-                    "in-person": "In person",
-                  }[e.location]
-                }
-              </span>
-            </div>
-            <div className="event-card-bottom">
-              <button onClick={() => copy(eventLink(e))}>
-                <Copy size={15} />
-                Copy link
-              </button>
-              <button
-                onClick={() =>
-                  setModal({
-                    type: "event",
-                    event: e,
-                  })
-                }
-              >
-                Edit <ArrowUpRight size={15} />
-              </button>
-              <button
-                type="button"
-                className="danger-text"
-                onClick={() => deleteEvent(e)}
-              >
-                Delete event
-              </button>
-            </div>
-          </article>
+            {label}{" "}
+            <span className="event-tab-count">{groups[key].length}</span>
+          </button>
         ))}
-        <button
-          className="new-event-card"
-          onClick={() =>
-            setModal({
-              type: "event",
-              event: {
-                ...initialEvent,
-              },
-            })
-          }
-        >
-          <span>
-            <Plus size={24} />
-          </span>
-          <strong>Make room for something new</strong>
-          <p>Create a meeting that fits your day.</p>
-        </button>
+      </div>
+      <div
+        id="event-category-panel"
+        role="tabpanel"
+        aria-labelledby={`event-tab-${eventTab}`}
+      >
+        {!visibleEvents.length && (
+          <div className="schedule-empty">
+            <h3>No meetings in this category</h3>
+            <p>Created meetings matching this category will appear here.</p>
+          </div>
+        )}
+        <div className="event-grid">
+          {visibleEvents.map((e) => (
+            <article
+              className={"event-card" + (!e.active ? " paused" : "")}
+              key={e.id}
+              style={{
+                "--event-color": e.color,
+              }}
+            >
+              {e.eventKind === "group" && (
+                <button
+                  type="button"
+                  className="primary"
+                  onClick={() => setSelectedGroup(e)}
+                >
+                  Open group
+                </button>
+              )}
+              <div className="event-card-top">
+                <span className="event-symbol">
+                  <Video size={21} />
+                </span>
+                <button
+                  className={"toggle " + (e.active ? "on" : "")}
+                  aria-label={`${e.active ? "Pause" : "Enable"} ${e.title}`}
+                  aria-pressed={e.active}
+                  onClick={() =>
+                    saveEvent({
+                      ...e,
+                      active: !e.active,
+                    })
+                  }
+                >
+                  <span />
+                </button>
+              </div>
+              <p className="small-text muted">
+                {e.participantUids?.length
+                  ? "Calendar sync status is shown in Bookings."
+                  : "Booking link — a calendar appointment is created after registration."}
+              </p>
+              <span className="event-kind">
+                {e.schedulingMode === "fixed" ? "DATED MEETING" : "ONE-ON-ONE"}
+              </span>
+              <h3>
+                {e.eventKind === "group" ? (
+                  <button
+                    type="button"
+                    className="text-button"
+                    onClick={() => setSelectedGroup(e)}
+                  >
+                    {e.title}
+                  </button>
+                ) : (
+                  e.title
+                )}
+              </h3>
+              {e.schedulingMode === "fixed" && (
+                <p className="meeting-date">
+                  <CalendarDays size={15} />
+                  <span>
+                    {fmt(e.fixedStartAt, profile.timezone, {
+                      year: "numeric",
+                    })}{" "}
+                    · {time(e.fixedStartAt, profile.timezone)} (
+                    {profile.timezone})
+                  </span>
+                </p>
+              )}
+              <span className="badge neutral">
+                {e.audience === "registered"
+                  ? "Registered users only"
+                  : "Anyone with the link"}
+              </span>
+              <p>
+                {e.description ||
+                  "A focused conversation, at a time that works for both of you."}
+              </p>
+              <div className="event-meta">
+                <span>
+                  <Clock size={15} />
+                  {e.duration} min
+                </span>
+                <span>
+                  {e.location === "in-person" ? (
+                    <MapPin size={15} />
+                  ) : e.location === "phone" ? (
+                    <Phone size={15} />
+                  ) : (
+                    <Video size={15} />
+                  )}
+                  {
+                    {
+                      "google-meet": "Google Meet",
+                      teams: "Microsoft Teams",
+                      custom: "Meeting link",
+                      phone: "Phone call",
+                      "in-person": "In person",
+                    }[e.location]
+                  }
+                </span>
+              </div>
+              {e.eventKind === "group" && (
+                <p className="small-text">
+                  Group event · One topic, multiple hosts
+                </p>
+              )}
+              <EventShortLink event={e} slug={profile.slug} copy={copy} />
+              <div className="event-card-bottom">
+                <button onClick={() => copy(eventLink(e))}>
+                  <Copy size={15} />
+                  Copy link
+                </button>
+                {e.eventKind === "group" && !!e.hostSlots?.length && (
+                  <details>
+                    <summary>Host-specific event links</summary>
+                    {[
+                      ...new Map(
+                        e.hostSlots.map((slot) => [
+                          slot.hostUid,
+                          slot.hostName || "Host",
+                        ]),
+                      ).entries(),
+                    ].map(([uid, name]) => (
+                      <button
+                        type="button"
+                        key={uid}
+                        onClick={() =>
+                          copy(
+                            `${eventLink(e)}?host=${encodeURIComponent(uid)}`,
+                          )
+                        }
+                      >
+                        Copy {name} link
+                      </button>
+                    ))}
+                  </details>
+                )}
+                <button
+                  onClick={() =>
+                    setModal({
+                      type: "event",
+                      event: e,
+                    })
+                  }
+                >
+                  Edit <ArrowUpRight size={15} />
+                </button>
+                <button
+                  type="button"
+                  className="danger-text"
+                  onClick={() => deleteEvent(e)}
+                >
+                  Delete event
+                </button>
+              </div>
+            </article>
+          ))}
+          <button
+            className="new-event-card"
+            onClick={() =>
+              setModal({
+                type: "event",
+                event: {
+                  ...initialEvent,
+                },
+              })
+            }
+          >
+            <span>
+              <Plus size={24} />
+            </span>
+            <strong>Make room for something new</strong>
+            <p>Create a meeting that fits your day.</p>
+          </button>
+        </div>
       </div>
       <div className="bottom-grid">
         <div className="next-card">

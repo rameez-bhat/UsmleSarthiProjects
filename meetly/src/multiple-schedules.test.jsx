@@ -123,6 +123,10 @@ test("named host conflicts require explicit removal and preserve free hosts", ()
       modal={{
         type: "event",
         event,
+        remainingSlots: [
+          event.hostSlots[0],
+          { ...event.hostSlots[1], time: "11:00" },
+        ],
         conflicts: [
           {
             hostUid: "pawan",
@@ -140,13 +144,20 @@ test("named host conflicts require explicit removal and preserve free hosts", ()
   expect(screen.getByText(/Pawan —/)).toBeTruthy();
   expect(saveEvent).not.toHaveBeenCalled();
   fireEvent.click(
-    screen.getByRole("button", { name: "Remove conflicting hosts’ times" }),
+    screen.getByRole("button", {
+      name: "Save without conflicting dates and times",
+    }),
   );
-  fireEvent.submit(container.querySelector("form"));
   expect(
-    saveEvent.mock.calls[0][0].hostSlots.map((slot) => slot.hostUid),
-  ).toEqual(["shafi"]);
-  expect(saveEvent.mock.calls[0][0].teamHostUids).toEqual([]);
+    saveEvent.mock.calls[0][0].hostSlots.map((slot) => [
+      slot.hostUid,
+      slot.time,
+    ]),
+  ).toEqual([
+    ["shafi", "10:00"],
+    ["pawan", "11:00"],
+  ]);
+  expect(saveEvent.mock.calls[0][0].teamHostUids).toEqual(["pawan"]);
 });
 
 test("Save includes per-host date and time ranges without Add choices or old time rows", () => {
@@ -169,4 +180,128 @@ test("Save includes per-host date and time ranges without Add choices or old tim
       .map((slot) => slot.time),
   ).toEqual(["09:00", "09:30", "10:00", "10:30", "11:00"]);
   expect(screen.queryByRole("button", { name: /Add choices/ })).toBeNull();
+});
+
+test("organizer can save a host-specific meeting pending an enabled host's own times", () => {
+  const { saveEvent, container } = show({ ...base, teamHostUids: ["pawan"] });
+  const checkbox = screen.getByLabelText(
+    /Allow this host to manage their own slots for this meeting/,
+  );
+  expect(checkbox.checked).toBe(false);
+  fireEvent.click(checkbox);
+  fireEvent.submit(container.querySelector("form"));
+  expect(saveEvent).toHaveBeenCalledTimes(1);
+  expect(saveEvent.mock.calls[0][0].selfSchedulingHostUids).toEqual(["pawan"]);
+  expect(saveEvent.mock.calls[0][0].teamHostUids).toEqual(["pawan"]);
+  expect(saveEvent.mock.calls[0][0].hostSlots).toEqual([]);
+});
+
+test("conflict confirmation retains a permitted host who has not published times yet", () => {
+  const saveEvent = vi.fn();
+  const event = {
+    ...base,
+    id: "shared",
+    schedulingMode: "host-slots",
+    multipleHostTimes: true,
+    teamHostUids: ["pawan"],
+    selfSchedulingHostUids: ["pawan"],
+    hostSlots: [
+      { hostUid: "shafi", date: "2026-12-01", time: "10:00", timezone: "UTC" },
+    ],
+  };
+  render(
+    <Modal
+      modal={{
+        type: "event",
+        event,
+        conflicts: [{ hostUid: "shafi", hostName: "Shafi", startAt: 1 }],
+        remainingSlots: [event.hostSlots[0]],
+      }}
+      close={vi.fn()}
+      saveEvent={saveEvent}
+      hostTimezone="UTC"
+      organizer={{ uid: "shafi", name: "Shafi" }}
+    />,
+  );
+  fireEvent.click(
+    screen.getByRole("button", {
+      name: "Save without conflicting dates and times",
+    }),
+  );
+  expect(saveEvent.mock.calls[0][0].teamHostUids).toEqual(["pawan"]);
+  expect(saveEvent.mock.calls[0][0].selfSchedulingHostUids).toEqual(["pawan"]);
+});
+
+test("editing one saved date preserves its time and every other host appointment", async () => {
+  const saved = [
+    {
+      hostUid: "shafi",
+      date: "2026-12-01",
+      time: "10:30",
+      timezone: "Asia/Kolkata",
+      startAt: 123,
+      hostDate: "2026-12-01",
+    },
+    {
+      hostUid: "shafi",
+      date: "2026-12-03",
+      time: "11:00",
+      timezone: "Asia/Kolkata",
+    },
+    {
+      hostUid: "pawan",
+      date: "2026-12-04",
+      time: "12:00",
+      timezone: "Asia/Kolkata",
+    },
+  ];
+  const { saveEvent, container } = show({
+    ...base,
+    id: "saved-event",
+    schedulingMode: "host-slots",
+    multipleHostTimes: true,
+    teamHostUids: ["pawan"],
+    hostSlots: saved,
+  });
+  expect(screen.getByLabelText("Saved appointment 1 date").value).toBe(
+    "2026-12-01",
+  );
+  expect(screen.getByLabelText("Saved appointment 1 time").value).toBe("10:30");
+  fireEvent.change(screen.getByLabelText("Saved appointment 1 date"), {
+    target: { value: "2026-12-02" },
+  });
+  fireEvent.submit(container.querySelector("form"));
+  await waitFor(() => expect(saveEvent).toHaveBeenCalled());
+  const output = saveEvent.mock.calls[0][0];
+  expect(output.hostSlots).toEqual([
+    {
+      hostUid: "shafi",
+      date: "2026-12-02",
+      time: "10:30",
+      timezone: "Asia/Kolkata",
+    },
+    saved[1],
+    saved[2],
+  ]);
+  expect(saved[0].date).toBe("2026-12-01");
+});
+
+test("Group event is a visible option and remains selected when reopening", async () => {
+  const { saveEvent, container, unmount } = show();
+  fireEvent.change(screen.getByLabelText("Meeting schedule"), {
+    target: { value: "group" },
+  });
+  expect(screen.getByLabelText("Meeting schedule").value).toBe("group");
+  fireEvent.change(screen.getByLabelText("Date 1"), {
+    target: { value: "2026-12-01" },
+  });
+  fireEvent.submit(container.querySelector("form"));
+  await waitFor(() => expect(saveEvent).toHaveBeenCalled());
+  const event = saveEvent.mock.calls[0][0];
+  expect(event.eventKind).toBe("group");
+  expect(event.schedulingMode).toBe("host-slots");
+  expect(event.assignmentMode).toBe("host-choice");
+  unmount();
+  show({ ...event, scheduleCategory: undefined });
+  expect(screen.getByLabelText("Meeting schedule").value).toBe("group");
 });

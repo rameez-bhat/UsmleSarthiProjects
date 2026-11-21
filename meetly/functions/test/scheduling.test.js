@@ -82,3 +82,47 @@ test("overlapping schedule is rejected", () =>
       ],
     }),
   ));
+
+test("adjacent appointments share an exact boundary without conflict when buffers are zero", () => {
+  const at = (value) => Date.parse(`2026-12-07T${value}:00Z`);
+  const previous = { start: at("10:30"), end: at("11:00") };
+  assert.equal(
+    overlap({ start: at("11:00"), end: at("11:30") }, previous),
+    false,
+  );
+  assert.equal(
+    overlap({ start: at("10:59"), end: at("11:29") }, previous),
+    true,
+  );
+  const profile = {
+    timezone: "UTC",
+    schedule: defaultSchedule(),
+    overrides: {},
+  };
+  const settings = {
+    duration: 30,
+    minNotice: 0,
+    horizonDays: 365,
+    bufferBefore: 0,
+    bufferAfter: 0,
+  };
+  const slots = slotsForDay({
+    date: "2026-12-07",
+    host: profile,
+    event: settings,
+    busy: [previous],
+    now: at("00:00"),
+  });
+  assert.ok(slots.some((slot) => slot.start === at("11:00")));
+  const buffered = slotsForDay({
+    date: "2026-12-07",
+    host: profile,
+    event: settings,
+    busy: [{ ...previous, end: at("11:10") }],
+    now: at("00:00"),
+  });
+  assert.equal(
+    buffered.some((slot) => slot.start === at("11:00")),
+    false,
+  );
+});

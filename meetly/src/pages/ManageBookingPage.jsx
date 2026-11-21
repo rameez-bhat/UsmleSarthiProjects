@@ -1,3 +1,4 @@
+import { PhoneContact } from "../components/PhoneContact";
 import React from "react";
 import {
   CheckCircle2,
@@ -64,6 +65,11 @@ export function ManageBookingPage({
           <Mail />
           {manage.attendeeEmail}
         </div>
+        {manage.status === "confirmed" && (
+          <PhoneContact
+            instructions={manage.meetingUrl || manage.locationValue}
+          />
+        )}
         {validURL(manage.meetingUrl) && (
           <a href={manage.meetingUrl} target="_blank" rel="noreferrer">
             <Video />

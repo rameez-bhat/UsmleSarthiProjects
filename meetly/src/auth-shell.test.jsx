@@ -45,6 +45,9 @@ vi.mock("firebase/auth", async (importOriginal) => {
     }),
   };
 });
+vi.mock("./components/SharedHostSchedules", () => ({
+  SharedHostSchedules: () => null,
+}));
 import { App } from "./main";
 const profile = {
   name: "Test Host",
@@ -383,14 +386,14 @@ test("meeting editor exposes round robin and pasted Google Meet or Zoom links", 
     target: { value: "round-robin" },
   });
   expect(screen.getByPlaceholderText("Search team hosts")).toBeTruthy();
-  fireEvent.change(screen.getByLabelText("Location"), {
+  fireEvent.change(screen.getByLabelText(/Location for/), {
     target: { value: "google-meet" },
   });
   expect(screen.getByLabelText(/Google Meet link/)).toBeTruthy();
-  fireEvent.change(screen.getByLabelText("Location"), {
+  fireEvent.change(screen.getByLabelText(/Location for/), {
     target: { value: "zoom" },
   });
-  expect(screen.getByLabelText(/Zoom join link/)).toBeTruthy();
+  expect(screen.getByLabelText(/Zoom link for/)).toBeTruthy();
 });
 
 test("group participant details preserve the original booking ID even with an older roster response", async () => {
@@ -609,6 +612,7 @@ test("editing hydrates selected invitee and round-robin host chips with emails",
   const original = state.api.getMockImplementation();
   const event = {
     id: "existing",
+    ownerId: "host",
     title: "Existing meeting",
     schedulingMode: "fixed",
     assignmentMode: "round-robin",
@@ -648,6 +652,7 @@ test("editing hydrates selected invitee and round-robin host chips with emails",
   });
   render(<App />);
   await act(async () => state.listener({ uid: "host", emailVerified: true }));
+  fireEvent.click(await screen.findByRole("tab", { name: /Multiple Hosts/ }));
   fireEvent.click(
     await screen.findByRole("button", { name: "Edit", exact: true }),
   );

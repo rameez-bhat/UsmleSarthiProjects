@@ -80,9 +80,10 @@ export function slotsForDay({
     let start = DateTime.fromISO(`${date}T${range.start}`, {
       zone: host.timezone,
     });
-    const end = DateTime.fromISO(`${date}T${range.end}`, {
+    let end = DateTime.fromISO(`${date}T${range.end}`, {
       zone: host.timezone,
     });
+    if (range.end === "00:00") end = end.plus({ days: 1 });
     // Reject nonexistent local opening times on DST transition days.
     if (
       start.toFormat("HH:mm") !== range.start ||

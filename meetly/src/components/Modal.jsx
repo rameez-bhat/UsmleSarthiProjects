@@ -1,3 +1,6 @@
+import { mergeScheduleDrafts } from "../schedule-blocks";
+import { QuestionEditor } from "./QuestionFields";
+import { HostPhoneEditor } from "./HostPhoneEditor";
 import { expandTimeRanges } from "../time-ranges";
 import React, { useState, useEffect, useCallback } from "react";
 import { createUUID } from "../shared/utils";
@@ -15,6 +18,8 @@ export function Modal({
   organizer,
 }) {
   const [hostDrafts, setHostDrafts] = useState({});
+  const [conflictEdited, setConflictEdited] = useState(false);
+  useEffect(() => setConflictEdited(false), [modal.conflicts]);
   const updateHostDraft = useCallback(
     (uid, draft) => setHostDrafts((old) => ({ ...old, [uid]: draft })),
     [],
@@ -34,7 +39,7 @@ export function Modal({
     [config, setConfig] = useState(""),
     [err, setErr] = useState("");
   useEffect(() => {
-    if (event && !["google-meet", "zoom"].includes(event.location)) {
+    if (event && !["google-meet", "zoom", "phone"].includes(event.location)) {
       setEvent((old) => ({
         ...old,
         location: "google-meet",
@@ -84,7 +89,9 @@ export function Modal({
   return (
     <div className="modal-overlay">
       <section
-        className="modal"
+        className={
+          modal.type === "event" ? "modal event-editor-modal" : "modal"
+        }
         role="dialog"
         aria-modal="true"
         aria-labelledby="dialog-title"
@@ -104,6 +111,9 @@ export function Modal({
               {event.id ? "Edit event type" : "Create an event type"}
             </h2>
             <form
+              onChangeCapture={() => {
+                if (modal.conflicts?.length) setConflictEdited(true);
+              }}
               onSubmit={(e) => {
                 e.preventDefault();
                 let slots;
@@ -117,13 +127,17 @@ export function Modal({
                   );
                   if (invalid) throw new Error(invalid.error);
                   slots = expandTimeRanges(
-                    [
-                      ...(event.hostSlots || []),
-                      ...drafts.flatMap((draft) => draft.slots),
-                    ],
+                    mergeScheduleDrafts(event.hostSlots || [], drafts),
                     event.duration,
                   );
-                  if (event.schedulingMode === "host-slots" && !slots.length)
+                  if (
+                    event.schedulingMode === "host-slots" &&
+                    !slots.length &&
+                    event.eventKind !== "group" &&
+                    !(event.selfSchedulingHostUids || []).some((uid) =>
+                      teamHosts.includes(uid),
+                    )
+                  )
                     throw new Error(
                       "Choose a date and time or range for at least one host before saving.",
                     );
@@ -135,6 +149,20 @@ export function Modal({
                 saveEvent({
                   ...event,
                   hostSlots: slots,
+                  selfSchedulingHostUids: (
+                    event.selfSchedulingHostUids || []
+                  ).filter(
+                    (uid) => teamHosts.includes(uid) && uid !== organizer?.uid,
+                  ),
+                  teamHostUids:
+                    event.schedulingMode === "host-slots"
+                      ? (event.teamHostUids || []).filter(
+                          (uid) =>
+                            event.eventKind === "group" ||
+                            slots.some((slot) => slot.hostUid === uid) ||
+                            (event.selfSchedulingHostUids || []).includes(uid),
+                        )
+                      : event.teamHostUids,
                   id: event.id || saveRequestId,
                 });
               }}
@@ -157,49 +185,58 @@ export function Modal({
                     ))}
                   </ul>
                   <p>
-                    You can change the times, or remove these hosts’ times and
-                    save again.
+                    Save only the available dates and times? Only the
+                    conflicting appointments will be removed; other times for
+                    the same host are kept.
                   </p>
-                  <button
-                    type="button"
-                    className="secondary"
-                    onClick={() => {
-                      const excluded = new Set(
-                        modal.conflicts.map((item) => item.hostUid),
-                      );
-                      setHostDrafts((old) =>
-                        Object.fromEntries(
-                          Object.entries(old).filter(
-                            ([uid]) => !excluded.has(uid),
+                  {conflictEdited && (
+                    <p>
+                      The schedule changed. Click Save to check the updated
+                      times before confirming.
+                    </p>
+                  )}
+                  {!Array.isArray(modal.remainingSlots) ? (
+                    <p>Choose different times and click Save to check again.</p>
+                  ) : !modal.remainingSlots.length ? (
+                    <p>
+                      No available appointments remain. Choose different dates
+                      or times.
+                    </p>
+                  ) : (
+                    <button
+                      type="button"
+                      className="primary"
+                      disabled={loading || conflictEdited}
+                      onClick={() => {
+                        const slots = modal.remainingSlots;
+                        if (!Array.isArray(slots)) {
+                          setErr(
+                            "Update schedulerSaveEvent, then click Save again to check individual conflicts.",
+                          );
+                          return;
+                        }
+                        if (!slots.length) return;
+                        // Use exactly the event and free slots checked by the server.
+                        // SaveEvent rechecks calendars before committing this retry.
+                        const candidate = modal.event;
+                        saveEvent({
+                          ...candidate,
+                          hostSlots: slots,
+                          teamHostUids: (candidate.teamHostUids || []).filter(
+                            (uid) =>
+                              candidate.eventKind === "group" ||
+                              slots.some((slot) => slot.hostUid === uid) ||
+                              (candidate.selfSchedulingHostUids || []).includes(
+                                uid,
+                              ),
                           ),
-                        ),
-                      );
-                      const slots = [
-                        ...(event.hostSlots || []),
-                        ...Object.values(hostDrafts).flatMap(
-                          (draft) => draft.slots,
-                        ),
-                      ].filter((slot) => !excluded.has(slot.hostUid));
-                      if (!slots.length) {
-                        setErr(
-                          "All host times conflict. Add another host or choose different times.",
-                        );
-                        return;
-                      }
-                      setEvent((old) => ({
-                        ...old,
-                        hostSlots: slots,
-                        teamHostUids: (old.teamHostUids || []).filter(
-                          (uid) => !excluded.has(uid),
-                        ),
-                      }));
-                      setErr(
-                        "Conflicting hosts’ times removed. Review the remaining times and click Save.",
-                      );
-                    }}
-                  >
-                    Remove conflicting hosts’ times
-                  </button>
+                          id: candidate.id || saveRequestId,
+                        });
+                      }}
+                    >
+                      Save without conflicting dates and times
+                    </button>
+                  )}
                 </section>
               )}
 
@@ -236,23 +273,30 @@ export function Modal({
                 Meeting schedule
                 <select
                   value={
-                    event.scheduleCategory ||
-                    event.schedulingMode ||
-                    "recurring"
+                    event.eventKind === "group"
+                      ? "group"
+                      : event.scheduleCategory ||
+                        event.schedulingMode ||
+                        "recurring"
                   }
                   onChange={(e) =>
                     setEvent((old) => ({
                       ...old,
-                      scheduleCategory: e.target.value,
+                      eventKind:
+                        e.target.value === "group" ? "group" : "individual",
+                      scheduleCategory:
+                        e.target.value === "group"
+                          ? "host-slots"
+                          : e.target.value,
                       multipleHostTimes: !old.participantUids?.length,
                       schedulingMode:
                         !old.participantUids?.length ||
-                        e.target.value === "host-slots"
+                        ["host-slots", "group"].includes(e.target.value)
                           ? "host-slots"
                           : e.target.value,
                       assignmentMode:
                         !old.participantUids?.length ||
-                        e.target.value === "host-slots"
+                        ["host-slots", "group"].includes(e.target.value)
                           ? "host-choice"
                           : "named",
                     }))
@@ -260,11 +304,26 @@ export function Modal({
                 >
                   <option value="recurring">Recurring availability</option>
                   <option value="fixed">Specific dates and times</option>
+                  <option
+                    value="group"
+                    disabled={!!event.participantUids?.length}
+                  >
+                    Group event — one topic, multiple hosts
+                  </option>
                   <option value="host-slots">
                     Round-robin team — let visitors choose a host and time
                   </option>
                 </select>
               </label>
+              {event.eventKind === "group" && (
+                <p className="info-banner">
+                  Group event: create the topic first, then open the group to
+                  add hosts, switch them on/off and manage each host’s slots.
+                  You can also select hosts below. Share the main event link for
+                  host selection, or copy a host-specific link from the event
+                  card. Each booking is with one selected host.
+                </p>
+              )}
               {(event.scheduleCategory || event.schedulingMode) !==
                 "host-slots" && (
                 <label className="checkbox-label">
@@ -276,6 +335,9 @@ export function Modal({
                       setEvent((old) => ({
                         ...old,
                         multipleHostTimes: e.target.checked,
+                        selfSchedulingHostUids: e.target.checked
+                          ? old.selfSchedulingHostUids || []
+                          : [],
                         hostSlots:
                           e.target.checked &&
                           !old.hostSlots?.length &&
@@ -339,6 +401,9 @@ export function Modal({
                       setEvent((old) => ({
                         ...old,
                         teamHostUids: uids,
+                        selfSchedulingHostUids: (
+                          old.selfSchedulingHostUids || []
+                        ).filter((uid) => uids.includes(uid)),
                         hostSlots: (old.hostSlots || []).filter(
                           (slot) =>
                             slot.hostUid === organizer?.uid ||
@@ -367,11 +432,35 @@ export function Modal({
                   </p>
                   <HostSlotEditor
                     duration={event.duration}
+                    selfSchedulingHostUids={event.selfSchedulingHostUids || []}
+                    onSelfSchedulingChange={(uids) =>
+                      change("selfSchedulingHostUids", uids)
+                    }
                     onDraftChange={updateHostDraft}
-                    hostUids={teamHosts}
+                    hostUids={
+                      modal.focusHostUid ? [modal.focusHostUid] : teamHosts
+                    }
                     organizer={organizer}
-                    value={event.hostSlots || []}
-                    onChange={(slots) => change("hostSlots", slots)}
+                    value={
+                      modal.focusHostUid
+                        ? (event.hostSlots || []).filter(
+                            (slot) => slot.hostUid === modal.focusHostUid,
+                          )
+                        : event.hostSlots || []
+                    }
+                    onChange={(slots) =>
+                      change(
+                        "hostSlots",
+                        modal.focusHostUid
+                          ? [
+                              ...(event.hostSlots || []).filter(
+                                (slot) => slot.hostUid !== modal.focusHostUid,
+                              ),
+                              ...slots,
+                            ]
+                          : slots,
+                      )
+                    }
                     timezone={hostTimezone}
                   />
                 </>
@@ -494,40 +583,27 @@ export function Modal({
                   />
                 </label>
               </div>
-              <label>
-                Location
-                <select
-                  value={event.location}
-                  onChange={(e) => change("location", e.target.value)}
-                >
-                  <option value="google-meet">Google Meet</option>
-                  <option value="zoom">Zoom</option>
-                </select>
-              </label>
-              {["custom", "phone", "in-person", "google-meet", "zoom"].includes(
-                event.location,
-              ) && (
-                <label>
-                  {event.location === "google-meet"
-                    ? "Google Meet link (optional; leave blank to generate automatically)"
-                    : event.location === "zoom"
-                      ? "Zoom join link (optional; leave blank to create through API)"
-                      : event.location === "custom"
-                        ? "Meeting URL (optional)"
-                        : event.location === "phone"
-                          ? "Phone number"
-                          : "Address"}
-                  <input
-                    type={
-                      ["custom", "google-meet", "zoom"].includes(event.location)
-                        ? "url"
-                        : "text"
-                    }
-                    value={event.locationValue}
-                    onChange={(e) => change("locationValue", e.target.value)}
-                  />
-                </label>
-              )}
+              <HostPhoneEditor
+                uids={teamHosts}
+                organizer={organizer}
+                value={event.hostLocations || {}}
+                defaultLocation={event.location}
+                defaultLink={event.locationValue}
+                legacyPhones={event.hostPhones}
+                onChange={(choices) =>
+                  setEvent((old) => ({
+                    ...old,
+                    hostLocations: choices,
+                    ...(choices[organizer?.uid]
+                      ? {
+                          location: choices[organizer.uid].location,
+                          locationValue:
+                            choices[organizer.uid].locationValue || "",
+                        }
+                      : {}),
+                  }))
+                }
+              />
               {event.location === "meetly" && (
                 <p className="small-text muted">
                   Video opens inside SAMAY using your configured Jitsi server.
@@ -541,6 +617,11 @@ export function Modal({
               />
               <details>
                 <summary>Scheduling rules & questions</summary>
+                <p className="small-text">
+                  Set both buffers to 0 to allow consecutive meetings, such as
+                  one ending at 11:00 and the next starting at 11:00. Existing
+                  confirmed bookings retain their saved buffers.
+                </p>
                 <div className="form-row">
                   {[
                     ["minNotice", "Minimum notice (minutes)", 0, 10080],
@@ -570,60 +651,25 @@ export function Modal({
                     ))}
                 </div>
                 {event.questions.map((q, i) => (
-                  <div className="question-editor" key={i}>
-                    <input
-                      aria-label="Question text"
-                      placeholder="Your question"
-                      value={q.label}
-                      required
-                      onChange={(e) =>
-                        change(
-                          "questions",
-                          event.questions.map((x, j) =>
-                            j === i
-                              ? {
-                                  ...x,
-                                  label: e.target.value,
-                                }
-                              : x,
-                          ),
-                        )
-                      }
-                    />
-                    <label className="checkbox-label">
-                      <input
-                        type="checkbox"
-                        checked={q.required}
-                        onChange={(e) =>
-                          change(
-                            "questions",
-                            event.questions.map((x, j) =>
-                              j === i
-                                ? {
-                                    ...x,
-                                    required: e.target.checked,
-                                  }
-                                : x,
-                            ),
-                          )
-                        }
-                      />
-                      Required
-                    </label>
-                    <button
-                      type="button"
-                      className="icon-button"
-                      aria-label="Remove question"
-                      onClick={() =>
-                        change(
-                          "questions",
-                          event.questions.filter((_, j) => j !== i),
-                        )
-                      }
-                    >
-                      <X size={16} />
-                    </button>
-                  </div>
+                  <QuestionEditor
+                    key={i}
+                    question={q}
+                    index={i}
+                    onChange={(question) =>
+                      change(
+                        "questions",
+                        event.questions.map((old, j) =>
+                          j === i ? question : old,
+                        ),
+                      )
+                    }
+                    onRemove={() =>
+                      change(
+                        "questions",
+                        event.questions.filter((_, j) => j !== i),
+                      )
+                    }
+                  />
                 ))}
                 <button
                   type="button"
@@ -634,6 +680,7 @@ export function Modal({
                       ...event.questions,
                       {
                         label: "",
+                        type: "text",
                         required: false,
                       },
                     ])

@@ -11,7 +11,7 @@ export function expandTimeRanges(rows, duration) {
       return hour * 60 + minute;
     };
     const start = toMinutes(row.time),
-      end = toMinutes(row.endTime);
+      end = row.endTime === "00:00" ? 1440 : toMinutes(row.endTime);
     if (end <= start || end - start < minutes)
       throw new Error(
         "The range must fit at least one full meeting on the same date.",

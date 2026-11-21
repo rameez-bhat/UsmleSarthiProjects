@@ -1,3 +1,4 @@
+import { BookingQuestion } from "./QuestionFields";
 import React, { useState, useEffect } from "react";
 import { createUUID } from "../shared/utils";
 import { api, auth } from "../firebase";
@@ -202,14 +203,12 @@ export function AssignedInvitation({
               />
             </label>
             {(event.questions || []).map((q, i) => (
-              <label key={i}>
-                {q.label}
-                <input
-                  name={`answer_${i}`}
-                  required={q.required}
-                  maxLength={1500}
-                />
-              </label>
+              <BookingQuestion
+                key={i}
+                question={q}
+                index={i}
+                value={undefined}
+              />
             ))}
             <label>
               Notes (optional)

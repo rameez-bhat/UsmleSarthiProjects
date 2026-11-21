@@ -64,6 +64,7 @@ __export(index_exports, {
   schedulerSaveAvailability: () => schedulerSaveAvailability,
   schedulerSaveEvent: () => schedulerSaveEvent,
   schedulerSaveNotifications: () => schedulerSaveNotifications,
+  schedulerSaveOwnSlots: () => schedulerSaveOwnSlots,
   schedulerSaveProfile: () => schedulerSaveProfile,
   schedulerSearchHosts: () => schedulerSearchHosts,
   schedulerSearchUsers: () => schedulerSearchUsers,
@@ -74,8 +75,495 @@ __export(index_exports, {
 });
 module.exports = __toCommonJS(index_exports);
 
-// functions/managed-login.js
+// functions/booking-settings.js
+var import_node_util = require("node:util");
+function sameBookingSettings(before, after) {
+  return (0, import_node_util.isDeepStrictEqual)(before, after);
+}
+
+// shared/group-hosts.js
+function isGroupHostEnabled(event, uid) {
+  return (
+    event.eventKind !== "group" || !(event.disabledHostUids || []).includes(uid)
+  );
+}
+function activeGroupEvent(event) {
+  if (event.eventKind !== "group") return event;
+  return {
+    ...event,
+    teamHostUids: (event.teamHostUids || []).filter((uid) =>
+      isGroupHostEnabled(event, uid),
+    ),
+    hostSlots: (event.hostSlots || []).filter((slot) =>
+      isGroupHostEnabled(event, slot.hostUid),
+    ),
+  };
+}
+
+// functions/questions.js
 var import_https = require("firebase-functions/v2/https");
+var invalid = (message) => {
+  throw new import_https.HttpsError("invalid-argument", message);
+};
+var types = [
+  "text",
+  "textarea",
+  "dropdown",
+  "radio",
+  "email",
+  "number",
+  "date",
+];
+function normalizeQuestions(input) {
+  if (input === void 0) return [];
+  if (!Array.isArray(input) || input.length > 10)
+    invalid("Add at most 10 questions.");
+  return input.map((q, i) => {
+    if (!q || typeof q !== "object") invalid(`Invalid question ${i + 1}.`);
+    const label = String(q.label || "")
+        .trim()
+        .slice(0, 160),
+      type = q.type || "text";
+    if (!label || !types.includes(type))
+      invalid(`Choose valid text and type for question ${i + 1}.`);
+    const result = { label, type, required: !!q.required };
+    if (["dropdown", "radio"].includes(type)) {
+      if (
+        !Array.isArray(q.options) ||
+        q.options.some((o) => typeof o !== "string")
+      )
+        invalid(`Add options for question ${i + 1}.`);
+      const options = [
+        ...new Set(q.options.map((o) => o.trim()).filter(Boolean)),
+      ];
+      if (
+        !options.length ||
+        options.length > 50 ||
+        options.some((o) => o.length > 200)
+      )
+        invalid(
+          `Question ${i + 1} needs 1\u201350 options, each up to 200 characters.`,
+        );
+      result.options = options;
+    }
+    return result;
+  });
+}
+function validateQuestionAnswers(questions = [], answers = []) {
+  for (const [i, q] of questions.entries()) {
+    const value = answers[i] || "";
+    if (!value) {
+      if (q.required) invalid(`Please answer: ${q.label}`);
+      continue;
+    }
+    if (
+      ["dropdown", "radio"].includes(q.type) &&
+      !(q.options || []).includes(value)
+    )
+      invalid(`Choose an available option for: ${q.label}`);
+    if (q.type === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))
+      invalid(`Enter a valid email for: ${q.label}`);
+    if (q.type === "number" && !Number.isFinite(Number(value)))
+      invalid(`Enter a valid number for: ${q.label}`);
+    if (
+      q.type === "date" &&
+      (!/^\d{4}-\d{2}-\d{2}$/.test(value) ||
+        !Number.isFinite(Date.parse(value + "T00:00:00Z")) ||
+        /* @__PURE__ */ new Date(value + "T00:00:00Z")
+          .toISOString()
+          .slice(0, 10) !== value)
+    )
+      invalid(`Enter a valid date for: ${q.label}`);
+  }
+}
+
+// functions/meeting-email.js
+var escape = (value) =>
+  String(value ?? "").replace(
+    /[&<>"']/g,
+    (c) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
+        c
+      ],
+  );
+var safeLink = (value) =>
+  /^https:\/\//i.test(value || "") ? escape(value) : "";
+async function emailBookingDetails(booking, bookingId, loadRegistration) {
+  if (!booking.participants?.length) return booking;
+  const participants = await Promise.all(
+    booking.participants.map(async (person) => {
+      if (!person.registrationId) return person;
+      const registration = await loadRegistration(person.registrationId);
+      if (
+        !registration ||
+        registration.bookingId !== bookingId ||
+        registration.participantUid !== person.uid
+      )
+        return person;
+      return {
+        ...person,
+        notes: registration.notes || "",
+        answers: registration.answers || [],
+        questionLabels: registration.questionLabels || [],
+      };
+    }),
+  );
+  return { ...booking, participants };
+}
+function bookingQuestions(person) {
+  const labels = Array.isArray(person.questionLabels)
+    ? person.questionLabels
+    : [];
+  const answers = Array.isArray(person.answers) ? person.answers : [];
+  return Array.from(
+    { length: Math.max(labels.length, answers.length) },
+    (_, i) => ({
+      question: String(labels[i] || `Question ${i + 1}`),
+      answer:
+        answers[i] === void 0 || answers[i] === null || answers[i] === ""
+          ? "Not answered"
+          : Array.isArray(answers[i])
+            ? answers[i].join(", ")
+            : String(answers[i]),
+    }),
+  );
+}
+function meetingEmail({
+  booking: b,
+  person,
+  title,
+  time,
+  managementUrl,
+  link,
+  cancelled,
+}) {
+  const row = (label, value) =>
+    `<tr><td style="padding:10px 0;color:#65746e;vertical-align:top;width:125px">${escape(label)}</td><td style="padding:10px 0;font-weight:600;white-space:pre-wrap">${escape(value || "\u2014")}</td></tr>`;
+  const people = b.participants?.length
+    ? b.participants
+    : [
+        {
+          name: b.attendeeName,
+          email: b.attendeeEmail,
+          notes: b.notes,
+          answers: b.answers,
+          questionLabels: b.questionLabels,
+        },
+      ];
+  const ownParticipant = b.participants?.length
+    ? people.find(
+        (p) =>
+          (person.registrationId &&
+            p.registrationId === person.registrationId) ||
+          (person.uid && p.uid === person.uid),
+      ) ||
+      (() => {
+        const matches = people.filter(
+          (p) =>
+            person.email &&
+            String(p.email || "").toLowerCase() ===
+              String(person.email).toLowerCase(),
+        );
+        return matches.length === 1 ? matches[0] : null;
+      })()
+    : people[0];
+  const ownQuestions =
+    !person.staff && ownParticipant ? bookingQuestions(ownParticipant) : [];
+  const ownAnswersHtml = ownQuestions.length
+    ? `<h3 style="margin-top:26px">Your booking questions and answers</h3><table role="presentation" style="width:100%">${ownQuestions.map((q) => row(q.question, q.answer)).join("")}</table>`
+    : "";
+  const ownAnswersText = ownQuestions.length
+    ? "\nYour booking questions and answers\n" +
+      ownQuestions.map((q) => `${q.question}: ${q.answer}`).join("\n")
+    : "";
+  const attendees = person.staff
+    ? `<h3 style="margin-top:26px">User details</h3>${people
+        .map(
+          (p) =>
+            `<table role="presentation" style="width:100%;border-top:1px solid #e4ece8">${row("Name", p.name)}${row("Email", p.email)}${row("Note", p.notes || p.note || (!b.participants?.length && b.notes) || "No note provided")}</table>${
+              bookingQuestions(p).length
+                ? `<h4>Booking questions and answers</h4><table role="presentation" style="width:100%">${bookingQuestions(
+                    p,
+                  )
+                    .map((q) => row(q.question, q.answer))
+                    .join("")}</table>`
+                : ""
+            }`,
+        )
+        .join("")}`
+    : "";
+  const utc = (ms) =>
+    new Date(ms)
+      .toISOString()
+      .replace(/[-:]/g, "")
+      .replace(/\.\d{3}Z$/, "Z");
+  const calendar = new URL("https://calendar.google.com/calendar/render");
+  calendar.search = new URLSearchParams({
+    action: "TEMPLATE",
+    text: b.eventTitle || "Meeting",
+    dates: `${utc(b.startAt)}/${utc(b.endAt || b.startAt + b.duration * 6e4)}`,
+    details: `Meeting with ${b.hostName || "your host"}
+${link || ""}`,
+    location: link || "",
+  }).toString();
+  const canJoin =
+    !cancelled &&
+    person.response !== "declined" &&
+    person.response !== "invited";
+  const button = (url, label) =>
+    `<a href="${safeLink(url)}" style="display:inline-block;margin:8px 8px 8px 0;padding:13px 20px;border-radius:8px;background:#176b57;color:#fff;text-decoration:none;font-weight:bold">${label}</a>`;
+  const intro = person.staff
+    ? "Here are the latest meeting and attendee details."
+    : cancelled
+      ? "Your meeting has been cancelled."
+      : person.response === "declined"
+        ? "Your invitation has been declined."
+        : title === "Meeting reminder"
+          ? "A reminder about your upcoming meeting."
+          : title === "Booking rescheduled"
+            ? "Your meeting has been rescheduled."
+            : "Thanks for booking the meeting! We look forward to meeting you.";
+  const description = String(b.eventDescription || "").trim();
+  const descriptionHtml = description
+    ? `<h3 style="margin:24px 0 10px;font-size:16px">About this meeting</h3><p style="white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.7">${escape(description)}</p>`
+    : "";
+  const text2 = `${title}
+${intro}
+Meeting Name: ${b.eventTitle}
+Meeting With: ${b.hostName}
+Time: ${time}${
+    description
+      ? `
+Meeting description: ${description}`
+      : ""
+  }
+${canJoin ? link || "" : ""}${
+    person.staff
+      ? people
+          .map(
+            (p) => `
+Name: ${p.name || "\u2014"}
+Email: ${p.email || "\u2014"}
+Note: ${p.notes || p.note || (!b.participants?.length && b.notes) || "No note provided"}${
+              bookingQuestions(p).length
+                ? "\nBooking questions and answers\n" +
+                  bookingQuestions(p)
+                    .map((q) => `${q.question}: ${q.answer}`)
+                    .join("\n")
+                : ""
+            }`,
+          )
+          .join("\n")
+      : ownAnswersText
+  }
+View details: ${managementUrl}${
+    canJoin
+      ? `
+Add to Google Calendar: ${calendar.href}`
+      : ""
+  }
+
+Thanks & Regards,
+USMLE Sarthi Team`;
+  const html = `<!doctype html><html><body style="margin:0;background:#f3f7f5;font-family:Arial,sans-serif;color:#203b32"><table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td style="padding:24px 12px"><table role="presentation" style="max-width:600px;width:100%;margin:auto;background:#fff;border-radius:16px" cellspacing="0" cellpadding="0"><tr><td style="padding:28px;background:#176b57;color:#fff;border-radius:16px 16px 0 0"><span style="font-size:13px;letter-spacing:3px">SAMAY</span><h1 style="font-size:25px;margin:14px 0 0">${escape(title)}</h1></td></tr><tr><td style="padding:28px"><p>Hello ${escape(person.name || (person.staff ? b.hostName : b.attendeeName) || "there")},</p><p style="line-height:1.7">${escape(intro)}</p><table role="presentation" style="width:100%">${row("Meeting Name", b.eventTitle)}${row("Meeting With", b.hostName)}${row("Time", time)}</table>${descriptionHtml}${attendees}${ownAnswersHtml}${canJoin && link && !safeLink(link) ? `<p style="white-space:pre-wrap;line-height:1.7">${escape(link)}</p>` : ""}<div>${canJoin && safeLink(link) ? button(link, "Join meeting") : ""}${button(managementUrl, "View meeting details")}${canJoin ? button(calendar.href, "&#128197; Add to Google Calendar") : ""}</div><p style="margin-top:28px;line-height:1.7">Thanks &amp; Regards,<br><strong>USMLE Sarthi Team</strong></p></td></tr></table></td></tr></table></body></html>`;
+  return { text: text2, html };
+}
+
+// functions/self-scheduling.js
+var import_https2 = require("firebase-functions/v2/https");
+function selfSchedulingHosts(input = [], event) {
+  if (!Array.isArray(input) || input.some((uid) => typeof uid !== "string"))
+    throw new import_https2.HttpsError(
+      "invalid-argument",
+      "Choose hosts using the self-scheduling checkboxes.",
+    );
+  const selected = [...new Set(input)].filter((uid) => uid !== event.ownerId);
+  if (selected.length && event.schedulingMode !== "host-slots")
+    throw new import_https2.HttpsError(
+      "invalid-argument",
+      "Enable 'Publish multiple dates and times for each host' before allowing hosts to add their own slots.",
+      { reason: "schedule_type" },
+    );
+  if (selected.some((uid) => !(event.teamHostUids || []).includes(uid)))
+    throw new import_https2.HttpsError(
+      "invalid-argument",
+      "A host allowed to add slots is no longer selected for this meeting. Reselect that host or clear their self-scheduling permission.",
+      { reason: "host_not_selected" },
+    );
+  return selected;
+}
+function assertSelfScheduling(event, uid) {
+  if (
+    !event ||
+    event.deletedAt ||
+    !event.active ||
+    event.schedulingMode !== "host-slots" ||
+    !(event.teamHostUids || []).includes(uid) ||
+    !(event.selfSchedulingHostUids || []).includes(uid)
+  )
+    throw new import_https2.HttpsError(
+      "permission-denied",
+      "The organizer has not allowed you to manage your slots for this meeting, or has withdrawn that permission.",
+    );
+}
+function replaceOwnSlots(event, uid, slots) {
+  assertSelfScheduling(event, uid);
+  if (slots.some((slot) => slot.hostUid !== uid))
+    throw new import_https2.HttpsError(
+      "permission-denied",
+      "You can change only your own meeting slots.",
+    );
+  return [
+    ...(event.hostSlots || []).filter((slot) => slot.hostUid !== uid),
+    ...slots,
+  ].sort((a, b) => a.startAt - b.startAt);
+}
+function hostAssignment(eventId, event, uid) {
+  return {
+    eventId,
+    hostUid: uid,
+    ownerId: event.ownerId,
+    title: event.title,
+    duration: event.duration,
+    active: event.active,
+    schedulingMode: event.schedulingMode,
+    hostSlots: (event.hostSlots || []).filter((slot) => slot.hostUid === uid),
+    updatedAt: Date.now(),
+  };
+}
+
+// functions/host-locations.js
+var import_https4 = require("firebase-functions/v2/https");
+
+// functions/phone-location.js
+var import_https3 = require("firebase-functions/v2/https");
+function normalizeHostPhones(
+  input,
+  hostIds,
+  labels = /* @__PURE__ */ new Map(),
+) {
+  const result = {};
+  for (const uid of hostIds) {
+    const raw = typeof input?.[uid] === "string" ? input[uid].trim() : "";
+    const phone = raw.replace(/[\s().-]/g, "");
+    if (!/^\+[1-9]\d{6,14}$/.test(phone))
+      throw new import_https3.HttpsError(
+        "invalid-argument",
+        `Enter a phone number with country code for ${labels.get(uid) || "each host and organizer"} (for example +919876543210).`,
+      );
+    result[uid] = phone;
+  }
+  return result;
+}
+function phoneInstructions(event, hostUid) {
+  const phone = event.hostPhones?.[hostUid];
+  if (!/^\+[1-9]\d{6,14}$/.test(phone || ""))
+    throw new import_https3.HttpsError(
+      "failed-precondition",
+      "The selected host must add their phone number before this meeting can be booked.",
+    );
+  return `Direct/WhatsApp Phone Call: ${phone}
+WhatsApp: https://wa.me/${phone.slice(1)}`;
+}
+function bookingJoiningInstructions(booking) {
+  return booking.location === "phone"
+    ? booking.locationValue || booking.meetingUrl || ""
+    : booking.meetingUrl || booking.locationValue || "";
+}
+
+// functions/host-locations.js
+function normalizeHostLocations(
+  input,
+  hostIds,
+  fallback,
+  labels = /* @__PURE__ */ new Map(),
+) {
+  return Object.fromEntries(
+    hostIds.map((uid) => {
+      const value = input?.[uid] || {
+        location: fallback.location,
+        locationValue: fallback.locationValue,
+        phone: fallback.hostPhones?.[uid],
+      };
+      const location = value.location;
+      const locationValue =
+        typeof value.locationValue === "string"
+          ? value.locationValue.trim().slice(0, 500)
+          : "";
+      if (!["google-meet", "zoom", "phone"].includes(location))
+        throw new import_https4.HttpsError(
+          "invalid-argument",
+          "Choose a location for every host.",
+        );
+      if (location === "phone")
+        return [
+          uid,
+          {
+            location,
+            phone: normalizeHostPhones({ [uid]: value.phone }, [uid], labels)[
+              uid
+            ],
+            locationValue: "",
+          },
+        ];
+      if (
+        locationValue &&
+        !(
+          location === "google-meet"
+            ? /^https:\/\/meet\.google\.com\/[a-z0-9-]+(?:\?[^\s]*)?$/i
+            : /^https:\/\/([a-z0-9-]+\.)?zoom\.us\/j\/\d+(\?[^\s]*)?$/i
+        ).test(locationValue)
+      )
+        throw new import_https4.HttpsError(
+          "invalid-argument",
+          `Enter a valid ${location === "zoom" ? "Zoom" : "Google Meet"} link for ${labels.get(uid) || "this host"}.`,
+        );
+      return [uid, { location, locationValue }];
+    }),
+  );
+}
+function eventForHost(event, uid) {
+  const choice = event.hostLocations?.[uid];
+  if (!choice) return event;
+  return {
+    ...event,
+    location: choice.location,
+    locationValue:
+      choice.location === "phone"
+        ? phoneInstructions({ hostPhones: { [uid]: choice.phone } }, uid)
+        : choice.locationValue || "",
+  };
+}
+
+// functions/host-availability.js
+var import_luxon = require("luxon");
+function fitsHostAvailability(slot, host, duration) {
+  const start = import_luxon.DateTime.fromMillis(slot.startAt, {
+    zone: host.timezone || "UTC",
+  });
+  const end = start.plus({ minutes: duration });
+  if (!start.isValid || !end.isValid) return false;
+  const date = start.toISODate();
+  const ranges =
+    host.overrides?.[date] ?? host.schedule?.[String(start.weekday)] ?? [];
+  return ranges.some((range) => {
+    const open = import_luxon.DateTime.fromISO(`${date}T${range.start}`, {
+      zone: host.timezone || "UTC",
+    });
+    let close = import_luxon.DateTime.fromISO(`${date}T${range.end}`, {
+      zone: host.timezone || "UTC",
+    });
+    if (range.end === "00:00") close = close.plus({ days: 1 });
+    return open.isValid && close.isValid && start >= open && end <= close;
+  });
+}
+function remainingHostSlots(slots, conflicts) {
+  const blocked = new Set(conflicts.map((s) => `${s.hostUid}|${s.startAt}`));
+  return slots.filter((s) => !blocked.has(`${s.hostUid}|${s.startAt}`));
+}
+
+// functions/managed-login.js
+var import_https5 = require("firebase-functions/v2/https");
 async function issueManagedLogin({
   actorUid,
   targetUid,
@@ -85,19 +573,19 @@ async function issueManagedLogin({
   audit,
 }) {
   if (managed)
-    throw new import_https.HttpsError(
+    throw new import_https5.HttpsError(
       "permission-denied",
       "Exit the managed account before opening another account.",
     );
   await requireAdmin2(actorUid);
   if (targetUid === actorUid)
-    throw new import_https.HttpsError(
+    throw new import_https5.HttpsError(
       "invalid-argument",
       "This is already your account.",
     );
   const target = await auth.getUser(targetUid);
   if (target.disabled)
-    throw new import_https.HttpsError(
+    throw new import_https5.HttpsError(
       "failed-precondition",
       "This account is disabled.",
     );
@@ -142,10 +630,10 @@ function googleConnectionError(hosts) {
 }
 
 // functions/month-availability.js
-var import_luxon2 = require("luxon");
+var import_luxon3 = require("luxon");
 
 // functions/scheduling.js
-var import_luxon = require("luxon");
+var import_luxon2 = require("luxon");
 var defaultSchedule = () =>
   Object.fromEntries(
     Array.from({ length: 7 }, (_, i) => [
@@ -178,7 +666,7 @@ function validateSchedule(schedule, overrides = {}) {
     Object.keys(overrides).length > 180 ||
     !Object.entries(overrides).every(
       ([d, r]) =>
-        import_luxon.DateTime.fromISO(d).isValid &&
+        import_luxon2.DateTime.fromISO(d).isValid &&
         /^\d{4}-\d{2}-\d{2}$/.test(d) &&
         intervals(r),
     )
@@ -186,14 +674,14 @@ function validateSchedule(schedule, overrides = {}) {
     throw Error("Invalid date overrides.");
 }
 function slotsForDay({ date, host, event, busy = [], now = Date.now() }) {
-  const day = import_luxon.DateTime.fromISO(date, { zone: host.timezone });
+  const day = import_luxon2.DateTime.fromISO(date, { zone: host.timezone });
   if (!day.isValid) return [];
   if (event.schedulingMode === "fixed") {
     const start = Number(event.fixedStartAt),
       end = start + event.duration * 6e4;
     if (
       !Number.isSafeInteger(start) ||
-      import_luxon.DateTime.fromMillis(start, {
+      import_luxon2.DateTime.fromMillis(start, {
         zone: host.timezone,
       }).toISODate() !== date ||
       start < now + event.minNotice * 6e4
@@ -219,12 +707,13 @@ function slotsForDay({ date, host, event, busy = [], now = Date.now() }) {
   const before = event.bufferBefore * 6e4,
     after = event.bufferAfter * 6e4;
   for (const range of schedule) {
-    let start = import_luxon.DateTime.fromISO(`${date}T${range.start}`, {
+    let start = import_luxon2.DateTime.fromISO(`${date}T${range.start}`, {
       zone: host.timezone,
     });
-    const end = import_luxon.DateTime.fromISO(`${date}T${range.end}`, {
+    let end = import_luxon2.DateTime.fromISO(`${date}T${range.end}`, {
       zone: host.timezone,
     });
+    if (range.end === "00:00") end = end.plus({ days: 1 });
     if (
       start.toFormat("HH:mm") !== range.start ||
       end.toFormat("HH:mm") !== range.end
@@ -246,7 +735,7 @@ function slotsForDay({ date, host, event, busy = [], now = Date.now() }) {
 }
 function lockDates(start, end) {
   const dates = [];
-  let d = import_luxon.DateTime.fromMillis(start, { zone: "utc" }).startOf(
+  let d = import_luxon2.DateTime.fromMillis(start, { zone: "utc" }).startOf(
     "day",
   );
   while (d.toMillis() < end) {
@@ -265,7 +754,7 @@ function slotsForMonth({
   busy = [],
   now = Date.now(),
 }) {
-  const first = import_luxon2.DateTime.fromISO(`${month}-01`, {
+  const first = import_luxon3.DateTime.fromISO(`${month}-01`, {
     zone: host.timezone,
   });
   if (!first.isValid) return [];
@@ -278,7 +767,7 @@ function slotsForMonth({
     const date = first.plus({ days: offset }).toISODate();
     const bookedToday = existing.filter(
       (b) =>
-        import_luxon2.DateTime.fromMillis(b.startAt, {
+        import_luxon3.DateTime.fromMillis(b.startAt, {
           zone: host.timezone,
         }).toISODate() === date,
     ).length;
@@ -289,11 +778,16 @@ function slotsForMonth({
 }
 
 // functions/host-slots.js
-var import_luxon3 = require("luxon");
-var import_https2 = require("firebase-functions/v2/https");
+var import_luxon4 = require("luxon");
+var import_https6 = require("firebase-functions/v2/https");
 function normalizeHostSlots(input, hostIds, profiles, event) {
-  if (!Array.isArray(input) || !input.length) {
-    throw new import_https2.HttpsError(
+  if (
+    !Array.isArray(input) ||
+    (!input.length &&
+      !event.selfSchedulingHostUids?.length &&
+      event.eventKind !== "group")
+  ) {
+    throw new import_https6.HttpsError(
       "invalid-argument",
       "Add at least one host meeting time.",
     );
@@ -301,13 +795,13 @@ function normalizeHostSlots(input, hostIds, profiles, event) {
   const seen = /* @__PURE__ */ new Set();
   const slots = input.map((value) => {
     if (!value || typeof value !== "object" || Array.isArray(value))
-      throw new import_https2.HttpsError(
+      throw new import_https6.HttpsError(
         "invalid-argument",
         "Invalid host meeting time.",
       );
     const host = profiles.get(value.hostUid);
     const local = `${value.date}T${value.time}`;
-    const start = import_luxon3.DateTime.fromISO(local, {
+    const start = import_luxon4.DateTime.fromISO(local, {
       zone: value.timezone || host?.timezone || "UTC",
     });
     if (
@@ -318,7 +812,7 @@ function normalizeHostSlots(input, hostIds, profiles, event) {
       !start.isValid ||
       start.toFormat("yyyy-MM-dd'T'HH:mm") !== local
     ) {
-      throw new import_https2.HttpsError(
+      throw new import_https6.HttpsError(
         "invalid-argument",
         "Choose a valid host, date and time for every slot.",
       );
@@ -326,7 +820,7 @@ function normalizeHostSlots(input, hostIds, profiles, event) {
     const startAt = start.toMillis();
     const key2 = `${value.hostUid}_${startAt}`;
     if (seen.has(key2))
-      throw new import_https2.HttpsError(
+      throw new import_https6.HttpsError(
         "invalid-argument",
         "Remove duplicate host times.",
       );
@@ -337,19 +831,22 @@ function normalizeHostSlots(input, hostIds, profiles, event) {
       date: value.date,
       time: value.time,
       timezone: value.timezone || host.timezone,
-      hostDate: import_luxon3.DateTime.fromMillis(startAt, {
+      hostDate: import_luxon4.DateTime.fromMillis(startAt, {
         zone: host.timezone,
       }).toISODate(),
       startAt,
     };
   });
   if (
+    event.eventKind !== "group" &&
     hostIds.some(
       (uid) =>
-        uid !== event.ownerId && !slots.some((slot) => slot.hostUid === uid),
+        uid !== event.ownerId &&
+        !(event.selfSchedulingHostUids || []).includes(uid) &&
+        !slots.some((slot) => slot.hostUid === uid),
     )
   ) {
-    throw new import_https2.HttpsError(
+    throw new import_https6.HttpsError(
       "invalid-argument",
       "Add at least one time for every selected host.",
     );
@@ -368,7 +865,7 @@ function availableHostSlots({
     .filter(
       (s) =>
         s.hostUid === hostId &&
-        import_luxon3.DateTime.fromMillis(s.startAt, {
+        import_luxon4.DateTime.fromMillis(s.startAt, {
           zone: host.timezone,
         }).toISODate() === date &&
         s.startAt > now &&
@@ -395,7 +892,7 @@ function hostSlotGroups(event, profiles) {
   for (const slot of event.hostSlots || []) {
     const host = profiles.get(slot.hostUid);
     if (!host || !Number.isFinite(slot.startAt)) continue;
-    const date = import_luxon3.DateTime.fromMillis(slot.startAt, {
+    const date = import_luxon4.DateTime.fromMillis(slot.startAt, {
       zone: host.timezone,
     }).toISODate();
     const key2 = `${slot.hostUid}_${date}`;
@@ -468,10 +965,10 @@ async function dispatchMailDraft(
 }
 
 // functions/notifications.js
-var import_https3 = require("firebase-functions/v2/https");
+var import_https7 = require("firebase-functions/v2/https");
 function notificationSettings(input = {}) {
   if (!input || typeof input !== "object" || Array.isArray(input))
-    throw new import_https3.HttpsError(
+    throw new import_https7.HttpsError(
       "invalid-argument",
       "Invalid notification settings.",
     );
@@ -484,7 +981,7 @@ function notificationSettings(input = {}) {
     "hostUpdates",
   ]) {
     if (input[key2] !== void 0 && typeof input[key2] !== "boolean")
-      throw new import_https3.HttpsError(
+      throw new import_https7.HttpsError(
         "invalid-argument",
         `Invalid email setting: ${key2}.`,
       );
@@ -495,7 +992,7 @@ function notificationSettings(input = {}) {
     !Array.isArray(reminders) ||
     reminders.some((n) => ![1440, 60, 15].includes(n))
   )
-    throw new import_https3.HttpsError(
+    throw new import_https7.HttpsError(
       "invalid-argument",
       "Choose supported email reminder times.",
     );
@@ -548,30 +1045,30 @@ function mailSummary(id, data) {
 }
 
 // functions/invitations.js
-var import_https4 = require("firebase-functions/v2/https");
+var import_https8 = require("firebase-functions/v2/https");
 var responseStatus = (participant) => participant?.response || "invited";
 var confirmedParticipants = (booking) =>
   (booking.participants || []).filter((p) => responseStatus(p) === "accepted");
 function respondToInvitation(booking, uid, response, now = Date.now()) {
   if (!["accepted", "declined"].includes(response))
-    throw new import_https4.HttpsError(
+    throw new import_https8.HttpsError(
       "invalid-argument",
       "Choose Accept or Decline.",
     );
   const participant = booking.participants?.find((p) => p.uid === uid);
   if (!participant)
-    throw new import_https4.HttpsError(
+    throw new import_https8.HttpsError(
       "permission-denied",
       "This invitation belongs to another user.",
     );
   if (booking.status !== "confirmed" || booking.startAt <= now)
-    throw new import_https4.HttpsError(
+    throw new import_https8.HttpsError(
       "failed-precondition",
       "This invitation is closed.",
     );
   if (responseStatus(participant) === response) return null;
   if (responseStatus(participant) !== "invited")
-    throw new import_https4.HttpsError(
+    throw new import_https8.HttpsError(
       "failed-precondition",
       "You have already responded. Contact the host to change your response.",
     );
@@ -599,7 +1096,7 @@ function canEnterRoom(booking, uid) {
 }
 
 // functions/participants.js
-var import_https5 = require("firebase-functions/v2/https");
+var import_https9 = require("firebase-functions/v2/https");
 function selectedUids(input = []) {
   if (
     !Array.isArray(input) ||
@@ -608,7 +1105,7 @@ function selectedUids(input = []) {
       (uid) => typeof uid !== "string" || !/^[a-zA-Z0-9_-]{1,110}$/.test(uid),
     )
   ) {
-    throw new import_https5.HttpsError(
+    throw new import_https9.HttpsError(
       "invalid-argument",
       "Select up to 100 registered users.",
     );
@@ -624,7 +1121,7 @@ async function resolveParticipants(uids, identityDb) {
         .limit(2)
         .get();
       if (result.docs.length !== 1)
-        throw new import_https5.HttpsError(
+        throw new import_https9.HttpsError(
           "invalid-argument",
           "A selected user is missing or has duplicate identity records.",
         );
@@ -633,7 +1130,7 @@ async function resolveParticipants(uids, identityDb) {
         typeof user2.email !== "string" ||
         !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user2.email)
       )
-        throw new import_https5.HttpsError(
+        throw new import_https9.HttpsError(
           "invalid-argument",
           "A selected user has no valid email.",
         );
@@ -650,7 +1147,7 @@ async function resolveParticipants(uids, identityDb) {
 }
 function personalMeeting(id, booking, uid) {
   if (booking.attendeeUid !== uid && !booking.participantUids?.includes(uid))
-    throw new import_https5.HttpsError(
+    throw new import_https9.HttpsError(
       "permission-denied",
       "This meeting belongs to another attendee.",
     );
@@ -717,7 +1214,7 @@ async function selectedUsers(identityDb, input) {
 
 // functions/access.js
 var import_firestore2 = require("firebase-admin/firestore");
-var import_https6 = require("firebase-functions/v2/https");
+var import_https10 = require("firebase-functions/v2/https");
 var ADMIN_ROLES = Object.freeze(["Admin", "CustomerSupport", "SuperAdmin"]);
 var HOST_ROLES = Object.freeze(["Mentor", "Journalist", ...ADMIN_ROLES]);
 function permissions(role) {
@@ -742,7 +1239,7 @@ async function accessForUid(
 async function requireHost(uid) {
   const access = await accessForUid(uid);
   if (!access.canHost)
-    throw new import_https6.HttpsError(
+    throw new import_https10.HttpsError(
       "permission-denied",
       "Your existing UsersRoles account is not authorized to host meetings. Contact an administrator.",
     );
@@ -751,7 +1248,7 @@ async function requireHost(uid) {
 async function requireAdmin(uid) {
   const access = await accessForUid(uid);
   if (!access.isAdmin)
-    throw new import_https6.HttpsError(
+    throw new import_https10.HttpsError(
       "permission-denied",
       "Administrator access is required.",
     );
@@ -846,7 +1343,7 @@ async function searchHosts(identityDb, schedulerDb, input) {
 }
 
 // functions/registrations.js
-var import_https7 = require("firebase-functions/v2/https");
+var import_https11 = require("firebase-functions/v2/https");
 function registrationReceipt(id, registration, booking) {
   const participant = booking.participants?.find(
     (p) => p.uid === registration.participantUid,
@@ -882,14 +1379,14 @@ function registerParticipant(
   capacity = 100,
 ) {
   if (booking.status !== "confirmed" || booking.startAt <= now)
-    throw new import_https7.HttpsError(
+    throw new import_https11.HttpsError(
       "failed-precondition",
       "This meeting is no longer open for registration.",
     );
   const existing = booking.participants.find((p) => p.uid === participant.uid);
   if (existing) {
     if (existing.response === "declined")
-      throw new import_https7.HttpsError(
+      throw new import_https11.HttpsError(
         "failed-precondition",
         "You declined this invitation. Contact the host to change your response.",
       );
@@ -904,7 +1401,7 @@ function registerParticipant(
       (p) => p.email.toLowerCase() === participant.email.toLowerCase(),
     )
   )
-    throw new import_https7.HttpsError(
+    throw new import_https11.HttpsError(
       "already-exists",
       "This email already has an invitation or registration. Sign in to accept your invitation, or use your confirmation link.",
     );
@@ -913,7 +1410,7 @@ function registerParticipant(
       capacity ||
     booking.participants.length >= 1e3
   )
-    throw new import_https7.HttpsError(
+    throw new import_https11.HttpsError(
       "resource-exhausted",
       "This meeting is full.",
     );
@@ -966,17 +1463,17 @@ function jitsiToken(
 }
 
 // functions/index.js
-var import_node_util = require("node:util");
+var import_node_util2 = require("node:util");
 var import_node_crypto3 = __toESM(require("node:crypto"), 1);
 
 // functions/attendee-details.js
-var import_https8 = require("firebase-functions/v2/https");
+var import_https12 = require("firebase-functions/v2/https");
 function assertAttendeeAccess(uid, access, booking) {
   if (
     !access.canHost ||
     (!access.isAdmin && booking.ownerId !== uid && booking.organizerId !== uid)
   )
-    throw new import_https8.HttpsError(
+    throw new import_https12.HttpsError(
       "permission-denied",
       "You can view attendee details only for bookings on your own links.",
     );
@@ -1060,9 +1557,9 @@ function attendeeRoster(id, booking) {
 }
 
 // functions/event-policy.js
-var import_luxon4 = require("luxon");
+var import_luxon5 = require("luxon");
 var import_firestore3 = require("firebase-admin/firestore");
-var import_https9 = require("firebase-functions/v2/https");
+var import_https13 = require("firebase-functions/v2/https");
 function applyEventPolicy(input, event, host, now = Date.now()) {
   const schedulingMode =
     input.multipleHostTimes === true
@@ -1073,7 +1570,7 @@ function applyEventPolicy(input, event, host, now = Date.now()) {
     !["recurring", "fixed", "host-slots"].includes(schedulingMode) ||
     !["anyone", "registered"].includes(audience)
   )
-    throw new import_https9.HttpsError(
+    throw new import_https13.HttpsError(
       "invalid-argument",
       "Choose a valid meeting schedule and booking audience.",
     );
@@ -1082,7 +1579,7 @@ function applyEventPolicy(input, event, host, now = Date.now()) {
     const category =
       input.scheduleCategory || input.schedulingMode || "recurring";
     if (!["recurring", "fixed", "host-slots"].includes(category))
-      throw new import_https9.HttpsError(
+      throw new import_https13.HttpsError(
         "invalid-argument",
         "Invalid schedule category.",
       );
@@ -1096,21 +1593,21 @@ function applyEventPolicy(input, event, host, now = Date.now()) {
       !/^\d{4}-\d{2}-\d{2}$/.test(input.meetingDate || "") ||
       !/^([01]\d|2[0-3]):[0-5]\d$/.test(input.meetingTime || "")
     )
-      throw new import_https9.HttpsError(
+      throw new import_https13.HttpsError(
         "invalid-argument",
         "Choose the meeting date and start time.",
       );
     const local = `${input.meetingDate}T${input.meetingTime}`;
-    const start = import_luxon4.DateTime.fromISO(local, {
+    const start = import_luxon5.DateTime.fromISO(local, {
       zone: host.timezone,
     });
     if (!start.isValid || start.toFormat("yyyy-MM-dd'T'HH:mm") !== local)
-      throw new import_https9.HttpsError(
+      throw new import_https13.HttpsError(
         "invalid-argument",
         "This local meeting time does not exist in the host time zone.",
       );
     if (event.active && start.toMillis() <= now + event.minNotice * 6e4)
-      throw new import_https9.HttpsError(
+      throw new import_https13.HttpsError(
         "invalid-argument",
         "Choose a meeting time after the configured minimum booking notice, or reduce that notice.",
       );
@@ -1132,7 +1629,7 @@ async function assertBookingAudience(
     return { uid: request2.auth?.uid || null, email: null };
   const auth = request2.auth;
   if (!auth)
-    throw new import_https9.HttpsError(
+    throw new import_https13.HttpsError(
       "unauthenticated",
       "Sign in with your registered USMLESarthi account to book this meeting.",
     );
@@ -1141,7 +1638,7 @@ async function assertBookingAudience(
     typeof auth.token.email !== "string" ||
     !auth.token.email
   )
-    throw new import_https9.HttpsError(
+    throw new import_https13.HttpsError(
       "failed-precondition",
       "Verify your account email, then sign in again before booking.",
     );
@@ -1151,7 +1648,7 @@ async function assertBookingAudience(
     .limit(2)
     .get();
   if (users.docs.length !== 1)
-    throw new import_https9.HttpsError(
+    throw new import_https13.HttpsError(
       "permission-denied",
       "This meeting is available only to existing registered USMLESarthi users. Contact support if your account is missing.",
     );
@@ -1207,11 +1704,11 @@ var DATABASE_ID = "calendly";
 var schedulerDatabase = () => (0, import_firestore4.getFirestore)(DATABASE_ID);
 
 // functions/index.js
-var import_https10 = require("firebase-functions/v2/https");
+var import_https14 = require("firebase-functions/v2/https");
 var import_firestore6 = require("firebase-functions/v2/firestore");
 var import_scheduler = require("firebase-functions/v2/scheduler");
 var import_firebase_functions = require("firebase-functions");
-var import_luxon5 = require("luxon");
+var import_luxon6 = require("luxon");
 
 // functions/zoom.js
 var cached;
@@ -1828,19 +2325,19 @@ var opts = {
 };
 var collection = (name) => db2.collection(`scheduler_${name}`);
 var bad = (message) => {
-  throw new import_https10.HttpsError("invalid-argument", message);
+  throw new import_https14.HttpsError("invalid-argument", message);
 };
 var text = (v, max = 200) =>
   typeof v === "string" ? v.trim().slice(0, max) : "";
 function user(r) {
   if (!r.auth)
-    throw new import_https10.HttpsError("unauthenticated", "Please sign in.");
+    throw new import_https14.HttpsError("unauthenticated", "Please sign in.");
   return r.auth.uid;
 }
 function verified(r) {
   const uid = user(r);
   if (!r.auth.token.email_verified)
-    throw new import_https10.HttpsError(
+    throw new import_https14.HttpsError(
       "failed-precondition",
       "Verify your email, then sign in again.",
     );
@@ -1857,7 +2354,7 @@ var safeId = (v) => {
   return v;
 };
 var wrap = (fn, withSecrets = false) =>
-  (0, import_https10.onCall)(
+  (0, import_https14.onCall)(
     { ...opts, ...(withSecrets ? { secrets } : {}) },
     async (r) => {
       try {
@@ -1873,9 +2370,9 @@ var wrap = (fn, withSecrets = false) =>
         }
         return await fn(r);
       } catch (e) {
-        if (e instanceof import_https10.HttpsError) throw e;
+        if (e instanceof import_https14.HttpsError) throw e;
         import_firebase_functions.logger.error(e.message);
-        throw new import_https10.HttpsError(
+        throw new import_https14.HttpsError(
           "internal",
           "The request could not be completed. Please try again or reconnect your calendar.",
         );
@@ -1897,7 +2394,7 @@ async function throttle(r, kind, limit = 60) {
   await db2.runTransaction(async (tx) => {
     const s = await tx.get(ref);
     if ((s.data()?.count || 0) >= limit)
-      throw new import_https10.HttpsError(
+      throw new import_https14.HttpsError(
         "resource-exhausted",
         "Too many requests. Please try again shortly.",
       );
@@ -1910,13 +2407,14 @@ async function throttle(r, kind, limit = 60) {
 function eventInput(v, uid) {
   const e = {
     ownerId: uid,
+    eventKind: v.eventKind === "group" ? "group" : "individual",
     title: text(v.title, 80),
     description: text(v.description, 2e3),
     duration: Number(v.duration),
     minNotice: Number(v.minNotice ?? 120),
     horizonDays: Number(v.horizonDays ?? 60),
     bufferBefore: Number(v.bufferBefore ?? 0),
-    bufferAfter: Number(v.bufferAfter ?? 10),
+    bufferAfter: Number(v.bufferAfter ?? 0),
     dailyLimit: Number(v.dailyLimit ?? 8),
     capacity: Number(v.capacity ?? 100),
     cancelHours: Number(v.cancelHours ?? 0),
@@ -1925,11 +2423,7 @@ function eventInput(v, uid) {
     color: /^#[0-9a-f]{6}$/i.test(v.color) ? v.color : "#187b68",
     active: v.active !== false,
     notifications: notificationSettings(v.notifications),
-    questions: Array.isArray(v.questions)
-      ? v.questions
-          .slice(0, 10)
-          .map((q) => ({ label: text(q.label, 160), required: !!q.required }))
-      : [],
+    questions: normalizeQuestions(v.questions),
   };
   const bounds = {
     duration: [15, 240],
@@ -2056,7 +2550,7 @@ var schedulerAttendeeDetails = wrap(async (request2) => {
     .doc(safeId(request2.data?.id))
     .get();
   if (!snapshot.exists)
-    throw new import_https10.HttpsError("not-found", "Booking not found.");
+    throw new import_https14.HttpsError("not-found", "Booking not found.");
   const booking = snapshot.data();
   assertAttendeeAccess(uid, access, booking);
   if (booking.participants?.length) {
@@ -2066,7 +2560,7 @@ var schedulerAttendeeDetails = wrap(async (request2) => {
       (p) => p.uid === request2.data.participantUid,
     );
     if (!participant)
-      throw new import_https10.HttpsError(
+      throw new import_https14.HttpsError(
         "permission-denied",
         "This user is not an attendee.",
       );
@@ -2102,7 +2596,7 @@ var schedulerSaveProfile = wrap(async (r) => {
   if (
     !/^[a-z0-9][a-z0-9-]{2,59}$/.test(slug) ||
     !text(v.name, 80) ||
-    !import_luxon5.DateTime.now().setZone(v.timezone).isValid
+    !import_luxon6.DateTime.now().setZone(v.timezone).isValid
   )
     bad(
       "Enter a name, a valid time zone and a link slug of 3\u201360 letters/numbers/hyphens.",
@@ -2112,7 +2606,7 @@ var schedulerSaveProfile = wrap(async (r) => {
   await db2.runTransaction(async (tx) => {
     const [old, claim] = await Promise.all([tx.get(profile), tx.get(slugRef)]);
     if (claim.exists && claim.data().ownerId !== uid)
-      throw new import_https10.HttpsError(
+      throw new import_https14.HttpsError(
         "already-exists",
         "That booking link is already taken.",
       );
@@ -2169,7 +2663,7 @@ var schedulerMyMeetings = wrap(async (r) => {
     .limit(2)
     .get();
   if (users.size !== 1)
-    throw new import_https10.HttpsError(
+    throw new import_https14.HttpsError(
       "permission-denied",
       "A registered Users account is required.",
     );
@@ -2235,7 +2729,7 @@ var schedulerJoinMeeting = calendarWrap(async (r) => {
     event.location === "meetly" &&
     (!r.auth?.token.email_verified || !account.uid)
   )
-    throw new import_https10.HttpsError(
+    throw new import_https14.HttpsError(
       "unauthenticated",
       "Sign in with a verified registered account for this meeting room.",
     );
@@ -2250,6 +2744,7 @@ var schedulerJoinMeeting = calendarWrap(async (r) => {
     : [];
   if ((event.questions || []).some((q, i) => q.required && !answers[i]))
     bad("Please answer the required questions.");
+  validateQuestionAnswers(event.questions, answers);
   await requireHost(event.ownerId);
   const result = await db2.runTransaction(async (tx) => {
     const [currentEvent, booking, old] = await Promise.all([
@@ -2265,7 +2760,7 @@ var schedulerJoinMeeting = calendarWrap(async (r) => {
         saved.email !== email ||
         saved.name !== name
       )
-        throw new import_https10.HttpsError(
+        throw new import_https14.HttpsError(
           "already-exists",
           "This request identifier is already in use.",
         );
@@ -2274,14 +2769,14 @@ var schedulerJoinMeeting = calendarWrap(async (r) => {
     if (
       !currentEvent.exists ||
       !currentEvent.data().active ||
-      !(0, import_node_util.isDeepStrictEqual)(currentEvent.data(), event)
+      !(0, import_node_util2.isDeepStrictEqual)(currentEvent.data(), event)
     )
-      throw new import_https10.HttpsError(
+      throw new import_https14.HttpsError(
         "aborted",
         "Meeting settings changed. Reload and try again.",
       );
     if (booking.data().startAt <= Date.now() + event.minNotice * 6e4)
-      throw new import_https10.HttpsError(
+      throw new import_https14.HttpsError(
         "failed-precondition",
         "Registration has closed for this meeting.",
       );
@@ -2332,8 +2827,25 @@ var schedulerJoinMeeting = calendarWrap(async (r) => {
         to: [email],
         message: {
           subject: `Registration confirmed: ${b.eventTitle}`,
-          text: `You are registered for ${b.eventTitle}.
-View joining details or cancel: ${origin()}/registration/${id}?token=${encodeURIComponent(token2)}`,
+          ...meetingEmail({
+            booking: {
+              ...b,
+              participants: void 0,
+              attendeeName: name,
+              attendeeEmail: email,
+              notes: registration.notes,
+              answers: registration.answers,
+              questionLabels: registration.questionLabels,
+            },
+            person: { name, email, staff: false, response: "accepted" },
+            title: "Meeting confirmed",
+            time: import_luxon6.DateTime.fromMillis(b.startAt, {
+              zone: b.timezone || "UTC",
+            }).toFormat("cccc, dd LLL yyyy \xB7 HH:mm ZZZZ"),
+            managementUrl: `${origin()}/registration/${id}?token=${encodeURIComponent(token2)}`,
+            link: b.status === "confirmed" ? bookingJoiningInstructions(b) : "",
+            cancelled: false,
+          }),
         },
       });
     return { registration, booking: { ...b, participants } };
@@ -2356,7 +2868,7 @@ var schedulerRegistration = wrap(async (r) => {
       !token2 ||
       hash(token2) !== registration.data().tokenHash
     )
-      throw new import_https10.HttpsError(
+      throw new import_https14.HttpsError(
         "permission-denied",
         "This private registration link is invalid.",
       );
@@ -2370,7 +2882,7 @@ var schedulerRegistration = wrap(async (r) => {
       registrationReceipt(ref.id, data, booking).status !== "cancelled"
     ) {
       if (Date.now() >= booking.startAt - booking.cancelHours * 36e5)
-        throw new import_https10.HttpsError(
+        throw new import_https14.HttpsError(
           "failed-precondition",
           "The cancellation window has closed. Contact the host.",
         );
@@ -2410,14 +2922,14 @@ var schedulerRespondInvitation = wrap(async (r) => {
     .limit(2)
     .get();
   if (users.size !== 1)
-    throw new import_https10.HttpsError(
+    throw new import_https14.HttpsError(
       "permission-denied",
       "A registered Users account is required.",
     );
   await db2.runTransaction(async (tx) => {
     const snapshot = await tx.get(ref);
     if (!snapshot.exists)
-      throw new import_https10.HttpsError("not-found", "Invitation not found.");
+      throw new import_https14.HttpsError("not-found", "Invitation not found.");
     const booking = snapshot.data(),
       participants = respondToInvitation(booking, uid, r.data.response);
     if (!participants) return;
@@ -2456,7 +2968,7 @@ var schedulerRoom = wrap(async (r) => {
   const uid = verified(r),
     snap = await collection("bookings").doc(safeId(r.data?.id)).get();
   if (!snap.exists || !canEnterRoom(snap.data(), uid))
-    throw new import_https10.HttpsError(
+    throw new import_https14.HttpsError(
       "permission-denied",
       "Accept your invitation and sign in to join this meeting.",
     );
@@ -2503,6 +3015,27 @@ var schedulerSaveEvent = slotWrap(async (r) => {
   ) {
     data.teamHostUids = participatingHosts(uid, data.teamHostUids);
   }
+  data.slotsVersion = r.data.slotsVersion ?? 0;
+  if (!Number.isSafeInteger(data.slotsVersion) || data.slotsVersion < 0)
+    bad("Invalid schedule version. Refresh the meeting.");
+  data.selfSchedulingHostUids = selfSchedulingHosts(
+    r.data.selfSchedulingHostUids || [],
+    data,
+  );
+  data.disabledHostUids =
+    data.eventKind === "group"
+      ? selectedUids(r.data.disabledHostUids).filter((hostId) =>
+          participatingHosts(uid, data.teamHostUids).includes(hostId),
+        )
+      : [];
+  if (data.eventKind === "group")
+    data.groupHostNames = Object.fromEntries(
+      participatingHosts(uid, data.teamHostUids).map((hostId) => [
+        hostId,
+        text(r.data.groupHostNames?.[hostId], 160) ||
+          (hostId === uid ? organizer.name : "Host"),
+      ]),
+    );
   const googleHostIds = participatingHosts(uid, data.teamHostUids);
   const identities = new Map(
     (
@@ -2535,9 +3068,43 @@ var schedulerSaveEvent = slotWrap(async (r) => {
       };
     }),
   );
-  const googleError = googleConnectionError(googleRequirements);
+  if (r.data.hostLocations) {
+    data.hostLocations = normalizeHostLocations(
+      r.data.hostLocations,
+      googleHostIds,
+      { ...data, hostPhones: r.data.hostPhones },
+      new Map(
+        googleHostIds.map((hostId, i) => [hostId, googleRequirements[i].name]),
+      ),
+    );
+    data.hostPhones = Object.fromEntries(
+      Object.entries(data.hostLocations)
+        .filter(([, choice]) => choice.location === "phone")
+        .map(([hostId, choice]) => [hostId, choice.phone]),
+    );
+  } else if (data.location === "phone") {
+    data.hostPhones = normalizeHostPhones(
+      r.data.hostPhones,
+      googleHostIds,
+      new Map(
+        googleHostIds.map((hostId, i) => [hostId, googleRequirements[i].name]),
+      ),
+    );
+    data.locationValue = "";
+  }
+  const googleError = googleConnectionError(
+    googleRequirements.filter(
+      (_, i) =>
+        eventForHost(data, googleHostIds[i]).location === "google-meet" &&
+        (data.eventKind !== "group" ||
+          (isGroupHostEnabled(data, googleHostIds[i]) &&
+            (r.data.hostSlots || []).some(
+              (slot) => slot.hostUid === googleHostIds[i],
+            ))),
+    ),
+  );
   if (googleError)
-    throw new import_https10.HttpsError("failed-precondition", googleError);
+    throw new import_https14.HttpsError("failed-precondition", googleError);
   if (data.schedulingMode === "host-slots") {
     if (
       resolved.length ||
@@ -2554,8 +3121,23 @@ var schedulerSaveEvent = slotWrap(async (r) => {
         data.teamHostUids.map(async (hostId) => {
           await requireHost(hostId);
           const profile = await collection("hosts").doc(hostId).get();
-          if (!profile.exists)
+          if (!profile.exists) {
+            if (
+              data.eventKind === "group" &&
+              !(r.data.hostSlots || []).some((slot) => slot.hostUid === hostId)
+            )
+              return [
+                hostId,
+                {
+                  name:
+                    data.groupHostNames?.[hostId] ||
+                    identities.get(hostId)?.name ||
+                    "Host",
+                  timezone: organizer.timezone || "UTC",
+                },
+              ];
             bad("Every host must complete their profile first.");
+          }
           return [hostId, profile.data()];
         }),
       ),
@@ -2566,10 +3148,29 @@ var schedulerSaveEvent = slotWrap(async (r) => {
       profiles,
       data,
     );
+    data.hostSlots = data.hostSlots.filter(
+      (slot) =>
+        !isGroupHostEnabled(data, slot.hostUid) ||
+        fitsHostAvailability(slot, profiles.get(slot.hostUid), data.duration),
+    );
+    if (
+      data.eventKind !== "group" &&
+      !data.hostSlots.length &&
+      !data.selfSchedulingHostUids.length
+    )
+      bad(
+        "No selected times fall within the hosts' saved availability. Choose different dates or update Availability.",
+      );
+    data.teamHostUids = data.teamHostUids.filter(
+      (hostUid) =>
+        data.eventKind === "group" ||
+        data.hostSlots.some((slot) => slot.hostUid === hostUid) ||
+        data.selfSchedulingHostUids.includes(hostUid),
+    );
     const conflictChecks = await Promise.all(
       data.teamHostUids.map(async (hostUid) => {
         const slots = data.hostSlots.filter((slot) => slot.hostUid === hostUid);
-        if (!slots.length) return [];
+        if (!slots.length || !isGroupHostEnabled(data, hostUid)) return [];
         const start2 =
           Math.min(...slots.map((slot) => slot.startAt)) -
           data.bufferBefore * 6e4;
@@ -2614,10 +3215,13 @@ var schedulerSaveEvent = slotWrap(async (r) => {
     );
     const conflicts = conflictChecks.flat();
     if (conflicts.length)
-      throw new import_https10.HttpsError(
+      throw new import_https14.HttpsError(
         "already-exists",
         "Some selected hosts already have meetings at the chosen times.",
-        { conflicts },
+        {
+          conflicts,
+          remainingSlots: remainingHostSlots(data.hostSlots, conflicts),
+        },
       );
   }
   if (!["named", "round-robin", "host-choice"].includes(data.assignmentMode))
@@ -2650,7 +3254,7 @@ var schedulerSaveEvent = slotWrap(async (r) => {
   if (previous.exists) {
     const existing = await ref.get();
     if (existing.data()?.ownerId !== uid)
-      throw new import_https10.HttpsError(
+      throw new import_https14.HttpsError(
         "permission-denied",
         "This event belongs to another host.",
       );
@@ -2659,9 +3263,9 @@ var schedulerSaveEvent = slotWrap(async (r) => {
       teamHostUids: [],
       ...existing.data(),
     };
-    if ((0, import_node_util.isDeepStrictEqual)(comparable, data))
+    if ((0, import_node_util2.isDeepStrictEqual)(comparable, data))
       return { id };
-    throw new import_https10.HttpsError(
+    throw new import_https14.HttpsError(
       "failed-precondition",
       "Cancel the saved meeting and create a new meeting to change its settings or invitees.",
     );
@@ -2677,7 +3281,7 @@ var schedulerSaveEvent = slotWrap(async (r) => {
         overlap({ start: lockStart, end: lockEnd }, interval),
       )
     ) {
-      throw new import_https10.HttpsError(
+      throw new import_https14.HttpsError(
         "already-exists",
         `${organizer.name || "Organizer"} already has a meeting at the chosen time.`,
         {
@@ -2704,19 +3308,21 @@ var schedulerSaveEvent = slotWrap(async (r) => {
               providers = await connections(hostUid);
             if (providers.some((p) => p !== "zoom") && !calendarConfigured)
               bad("Configure calendar OAuth before scheduling team meetings.");
+            const hostEvent = eventForHost(data, hostUid);
             const providerReady =
-              (data.location !== "google-meet" ||
-                data.locationValue ||
+              (hostEvent.location !== "google-meet" ||
+                hostEvent.locationValue ||
                 providers.includes("google")) &&
-              (data.location !== "teams" || providers.includes("microsoft")) &&
-              (data.location !== "zoom" ||
-                data.locationValue ||
+              (hostEvent.location !== "teams" ||
+                providers.includes("microsoft")) &&
+              (hostEvent.location !== "zoom" ||
+                hostEvent.locationValue ||
                 providers.includes("zoom") ||
                 (process.env.ZOOM_ACCOUNT_ID && process.env.ZOOM_CLIENT_ID));
             const busy = providerReady
               ? await busyForHost(hostUid, lockStart, lockEnd)
               : [];
-            const date = import_luxon5.DateTime.fromMillis(start, {
+            const date = import_luxon6.DateTime.fromMillis(start, {
               zone: host.timezone,
             }).toISODate();
             const hoursReady =
@@ -2757,27 +3363,32 @@ var schedulerSaveEvent = slotWrap(async (r) => {
       tx.get(rotationRef),
     ]);
     if (old.data()?.deletedAt)
-      throw new import_https10.HttpsError(
+      throw new import_https14.HttpsError(
         "failed-precondition",
         "This event was deleted.",
       );
     if (old.exists && old.data().ownerId !== uid)
-      throw new import_https10.HttpsError(
+      throw new import_https14.HttpsError(
         "permission-denied",
         "This event belongs to another host.",
       );
+    if (old.exists && (old.data().slotsVersion || 0) !== data.slotsVersion)
+      throw new import_https14.HttpsError(
+        "aborted",
+        "A host updated their slots since you opened this meeting. Refresh before saving so their changes are preserved.",
+      );
     if (assigned.exists) {
-      if ((0, import_node_util.isDeepStrictEqual)(old.data(), data)) return;
-      throw new import_https10.HttpsError(
+      if ((0, import_node_util2.isDeepStrictEqual)(old.data(), data)) return;
+      throw new import_https14.HttpsError(
         "already-exists",
         "The meeting was already created.",
       );
     }
     if (
       !currentHost.exists ||
-      !(0, import_node_util.isDeepStrictEqual)(currentHost.data(), organizer)
+      !(0, import_node_util2.isDeepStrictEqual)(currentHost.data(), organizer)
     )
-      throw new import_https10.HttpsError(
+      throw new import_https14.HttpsError(
         "aborted",
         "Host settings changed. Try again.",
       );
@@ -2803,7 +3414,10 @@ var schedulerSaveEvent = slotWrap(async (r) => {
             available:
               c.available &&
               hostNow.exists &&
-              (0, import_node_util.isDeepStrictEqual)(hostNow.data(), c.host) &&
+              (0, import_node_util2.isDeepStrictEqual)(
+                hostNow.data(),
+                c.host,
+              ) &&
               !confirmed.some((b) =>
                 overlap(
                   { start: lockStart, end: lockEnd },
@@ -2812,7 +3426,7 @@ var schedulerSaveEvent = slotWrap(async (r) => {
               ) &&
               confirmed.filter(
                 (b) =>
-                  import_luxon5.DateTime.fromMillis(b.startAt, {
+                  import_luxon6.DateTime.fromMillis(b.startAt, {
                     zone: c.host.timezone,
                   }).toISODate() === c.date,
               ).length < data.dailyLimit,
@@ -2824,7 +3438,7 @@ var schedulerSaveEvent = slotWrap(async (r) => {
         rotation.data()?.counts,
       );
       if (!chosen)
-        throw new import_https10.HttpsError(
+        throw new import_https14.HttpsError(
           "already-exists",
           "No selected host is available at this time. Check calendars, weekly hours and daily booking limits.",
         );
@@ -2845,14 +3459,17 @@ var schedulerSaveEvent = slotWrap(async (r) => {
           },
           updatedAt: Date.now(),
         });
+      const chosenEvent = eventForHost(data, chosen.uid);
       const roomKey =
-        data.location === "meetly"
+        chosenEvent.location === "meetly"
           ? `meetly-${import_node_crypto3.default.randomBytes(24).toString("hex")}`
           : null;
       const meetingUrl =
-        data.location === "meetly"
+        chosenEvent.location === "meetly"
           ? `${origin()}/room/${bookingRef.id}`
-          : data.locationValue;
+          : chosenEvent.location === "phone"
+            ? chosenEvent.locationValue || phoneInstructions(data, chosen.uid)
+            : chosenEvent.locationValue;
       tx.create(bookingRef, {
         ownerId: chosen.uid,
         organizerId: uid,
@@ -2861,6 +3478,7 @@ var schedulerSaveEvent = slotWrap(async (r) => {
         notifications: data.notifications,
         eventId: id,
         eventTitle: data.title,
+        eventDescription: data.description || "",
         hostName: chosen.host.name,
         hostEmail: chosen.host.email,
         timezone: organizer.timezone,
@@ -2878,8 +3496,11 @@ var schedulerSaveEvent = slotWrap(async (r) => {
         lockStart,
         lockEnd,
         status: "confirmed",
-        location: data.location,
-        locationValue: data.locationValue,
+        location: chosenEvent.location,
+        locationValue:
+          chosenEvent.location === "phone"
+            ? meetingUrl
+            : chosenEvent.locationValue,
         meetingUrl,
         roomKey,
         cancelHours: data.cancelHours,
@@ -2902,7 +3523,7 @@ var schedulerSaveEvent = slotWrap(async (r) => {
               message: {
                 subject: `Invitation: ${data.title}`,
                 text: `You are invited to ${data.title} with ${chosen.host.name}.
-${import_luxon5.DateTime.fromMillis(start, { zone: organizer.timezone }).toFormat("dd LLL yyyy HH:mm ZZZZ")}
+${import_luxon6.DateTime.fromMillis(start, { zone: organizer.timezone }).toFormat("dd LLL yyyy HH:mm ZZZZ")}
 Accept or decline: ${origin()}/book/${organizer.slug}/${id}
 Joining details are shared after you accept.`,
               },
@@ -2927,7 +3548,7 @@ Joining details are shared after you accept.`,
                 subject: `${staff.uid === "host" ? "Meeting assigned to you" : "Meeting scheduled"}: ${data.title}`,
                 text: `${data.title}
 Assigned host: ${chosen.host.name}
-${import_luxon5.DateTime.fromMillis(start, { zone: organizer.timezone }).toFormat("dd LLL yyyy HH:mm ZZZZ")}
+${import_luxon6.DateTime.fromMillis(start, { zone: organizer.timezone }).toFormat("dd LLL yyyy HH:mm ZZZZ")}
 Invited users: ${resolved.map((p) => p.name).join(", ")}
 View invitations and bookings: ${origin()}/bookings`,
               },
@@ -2942,8 +3563,173 @@ View invitations and bookings: ${origin()}/bookings`,
       });
     }
     tx.set(ref, data);
+    for (const hostUid of old.data()?.selfSchedulingHostUids || []) {
+      if (!data.selfSchedulingHostUids.includes(hostUid))
+        tx.delete(collection("host_assignments").doc(`${id}_${hostUid}`));
+    }
+    for (const hostUid of data.selfSchedulingHostUids)
+      tx.set(
+        collection("host_assignments").doc(`${id}_${hostUid}`),
+        hostAssignment(id, data, hostUid),
+      );
+    tx.set(collection("public_events").doc(id), {
+      ownerId: data.ownerId,
+      eventKind: data.eventKind,
+      disabledHostUids: data.disabledHostUids || [],
+      groupHostNames: data.groupHostNames || {},
+      active: data.active,
+      duration: data.duration,
+      minNotice: data.minNotice,
+      teamHostUids: data.teamHostUids || [],
+      schedulingMode: data.schedulingMode,
+      hostSlots: data.hostSlots || [],
+      fixedStartAt: data.fixedStartAt || null,
+      meetingTimezone: data.meetingTimezone || organizer.timezone || "UTC",
+      hostName: organizer.name || "Organizer",
+      updatedAt: Date.now(),
+    });
   });
   return { id };
+});
+var schedulerSaveOwnSlots = slotWrap(async (r) => {
+  const uid = await hostUser(r),
+    id = safeId(r.data.eventId);
+  const ref = collection("events").doc(id);
+  const snapshot = await ref.get();
+  const event = snapshot.data();
+  assertSelfScheduling(event, uid);
+  const profileRef = collection("hosts").doc(uid),
+    profileSnapshot = await profileRef.get();
+  if (!profileSnapshot.exists) bad("Complete your host profile first.");
+  const profile = profileSnapshot.data();
+  if (!Array.isArray(r.data.hostSlots)) bad("Choose valid host times.");
+  let slots = r.data.hostSlots.length
+    ? normalizeHostSlots(
+        r.data.hostSlots,
+        [uid],
+        /* @__PURE__ */ new Map([[uid, profile]]),
+        {
+          ...event,
+          ownerId: uid,
+          selfSchedulingHostUids: [],
+        },
+      )
+    : [];
+  slots = slots.filter((slot) =>
+    fitsHostAvailability(slot, profile, event.duration),
+  );
+  const newSlots = slots.filter(
+    (slot) =>
+      !(event.hostSlots || []).some(
+        (old) => old.hostUid === uid && old.startAt === slot.startAt,
+      ),
+  );
+  if (newSlots.length) {
+    const ownEvent = eventForHost(event, uid);
+    if (
+      ownEvent.location === "google-meet" &&
+      !ownEvent.locationValue &&
+      !(await connections(uid)).includes("google")
+    )
+      throw new import_https14.HttpsError(
+        "failed-precondition",
+        "Connect your Google account in Integrations before publishing Google Meet slots.",
+      );
+    const start =
+      Math.min(...newSlots.map((slot) => slot.startAt)) -
+      event.bufferBefore * 6e4;
+    const end =
+      Math.max(...newSlots.map((slot) => slot.startAt)) +
+      (event.duration + event.bufferAfter) * 6e4;
+    const [busy, bookings] = await Promise.all([
+      busyForHost(uid, start, end),
+      collection("bookings")
+        .where("ownerId", "==", uid)
+        .where("startAt", ">=", start - 864e5)
+        .where("startAt", "<=", end + 864e5)
+        .get(),
+    ]);
+    const blocked = [
+      ...busy,
+      ...bookings.docs
+        .filter((doc) => doc.data().status === "confirmed")
+        .map((doc) => ({
+          start: doc.data().lockStart,
+          end: doc.data().lockEnd,
+        })),
+    ];
+    const conflicts = newSlots
+      .filter((slot) =>
+        blocked.some((interval) =>
+          overlap(
+            {
+              start: slot.startAt - event.bufferBefore * 6e4,
+              end: slot.startAt + (event.duration + event.bufferAfter) * 6e4,
+            },
+            interval,
+          ),
+        ),
+      )
+      .map((slot) => ({
+        hostUid: uid,
+        hostName: profile.name || "Host",
+        startAt: slot.startAt,
+      }));
+    if (conflicts.length)
+      throw new import_https14.HttpsError(
+        "already-exists",
+        "Some of your times overlap existing meetings.",
+        { conflicts, remainingSlots: remainingHostSlots(slots, conflicts) },
+      );
+  }
+  await db2.runTransaction(async (tx) => {
+    const [current, hostNow] = await Promise.all([
+      tx.get(ref),
+      tx.get(profileRef),
+    ]);
+    assertSelfScheduling(current.data(), uid);
+    if (
+      !(0, import_node_util2.isDeepStrictEqual)(current.data(), event) ||
+      !(0, import_node_util2.isDeepStrictEqual)(hostNow.data(), profile)
+    )
+      throw new import_https14.HttpsError(
+        "aborted",
+        "The meeting or your availability changed. Refresh and try again.",
+      );
+    const allSlots = replaceOwnSlots(current.data(), uid, slots);
+    tx.update(ref, {
+      hostSlots: allSlots,
+      slotsVersion: (event.slotsVersion || 0) + 1,
+      updatedAt: Date.now(),
+    });
+    tx.set(collection("public_events").doc(id), {
+      ownerId: event.ownerId,
+      eventKind: event.eventKind || "individual",
+      disabledHostUids: event.disabledHostUids || [],
+      groupHostNames: event.groupHostNames || {},
+      active: event.active,
+      duration: event.duration,
+      minNotice: event.minNotice,
+      teamHostUids: event.teamHostUids,
+      schedulingMode: event.schedulingMode,
+      hostSlots: allSlots,
+      updatedAt: Date.now(),
+    });
+    tx.set(
+      collection("host_assignments").doc(`${id}_${uid}`),
+      hostAssignment(id, { ...event, hostSlots: allSlots }, uid),
+    );
+    tx.create(collection("audit").doc(), {
+      action: "host-own-slots-updated",
+      actor: uid,
+      eventId: id,
+      ownerId: event.ownerId,
+      at: Date.now(),
+      before: (event.hostSlots || []).filter((slot) => slot.hostUid === uid),
+      after: slots,
+    });
+  });
+  return { ok: true, hostSlots: slots };
 });
 var schedulerDeleteEvent = wrap(async (r) => {
   const uid = await hostUser(r);
@@ -2954,9 +3740,9 @@ var schedulerDeleteEvent = wrap(async (r) => {
       tx.get(collection("bookings").where("eventId", "==", ref.id)),
     ]);
     if (!event.exists)
-      throw new import_https10.HttpsError("not-found", "Event not found.");
+      throw new import_https14.HttpsError("not-found", "Event not found.");
     if (event.data().ownerId !== uid)
-      throw new import_https10.HttpsError(
+      throw new import_https14.HttpsError(
         "permission-denied",
         "Only the event organizer can delete this event.",
       );
@@ -2968,12 +3754,15 @@ var schedulerDeleteEvent = wrap(async (r) => {
             ["pending", "error"].includes(doc.data().syncStatus)),
       )
     ) {
-      throw new import_https10.HttpsError(
+      throw new import_https14.HttpsError(
         "failed-precondition",
         "Cancel upcoming bookings and wait for calendar cancellation to finish before deleting this event.",
       );
     }
     tx.update(ref, { active: false, deletedAt: Date.now(), deletedBy: uid });
+    tx.delete(collection("public_events").doc(ref.id));
+    for (const hostUid of event.data().selfSchedulingHostUids || [])
+      tx.delete(collection("host_assignments").doc(`${ref.id}_${hostUid}`));
     tx.create(collection("audit").doc(), {
       action: "event-deleted",
       eventId: ref.id,
@@ -2988,11 +3777,21 @@ function publicEvent(doc) {
     participantUids = [],
     teamHostUids,
     locationValue,
+    hostPhones,
+    hostLocations,
+    selfSchedulingHostUids,
+    slotsVersion,
     ...event
   } = doc.data();
+  const publicData = activeGroupEvent({
+    ...event,
+    ...(event.eventKind === "group"
+      ? { teamHostUids: teamHostUids || [] }
+      : {}),
+  });
   return {
     id: doc.id,
-    ...event,
+    ...publicData,
     locationValue: "",
     assignedCount: participantUids.length,
   };
@@ -3001,10 +3800,10 @@ var schedulerPublicPage = wrap(async (r) => {
   await throttle(r, "page");
   const s = await collection("slugs").doc(safeId(r.data.slug)).get();
   if (!s.exists)
-    throw new import_https10.HttpsError("not-found", "Booking page not found.");
+    throw new import_https14.HttpsError("not-found", "Booking page not found.");
   const host = await collection("hosts").doc(s.data().ownerId).get();
   if (!host.exists)
-    throw new import_https10.HttpsError("not-found", "Host not found.");
+    throw new import_https14.HttpsError("not-found", "Host not found.");
   await requireHost(host.id);
   const h = host.data(),
     events = await collection("events")
@@ -3026,10 +3825,10 @@ var schedulerPublicEvent = wrap(async (r) => {
   await throttle(r, "page");
   const s = await collection("events").doc(safeId(r.data.eventId)).get();
   if (!s.exists || !s.data().active)
-    throw new import_https10.HttpsError("not-found", "Event unavailable.");
+    throw new import_https14.HttpsError("not-found", "Event unavailable.");
   const h = await collection("hosts").doc(s.data().ownerId).get();
   if (!h.exists)
-    throw new import_https10.HttpsError("not-found", "Host unavailable.");
+    throw new import_https14.HttpsError("not-found", "Host unavailable.");
   await requireHost(h.id);
   const p = h.data();
   return {
@@ -3052,31 +3851,33 @@ async function context(
 ) {
   const ev = await collection("events").doc(safeId(eventId)).get();
   if (!ev.exists || !ev.data().active)
-    throw new import_https10.HttpsError(
+    throw new import_https14.HttpsError(
       "not-found",
       "This event is unavailable.",
     );
-  const event = ev.data();
+  let event = ev.data();
   const hostId =
     event.schedulingMode === "host-slots" ? selectedHostId : event.ownerId;
   if (
     !hostId ||
+    !isGroupHostEnabled(event, hostId) ||
     (event.schedulingMode === "host-slots" &&
       !participatingHosts(event.ownerId, event.teamHostUids || []).includes(
         hostId,
       ))
   )
     bad("Choose a participating host.");
+  event = eventForHost(event, hostId);
   const hs = await collection("hosts").doc(hostId).get();
   if (!hs.exists) bad("Host is unavailable.");
   await requireHost(hostId);
   const host = hs.data();
   if (
     !/^\d{4}-\d{2}-\d{2}$/.test(date) ||
-    !import_luxon5.DateTime.fromISO(date, { zone: host.timezone }).isValid
+    !import_luxon6.DateTime.fromISO(date, { zone: host.timezone }).isValid
   )
     bad("Invalid date.");
-  const day = import_luxon5.DateTime.fromISO(date, { zone: host.timezone }),
+  const day = import_luxon6.DateTime.fromISO(date, { zone: host.timezone }),
     start = day.startOf("day").toMillis(),
     end = day.endOf(wholeMonth ? "month" : "day").toMillis();
   const query = collection("bookings")
@@ -3097,7 +3898,7 @@ async function context(
       ] ||
       !process.env.OAUTH_TOKEN_KEY
     )
-      throw new import_https10.HttpsError(
+      throw new import_https14.HttpsError(
         "failed-precondition",
         "This host has a connected calendar. Configure its OAuth client ID and backend secrets, then redeploy schedulerSlots before offering times.",
       );
@@ -3108,7 +3909,7 @@ async function context(
       !providerConnections.includes("google")) ||
     (event.location === "teams" && !providerConnections.includes("microsoft"))
   ) {
-    throw new import_https10.HttpsError(
+    throw new import_https14.HttpsError(
       "failed-precondition",
       "This host must connect the meeting's calendar provider before offering times.",
     );
@@ -3122,7 +3923,7 @@ async function context(
     .map((d) => d.data());
   const today = existing.filter(
     (b) =>
-      import_luxon5.DateTime.fromMillis(b.startAt, {
+      import_luxon6.DateTime.fromMillis(b.startAt, {
         zone: host.timezone,
       }).toISODate() === date,
   );
@@ -3135,6 +3936,7 @@ async function context(
     hostId,
     event,
     eventId: ev.id,
+    sourceEvent: ev.data(),
     query,
     date,
     busy,
@@ -3154,24 +3956,107 @@ var schedulerSlots = slotWrap(async (r) => {
   await throttle(r, "slots", 120);
   const event = await collection("events").doc(safeId(r.data.eventId)).get();
   if (!event.exists || !event.data().active) bad("Event is unavailable.");
-  if (event.data().schedulingMode === "host-slots") {
+  if (r.data.diagnostics === true) {
+    const requester = await hostUser(r);
+    if (requester !== event.data().ownerId)
+      throw new import_https14.HttpsError(
+        "permission-denied",
+        "This signed-in account is not the event organizer.",
+      );
+  }
+  if (event.data().schedulingMode === "fixed") {
     const data = event.data();
-    const hostIds = participatingHosts(data.ownerId, data.teamHostUids || []);
+    if (!Number.isSafeInteger(data.fixedStartAt))
+      bad(
+        "This fixed event has no valid saved start time. Open its editor and save its date and time.",
+      );
+    const profile = await collection("hosts").doc(data.ownerId).get();
+    const date = import_luxon6.DateTime.fromMillis(data.fixedStartAt, {
+      zone: profile.data()?.timezone || data.meetingTimezone || "UTC",
+    }).toISODate();
+    const c2 = await context(event.id, date);
+    const slots = c2.slots.map((slot) => ({
+      ...slot,
+      hostUid: c2.hostId,
+      hostName: c2.host.name,
+    }));
+    return {
+      timezone: c2.host.timezone,
+      slots,
+      hosts: [
+        {
+          uid: c2.hostId,
+          name: c2.host.name,
+          organizer: true,
+          publishedCount: 1,
+          availableCount: slots.length,
+        },
+      ],
+      ...(r.data.diagnostics === true
+        ? {
+            diagnostics: [
+              {
+                hostUid: c2.hostId,
+                hostName: c2.host.name,
+                startAt: data.fixedStartAt,
+                reason: hostSlotReason(
+                  { startAt: data.fixedStartAt },
+                  data,
+                  c2,
+                ),
+              },
+            ],
+          }
+        : {}),
+    };
+  }
+  if (
+    r.data.diagnostics === true &&
+    event.data().schedulingMode !== "host-slots"
+  )
+    throw new import_https14.HttpsError(
+      "failed-precondition",
+      "This event uses recurring availability rather than saved appointment times. Check the organizer's Availability settings, or save a fixed date or host-specific times in the event editor.",
+    );
+  if (event.data().schedulingMode === "host-slots") {
+    const data = activeGroupEvent(event.data());
+    const hostIds = participatingHosts(
+      data.ownerId,
+      data.teamHostUids || [],
+    ).filter((uid) => isGroupHostEnabled(data, uid));
+    if (!hostIds.length) return { timezone: "UTC", slots: [], hosts: [] };
     const snapshots = await db2.getAll(
       ...hostIds.map((uid) => collection("hosts").doc(uid)),
     );
     const profiles = new Map(
       snapshots.filter((s) => s.exists).map((s) => [s.id, s.data()]),
     );
-    const diagnosticsAllowed =
-      r.data.diagnostics === true && r.auth?.uid === data.ownerId;
-    if (diagnosticsAllowed) await hostUser(r);
+    const diagnosticsAllowed = r.data.diagnostics === true;
+    if (diagnosticsAllowed) {
+      const requester = await hostUser(r);
+      if (requester !== data.ownerId)
+        throw new import_https14.HttpsError(
+          "permission-denied",
+          "This signed-in account is not the event organizer. Sign in with the account that created this event to inspect its availability reasons.",
+        );
+    }
+    const requestedSlot =
+      r.data.hostUid && Number.isSafeInteger(r.data.startAt)
+        ? (data.hostSlots || []).filter(
+            (slot) =>
+              slot.hostUid === r.data.hostUid &&
+              slot.startAt === r.data.startAt,
+          )
+        : null;
     const results = await Promise.all(
-      hostSlotGroups(data, profiles).map(async (group) => {
+      hostSlotGroups(
+        requestedSlot ? { ...data, hostSlots: requestedSlot } : data,
+        profiles,
+      ).map(async (group) => {
         const rows = (data.hostSlots || []).filter(
           (s) =>
             s.hostUid === group.hostUid &&
-            import_luxon5.DateTime.fromMillis(s.startAt, {
+            import_luxon6.DateTime.fromMillis(s.startAt, {
               zone: profiles.get(s.hostUid).timezone,
             }).toISODate() === group.date,
         );
@@ -3218,7 +4103,10 @@ var schedulerSlots = slotWrap(async (r) => {
       .sort((a, b) => a.start - b.start);
     const hosts = hostIds.map((uid) => ({
       uid,
-      name: profiles.get(uid)?.name || "Host unavailable",
+      name:
+        profiles.get(uid)?.name ||
+        data.groupHostNames?.[uid] ||
+        "Host unavailable",
       organizer: uid === data.ownerId,
       publishedCount: (data.hostSlots || []).filter((s) => s.hostUid === uid)
         .length,
@@ -3236,7 +4124,7 @@ var schedulerSlots = slotWrap(async (r) => {
   if (r.data.month !== void 0) {
     if (!/^\d{4}-\d{2}$/.test(r.data.month))
       bad("Choose a valid calendar month.");
-    const requested = import_luxon5.DateTime.fromISO(`${r.data.month}-01`, {
+    const requested = import_luxon6.DateTime.fromISO(`${r.data.month}-01`, {
       zone: "UTC",
     });
     if (!requested.isValid) bad("Choose a valid calendar month.");
@@ -3271,7 +4159,7 @@ async function manageAllowed(r, b) {
   }
   const token2 = text(r.data.token, 200);
   if (!token2 || hash(token2) !== b.tokenHash)
-    throw new import_https10.HttpsError(
+    throw new import_https14.HttpsError(
       "permission-denied",
       "This booking link is invalid.",
     );
@@ -3281,7 +4169,7 @@ var schedulerGetBooking = wrap(async (r) => {
   const id = safeId(r.data.id),
     s = await collection("bookings").doc(id).get();
   if (!s.exists)
-    throw new import_https10.HttpsError("not-found", "Booking not found.");
+    throw new import_https14.HttpsError("not-found", "Booking not found.");
   const b = s.data();
   await manageAllowed(r, b);
   const { tokenHash, tokenCipher, roomKey, ...publicData } = b;
@@ -3296,19 +4184,19 @@ async function book(r, reschedule = false) {
     ref = collection("bookings").doc(safeId(v.id));
     const s = await ref.get();
     if (!s.exists)
-      throw new import_https10.HttpsError("not-found", "Booking not found.");
+      throw new import_https14.HttpsError("not-found", "Booking not found.");
     old = s.data();
     await manageAllowed(r, old);
     if (
       old.status !== "confirmed" ||
       Date.now() > old.startAt - old.cancelHours * 36e5
     )
-      throw new import_https10.HttpsError(
+      throw new import_https14.HttpsError(
         "failed-precondition",
         "The rescheduling window has closed.",
       );
   }
-  if (v.timezone && !import_luxon5.DateTime.now().setZone(v.timezone).isValid)
+  if (v.timezone && !import_luxon6.DateTime.now().setZone(v.timezone).isValid)
     bad("Invalid attendee time zone.");
   const eventId = old?.eventId || v.eventId,
     startAt = Number(v.startAt);
@@ -3316,7 +4204,7 @@ async function book(r, reschedule = false) {
   const ev = await collection("events").doc(safeId(eventId)).get();
   if (!ev.exists) bad("Event is unavailable.");
   if (ev.data().participantUids?.length)
-    throw new import_https10.HttpsError(
+    throw new import_https14.HttpsError(
       "permission-denied",
       "This meeting already has assigned attendees. Sign in to My meetings.",
     );
@@ -3326,7 +4214,7 @@ async function book(r, reschedule = false) {
     ev.data().audience === "registered" &&
     old.attendeeUid !== attendee.uid
   )
-    throw new import_https10.HttpsError(
+    throw new import_https14.HttpsError(
       "permission-denied",
       "Sign in with the account that originally booked this meeting.",
     );
@@ -3343,7 +4231,7 @@ async function book(r, reschedule = false) {
         b.startAt !== Number(v.startAt) ||
         (ev.data().schedulingMode === "host-slots" && b.ownerId !== v.hostUid)
       )
-        throw new import_https10.HttpsError(
+        throw new import_https14.HttpsError(
           "already-exists",
           "Request identifier is already used.",
         );
@@ -3368,17 +4256,17 @@ async function book(r, reschedule = false) {
       ? hs
       : await collection("hosts").doc(ev.data().ownerId).get();
   const organizerProfile = organizerSnapshot.data() || {};
-  const date = import_luxon5.DateTime.fromMillis(startAt, {
+  const date = import_luxon6.DateTime.fromMillis(startAt, {
       zone: hs.data().timezone,
     }).toISODate(),
     c = await context(eventId, date, old ? ref.id : null, selectedHostId);
-  if (JSON.stringify(c.event) !== JSON.stringify(ev.data()))
-    throw new import_https10.HttpsError(
+  if (!sameBookingSettings(c.sourceEvent, ev.data()))
+    throw new import_https14.HttpsError(
       "aborted",
       "Meeting settings changed. Refresh and try again.",
     );
   if (!c.slots.some((s) => s.start === startAt))
-    throw new import_https10.HttpsError(
+    throw new import_https14.HttpsError(
       "already-exists",
       "That time is no longer available. Choose another time.",
     );
@@ -3389,7 +4277,7 @@ async function book(r, reschedule = false) {
     !ps.includes("zoom") &&
     (!process.env.ZOOM_ACCOUNT_ID || !process.env.ZOOM_CLIENT_ID)
   ) {
-    throw new import_https10.HttpsError(
+    throw new import_https14.HttpsError(
       "failed-precondition",
       "This host must connect Zoom or provide a Zoom meeting link.",
     );
@@ -3399,12 +4287,12 @@ async function book(r, reschedule = false) {
     !c.event.locationValue &&
     !ps.includes("google")
   )
-    throw new import_https10.HttpsError(
+    throw new import_https14.HttpsError(
       "failed-precondition",
       "This host must connect Google Calendar first.",
     );
   if (c.event.location === "teams" && !ps.includes("microsoft"))
-    throw new import_https10.HttpsError(
+    throw new import_https14.HttpsError(
       "failed-precondition",
       "This host must connect Outlook first.",
     );
@@ -3420,12 +4308,16 @@ async function book(r, reschedule = false) {
       : []);
   if (c.event.questions.some((q, i) => q.required && !answers[i]))
     bad("Please answer all required questions.");
+  if (!old) validateQuestionAnswers(c.event.questions, answers);
   const id = old ? ref.id : safeId(v.requestId),
     token2 = old
       ? unseal(old.tokenCipher).token
       : import_node_crypto3.default.randomBytes(32).toString("base64url");
   ref = ref || collection("bookings").doc(id);
-  const event = c.event,
+  const event =
+      c.event.location === "phone"
+        ? { ...c.event, locationValue: phoneInstructions(c.event, c.hostId) }
+        : c.event,
     endAt = startAt + event.duration * 6e4,
     lockStart = startAt - event.bufferBefore * 6e4,
     lockEnd = endAt + event.bufferAfter * 6e4;
@@ -3439,6 +4331,7 @@ async function book(r, reschedule = false) {
     ownerId: c.hostId,
     eventId,
     eventTitle: event.title,
+    eventDescription: event.description || "",
     hostName: c.host.name,
     hostEmail: c.host.email,
     timezone: c.host.timezone,
@@ -3496,7 +4389,7 @@ async function book(r, reschedule = false) {
         current.data().ownerId === c.hostId
       )
         return current.data();
-      throw new import_https10.HttpsError(
+      throw new import_https14.HttpsError(
         "already-exists",
         "A booking with this request identifier already exists.",
       );
@@ -3507,7 +4400,7 @@ async function book(r, reschedule = false) {
         current.data().revision !== old.revision ||
         current.data().status !== "confirmed")
     )
-      throw new import_https10.HttpsError(
+      throw new import_https14.HttpsError(
         "aborted",
         "This booking changed. Refresh and try again.",
       );
@@ -3519,17 +4412,17 @@ async function book(r, reschedule = false) {
       tx.get(c.query),
     ]);
     if (!hostNow.exists || !eventNow.exists || !eventNow.data().active)
-      throw new import_https10.HttpsError(
+      throw new import_https14.HttpsError(
         "failed-precondition",
         "Event is unavailable.",
       );
-    if (JSON.stringify(hostNow.data()) !== JSON.stringify(c.host))
-      throw new import_https10.HttpsError(
+    if (!sameBookingSettings(hostNow.data(), c.host))
+      throw new import_https14.HttpsError(
         "aborted",
         "Host availability changed. Choose a time again.",
       );
-    if (JSON.stringify(eventNow.data()) !== JSON.stringify(event))
-      throw new import_https10.HttpsError(
+    if (!sameBookingSettings(eventNow.data(), c.sourceEvent))
+      throw new import_https14.HttpsError(
         "aborted",
         "Event settings changed. Choose a time again.",
       );
@@ -3539,7 +4432,7 @@ async function book(r, reschedule = false) {
     if (
       others.filter(
         (b) =>
-          import_luxon5.DateTime.fromMillis(b.startAt, {
+          import_luxon6.DateTime.fromMillis(b.startAt, {
             zone: hostNow.data().timezone,
           }).toISODate() === date,
       ).length >= event.dailyLimit ||
@@ -3556,7 +4449,7 @@ async function book(r, reschedule = false) {
         ],
       }).some((s) => s.start === startAt)
     )
-      throw new import_https10.HttpsError(
+      throw new import_https14.HttpsError(
         "already-exists",
         "That time was just booked. Choose another time.",
       );
@@ -3595,7 +4488,7 @@ var schedulerCancel = wrap(async (r) => {
   await db2.runTransaction(async (tx) => {
     const s = await tx.get(ref);
     if (!s.exists)
-      throw new import_https10.HttpsError("not-found", "Booking not found.");
+      throw new import_https14.HttpsError("not-found", "Booking not found.");
     const b = s.data();
     await manageAllowed(r, b);
     if (b.status === "cancelled") return;
@@ -3604,7 +4497,7 @@ var schedulerCancel = wrap(async (r) => {
       r.auth?.uid !== b.organizerId &&
       Date.now() > b.startAt - b.cancelHours * 36e5
     )
-      throw new import_https10.HttpsError(
+      throw new import_https14.HttpsError(
         "failed-precondition",
         "The cancellation window has closed. Contact the host.",
       );
@@ -3633,7 +4526,7 @@ var schedulerConnect = wrap(async (r) => {
   try {
     origin();
   } catch (e) {
-    throw new import_https10.HttpsError("failed-precondition", e.message);
+    throw new import_https14.HttpsError("failed-precondition", e.message);
   }
   if (
     !process.env[
@@ -3645,7 +4538,7 @@ var schedulerConnect = wrap(async (r) => {
     ] ||
     !process.env.OAUTH_REDIRECT_URI
   )
-    throw new import_https10.HttpsError(
+    throw new import_https14.HttpsError(
       "failed-precondition",
       `Configure ${provider === "zoom" ? "ZOOM_OAUTH_CLIENT_ID" : provider === "google" ? "GOOGLE_CLIENT_ID" : "MICROSOFT_CLIENT_ID"} and OAUTH_REDIRECT_URI in the Functions environment, then redeploy schedulerConnect.`,
     );
@@ -3661,7 +4554,7 @@ var schedulerConnect = wrap(async (r) => {
     .set({ ownerId: uid, provider, verifier, expiresAt: Date.now() + 6e5 });
   return { url };
 });
-var schedulerOAuthCallback = (0, import_https10.onRequest)(
+var schedulerOAuthCallback = (0, import_https14.onRequest)(
   { region, secrets, maxInstances: 5 },
   async (req, res) => {
     let returnOrigin = null,
@@ -3783,7 +4676,7 @@ var schedulerDisconnect = wrap(async (r) => {
           d.data().externalIds?.[r.data.provider],
       )
     )
-      throw new import_https10.HttpsError(
+      throw new import_https14.HttpsError(
         "failed-precondition",
         "This calendar has upcoming synced bookings. Keep it connected until those bookings finish or are cancelled.",
       );
@@ -3820,12 +4713,27 @@ async function mail(b, id, kind) {
     );
   else
     participants = [
-      { uid: "attendee", email: b.attendeeEmail, response: "accepted" },
+      {
+        uid: "attendee",
+        name: b.attendeeName,
+        email: b.attendeeEmail,
+        response: "accepted",
+      },
     ];
   const recipients = [
     ...participants.map((p) => ({ ...p, staff: false })),
     ...staff.map((p) => ({ ...p, staff: true, response: "accepted" })),
   ];
+  const emailBooking = await emailBookingDetails(
+    b,
+    id,
+    async (registrationId) => {
+      const snapshot = await collection("registrations")
+        .doc(safeId(registrationId))
+        .get();
+      return snapshot.exists ? snapshot.data() : null;
+    },
+  );
   for (const person of recipients) {
     const state = responseStatus(person),
       effectiveKind =
@@ -3845,7 +4753,7 @@ async function mail(b, id, kind) {
               : b.participants?.length || b.revision === 1
                 ? "Meeting confirmed"
                 : "Booking rescheduled";
-    const time = import_luxon5.DateTime.fromMillis(b.startAt, {
+    const time = import_luxon6.DateTime.fromMillis(b.startAt, {
       zone: person.staff ? b.timezone : b.attendeeTimezone || b.timezone,
     }).toFormat("cccc, dd LLL yyyy \xB7 HH:mm ZZZZ");
     let managementUrl = `${origin()}/${person.staff ? "bookings" : "my-meetings"}`;
@@ -3859,12 +4767,7 @@ async function mail(b, id, kind) {
       managementUrl = `${origin()}/manage/${id}?token=${encodeURIComponent(unseal(b.tokenCipher).token)}`;
     const link =
       state === "accepted" && kind !== "cancel"
-        ? b.meetingUrl || b.locationValue || ""
-        : "";
-    const roster =
-      person.staff && b.participants?.length
-        ? `
-Attendees: ${b.participants.map((p) => `${p.name} (${responseStatus(p)})`).join(", ")}`
+        ? bookingJoiningInstructions(b)
         : "";
     const suffix = person.staff
       ? b.participants?.length && kind.startsWith("reminder")
@@ -3884,12 +4787,15 @@ Attendees: ${b.participants.map((p) => `${p.name} (${responseStatus(p)})`).join(
           createdAt: Date.now(),
           message: {
             subject: `${title}: ${b.eventTitle}`,
-            text: `${title}
-${b.eventTitle}
-${time}
-With ${b.hostName}
-${link}${roster}
-View details: ${managementUrl}`,
+            ...meetingEmail({
+              booking: emailBooking,
+              person,
+              title,
+              time,
+              managementUrl,
+              link,
+              cancelled: kind === "cancel",
+            }),
           },
         });
     } catch (e) {
@@ -3913,7 +4819,7 @@ var schedulerSaveNotifications = wrap(async (r) => {
       event.data().ownerId !== uid &&
       !bookings.docs.some((d) => d.data().ownerId === uid)
     )
-      throw new import_https10.HttpsError(
+      throw new import_https14.HttpsError(
         "permission-denied",
         "You cannot change this meeting's notifications.",
       );
@@ -3945,7 +4851,7 @@ var schedulerMeetingEmails = wrap(async (r) => {
     const messageRef = collection("mail").doc(mailId),
       message = await messageRef.get();
     if (!message.exists || message.data().bookingId !== bookingId)
-      throw new import_https10.HttpsError(
+      throw new import_https14.HttpsError(
         "permission-denied",
         "Email not found for this meeting.",
       );
@@ -4005,7 +4911,7 @@ var schedulerMeetingEmails = wrap(async (r) => {
               message: {
                 subject: `Invitation: ${booking.eventTitle}`,
                 text: `You are invited to ${booking.eventTitle} with ${booking.hostName}.
-${import_luxon5.DateTime.fromMillis(booking.startAt, { zone: booking.timezone }).toFormat("dd LLL yyyy HH:mm ZZZZ")}
+${import_luxon6.DateTime.fromMillis(booking.startAt, { zone: booking.timezone }).toFormat("dd LLL yyyy HH:mm ZZZZ")}
 Accept or decline: ${origin()}/my-meetings`,
               },
             });
@@ -4196,7 +5102,7 @@ var schedulerRetrySync = wrap(async (r) => {
     ref = collection("bookings").doc(safeId(r.data.id)),
     s = await ref.get();
   if (!s.exists || (s.data().ownerId !== uid && s.data().organizerId !== uid))
-    throw new import_https10.HttpsError(
+    throw new import_https14.HttpsError(
       "permission-denied",
       "Booking not found.",
     );
@@ -4259,6 +5165,7 @@ var schedulerReminders = (0, import_scheduler.onSchedule)(
     schedulerSaveAvailability,
     schedulerSaveEvent,
     schedulerSaveNotifications,
+    schedulerSaveOwnSlots,
     schedulerSaveProfile,
     schedulerSearchHosts,
     schedulerSearchUsers,

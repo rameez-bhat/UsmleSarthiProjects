@@ -32,5 +32,38 @@ export function hostScheduleOptions(config, duration) {
       ...(config.timeMode === "range" ? { endTime: config.endTime } : {}),
     })),
   );
-  return expandTimeRanges(rows, duration);
+  const additionalTimes =
+    config.timeMode === "range"
+      ? (config.extraTimeRanges || []).flatMap((range) =>
+          hostScheduleOptions(
+            {
+              ...config,
+              times: [range.start],
+              endTime: range.end,
+              extraTimeRanges: [],
+              extraRanges: [],
+            },
+            duration,
+          ),
+        )
+      : [];
+  const extra =
+    config.dateMode === "range"
+      ? (config.extraRanges || []).flatMap((range) =>
+          hostScheduleOptions(
+            {
+              ...config,
+              from: range.from,
+              to: range.to,
+              times: [range.start],
+              endTime: range.end,
+              timeMode: "range",
+              extraTimeRanges: range.extraTimeRanges || [],
+              extraRanges: [],
+            },
+            duration,
+          ),
+        )
+      : [];
+  return expandTimeRanges([...rows, ...additionalTimes, ...extra], duration);
 }

@@ -58,3 +58,31 @@ test("invalid date and time ranges cannot silently publish alternatives", () => 
     hostScheduleOptions({ ...base, to: "2028-01-01" }, 30),
   ).toThrow();
 });
+
+test("separate date ranges retain independent time windows and deduplicate overlaps", () => {
+  const rows = hostScheduleOptions(
+    {
+      hostUid: "host",
+      timezone: "UTC",
+      dateMode: "range",
+      dates: [],
+      from: "2026-12-01",
+      to: "2026-12-02",
+      timeMode: "range",
+      times: ["09:00"],
+      endTime: "10:00",
+      extraRanges: [
+        { from: "2026-12-05", to: "2026-12-05", start: "14:00", end: "15:30" },
+        { from: "2026-12-01", to: "2026-12-01", start: "09:00", end: "10:00" },
+      ],
+    },
+    30,
+  );
+  expect(rows).toHaveLength(7);
+  expect(
+    rows.filter((row) => row.date === "2026-12-05").map((row) => row.time),
+  ).toEqual(["14:00", "14:30", "15:00"]);
+  expect(
+    rows.filter((row) => row.date === "2026-12-01").map((row) => row.time),
+  ).toEqual(["09:00", "09:30"]);
+});

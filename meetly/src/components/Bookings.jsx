@@ -1,3 +1,4 @@
+import { PhoneContact } from "../components/PhoneContact";
 import React, { useState } from "react";
 import { PageTitle } from "../components/PageTitle";
 import { fmt, time } from "../shared/utils";
@@ -103,6 +104,11 @@ export function Bookings({
               </div>
               <div className="booking-actions">
                 <MeetingEmails booking={b} />
+                {b.status === "confirmed" && (
+                  <PhoneContact
+                    instructions={b.meetingUrl || b.locationValue}
+                  />
+                )}
                 {b.status === "confirmed" &&
                   /^https:\/\//i.test(
                     b.meetingUrl || b.locationValue || "",

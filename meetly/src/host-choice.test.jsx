@@ -33,7 +33,10 @@ test("same-instant host choices stay distinct and confirmation books the named h
   );
   await screen.findByRole("button", { name: /Dr B/ });
   fireEvent.click(screen.getByRole("button", { name: /Dr B/ }));
-  expect(screen.getByText("You are booking with Dr B.")).toBeTruthy();
+  expect(
+    screen.queryByRole("region", { name: "Choose a host for this event" }),
+  ).toBeNull();
+  await screen.findByText("You are booking with Dr B.");
   fireEvent.change(screen.getByLabelText("Your name"), {
     target: { value: "Guest" },
   });
@@ -106,8 +109,82 @@ test("organizer remains visible when other hosts have availability", async () =>
   expect(
     await screen.findByRole("heading", { name: "Shafi (Organizer)" }),
   ).toBeTruthy();
-  expect(
-    screen.getByText("No available times on this date"),
-  ).toBeTruthy();
+  expect(screen.getByText("No available times on this date")).toBeTruthy();
   expect(screen.getByRole("button", { name: /Pawan/ })).toBeTruthy();
+});
+
+test("event-specific host link preselects a host without showing other hosts' times", async () => {
+  history.replaceState({}, "", "/book/organizer/topic?host=b");
+  const start = Date.now() + 86400000;
+  render(
+    <HostChoiceBooking
+      event={{
+        id: "topic",
+        title: "Mock Interview",
+        eventKind: "group",
+        duration: 30,
+        questions: [],
+      }}
+      data={{ host: { id: "a", name: "Dr A", timezone: "UTC" } }}
+      getSlots={vi.fn().mockResolvedValue({
+        hosts: [
+          { uid: "a", name: "Dr A" },
+          { uid: "b", name: "Dr B" },
+        ],
+        slots: [
+          { hostUid: "a", hostName: "Dr A", start, end: start + 1800000 },
+          { hostUid: "b", hostName: "Dr B", start, end: start + 1800000 },
+        ],
+      })}
+      book={vi.fn()}
+      notify={vi.fn()}
+    />,
+  );
+  expect(
+    await screen.findByText("You are booking Mock Interview with Dr B."),
+  ).toBeTruthy();
+  expect(screen.queryByRole("button", { name: /Dr A,/ })).toBeNull();
+  expect(screen.getByRole("button", { name: /Dr B,/ })).toBeTruthy();
+  history.replaceState({}, "", "/");
+});
+
+test("only a Group event shows the topic host directory before the calendar", async () => {
+  history.replaceState({}, "", "/book/organizer/topic");
+  const start = Date.now() + 86400000;
+  render(
+    <HostChoiceBooking
+      event={{
+        id: "topic",
+        eventKind: "group",
+        title: "Topic",
+        duration: 30,
+        questions: [],
+      }}
+      data={{ host: { id: "a", name: "Dr A", timezone: "UTC" } }}
+      getSlots={vi.fn().mockResolvedValue({
+        hosts: [
+          { uid: "a", name: "Dr A" },
+          { uid: "b", name: "Dr B" },
+        ],
+        slots: [
+          { hostUid: "a", hostName: "Dr A", start, end: start + 1800000 },
+          { hostUid: "b", hostName: "Dr B", start, end: start + 1800000 },
+        ],
+      })}
+      book={vi.fn()}
+      notify={vi.fn()}
+    />,
+  );
+  expect(
+    await screen.findByRole("heading", { name: "Choose your host for Topic" }),
+  ).toBeTruthy();
+  expect(
+    screen.queryByRole("region", { name: "Available meeting dates" }),
+  ).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: /Dr B/ }));
+  expect(
+    await screen.findByRole("region", { name: "Available meeting dates" }),
+  ).toBeTruthy();
+  expect(screen.getByRole("button", { name: /Dr B,/ })).toBeTruthy();
+  expect(screen.queryByRole("button", { name: /Dr A,/ })).toBeNull();
 });

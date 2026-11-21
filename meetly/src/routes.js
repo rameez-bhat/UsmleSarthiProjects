@@ -2,6 +2,7 @@ export const pagePaths = Object.freeze({
   "Event types": "/event-types",
   "My meetings": "/my-meetings",
   Bookings: "/bookings",
+  "Manage your slots": "/manage-slots",
   Availability: "/availability",
   "Hosts & sharing": "/hosts",
   Integrations: "/integrations",
